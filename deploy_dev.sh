@@ -1,69 +1,65 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# --- CONFIGURATION ---
 ENV="dev"
+PROJECT_DIR="/srv/django/MikesLists_dev"
+VENV_PATH="/srv/django/venv-dev/bin/activate"
+SETTINGS="MikesLists.settings.dev"
+SERVICE_NAME="gunicorn-MikesLists-dev.service"
 
+echo "=== STARTING CONSOLIDATED $ENV WORKFLOW ==="
 
-echo "Running safety checks for ENV=${ENV}..."
+cd "$PROJECT_DIR"
 
-# 1. Ensure we are on the correct branch
-CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-if [[ "$CURRENT_BRANCH" != "$ENV" ]]; then
-    echo "ERROR: You are on branch '$CURRENT_BRANCH', but this script deploys the '$ENV' branch."
-    echo "Aborting deployment."
-    exit 1
-fi
-
-# 2. Ensure there are no uncommitted changes
+# 1. AUTOMATED GIT WORKFLOW
 if [[ -n "$(git status --porcelain)" ]]; then
-    echo "ERROR: There are uncommitted changes in the working directory."
-    echo "Please commit or stash them before deploying."
-    git status
-    exit 1
+    echo "Detected uncommitted changes. Preparing to push..."
+    
+    # Ask for a commit message if not provided as an argument
+    if [ -z "${1:-}" ]; then
+        read -p "Enter commit message: " COMMIT_MSG
+    else
+        COMMIT_MSG="$1"
+    fi
+
+    git add .
+    git commit -m "$COMMIT_MSG"
+    echo "✔ Changes committed."
+else
+    echo "No local changes to commit."
 fi
 
-# 3. Ensure local branch is up to date with origin/ENV
+echo "Pushing to origin $ENV..."
+git push origin "$ENV"
+
+# 2. RUN SAFETY CHECKS (From your original script)
+echo "Running safety checks..."
 git fetch origin
-LOCAL_HASH=$(git rev-parse "$ENV")
+LOCAL_HASH=$(git rev-parse HEAD)
 REMOTE_HASH=$(git rev-parse "origin/$ENV")
 
 if [[ "$LOCAL_HASH" != "$REMOTE_HASH" ]]; then
-    echo "ERROR: Local '$ENV' branch is not up to date with origin/$ENV."
-    echo "Please run: git pull origin $ENV"
+    echo "ERROR: Local branch and Remote branch are out of sync."
     exit 1
 fi
+echo "✔ Safety checks passed."
 
-echo "✔ Safety checks passed for ENV=${ENV}."
-
-
-
-echo "=== DEPLOY DEV ==="
-LOGFILE="/srv/django/deploy_logs/$(date +'%Y-%m-%d_%H-%M-%S')_${ENV}.log"
-mkdir -p /srv/django/deploy_logs
-exec > >(tee -a "$LOGFILE") 2>&1
-
-cd /srv/django/MikesLists_dev
-
+# 3. SERVER DEPLOYMENT TASKS
 echo "Creating rollback tag..."
 git tag -f rollback_before_deploy
 git push -f origin rollback_before_deploy
 
-echo "Pulling latest code from origin/dev..."
-git fetch origin
-git checkout dev
-git pull origin dev
-
 echo "Activating virtual environment..."
-source /srv/django/venv-dev/bin/activate
+source "$VENV_PATH"
 
 echo "Applying migrations..."
-python manage.py migrate --settings=MikesLists.settings.dev
+python manage.py migrate --settings="$SETTINGS"
 
 echo "Collecting static files..."
-python manage.py collectstatic --noinput --settings=MikesLists.settings.dev
+python manage.py collectstatic --noinput --settings="$SETTINGS"
 
-echo "Restarting gunicorn-dev..."
-#sudo systemctl restart gunicorn-dev.service
-sudo systemctl restart gunicorn-MikesLists-dev.service
+echo "Restarting service..."
+sudo systemctl restart "$SERVICE_NAME"
 
-echo "DEV deployment complete."
+echo "✅ $ENV Deployment and Push Complete!"
