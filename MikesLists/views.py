@@ -31,7 +31,7 @@ __updated__ = "2025-12-24 22:12:27"
 
 import os
 
-def home_view(request):
+def home(request):
     # Get the settings string (e.g., 'MikesLists.settings.live')
     settings_module = os.environ.get('DJANGO_SETTINGS_MODULE', 'dev')
 
