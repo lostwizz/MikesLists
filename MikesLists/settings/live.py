@@ -20,12 +20,12 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-#)8*p_a=2@br%mi(e*tfiom(87t*mx@u_ro@2(z3u5dmhs0s1h'
+SECRET_KEY = 'django-insecure-#1!-9v!-p673679u(+-84b3l+v8)jp*74j+nh^)c6*@-7$ezmr'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG =  True
 
-ALLOWED_HOSTS = ['localhost', 'localhost.local','127.0.0.1', '10.0.0.208', 'pi204.local', '10.0.0.100']
+ALLOWED_HOSTS = ['localhost', 'localhost.local','127.0.0.1', '10.0.0.208', '10.0.0.100', 'pi204.local']
 
 
 # Application definition
@@ -75,9 +75,9 @@ WSGI_APPLICATION = 'MikesLists.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',   # MariaDB uses the MySQL backend
-        'NAME': 'MikesLists_test',
-        'USER': 'MikesLists_test',
-        'PASSWORD': '-BoE71/mJW3qNPOz',
+        'NAME': 'MikesLists_live',
+        'USER': 'MikesLists_live',
+        'PASSWORD': 'g6IxmaX]XO7dE/SX',
         'HOST': '10.0.0.240',     # or IP of your MariaDB server
         'PORT': '3306',          # default MariaDB/MySQL port
         'OPTIONS': {
@@ -85,6 +85,7 @@ DATABASES = {
         },
     }
 }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
