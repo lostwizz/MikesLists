@@ -72,4 +72,9 @@ else
     ~/bin/chk.sh
 fi
 
-echo -e "\n\e[32m🎉 ${ENV^^} Deployment Finished!\e[0m"
+VERSION=$(git rev-parse --short HEAD)
+
+
+#echo -e "\n\e[32m🎉 ${ENV^^} Deployment Finished!\e[0m"
+#echo -e "\n\e[32m🎉 ${ENV^^} is up and working!\e[0m"
+echo -e "\n\e[32m🎉 ${ENV^^} is up and working! (v.$VERSION)\e[0m"
