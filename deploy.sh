@@ -67,6 +67,14 @@ python manage.py collectstatic --noinput --settings="$SETTINGS"
 echo "♻️  Restarting $SERVICE_NAME..."
 sudo systemctl restart "$SERVICE_NAME"
 
+# Check if Django can still see your settings
+echo "Checking settings"
+python manage.py check --settings=MikesLists.settings.test
+
+# Double-check migrations
+echo "Show Migrations"
+python manage.py showmigrations --settings=MikesLists.settings.test
+
 echo "------------------------------------------"
 echo "🎉 ${ENV^^} IS LIVE!"
 echo "------------------------------------------"
