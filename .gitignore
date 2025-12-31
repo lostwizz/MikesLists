@@ -1,0 +1,44 @@
+# Python compiled files
+*.pyc
+*.pyo
+__pycache__/
+
+# Django stuff
+*.log
+*.pot
+*.pyc
+db.sqlite3
+*.sqlite3
+*.mo
+*.pyc
+
+# Virtual environments
+venv-*/
+
+# Collected static files
+*/staticfiles_collected/
+
+# Uploaded media files
+*/media/
+
+# VSCode
+.vscode/
+
+# JetBrains / PyCharm
+.idea/
+
+# macOS system files
+.DS_Store
+
+# Environment variables
+.env
+.env.*
+settings/local.py
+
+# pip cache
+*.egg-info/
+dist/
+build/
+.eggs/
+
+*.log*
