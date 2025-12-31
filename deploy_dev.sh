@@ -4,12 +4,12 @@ set -euo pipefail
 ENV="dev"
 
 
-echo "Running safety checks..."
+echo "Running safety checks for ENV=${ENV}..."
 
 # 1. Ensure we are on the correct branch
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-if [[ "$CURRENT_BRANCH" != "dev" ]]; then
-    echo "ERROR: You are on branch '$CURRENT_BRANCH', but this script deploys the 'dev' branch."
+if [[ "$CURRENT_BRANCH" != "$ENV" ]]; then
+    echo "ERROR: You are on branch '$CURRENT_BRANCH', but this script deploys the '$ENV' branch."
     echo "Aborting deployment."
     exit 1
 fi
@@ -22,18 +22,19 @@ if [[ -n "$(git status --porcelain)" ]]; then
     exit 1
 fi
 
-# 3. Ensure local branch is up to date with origin/dev
+# 3. Ensure local branch is up to date with origin/ENV
 git fetch origin
-LOCAL_HASH=$(git rev-parse dev)
-REMOTE_HASH=$(git rev-parse origin/dev)
+LOCAL_HASH=$(git rev-parse "$ENV")
+REMOTE_HASH=$(git rev-parse "origin/$ENV")
 
 if [[ "$LOCAL_HASH" != "$REMOTE_HASH" ]]; then
-    echo "ERROR: Local dev branch is not up to date with origin/dev."
-    echo "Please run: git pull origin dev"
+    echo "ERROR: Local '$ENV' branch is not up to date with origin/$ENV."
+    echo "Please run: git pull origin $ENV"
     exit 1
 fi
 
-echo "✔ Safety checks passed."
+echo "✔ Safety checks passed for ENV=${ENV}."
+
 
 
 echo "=== DEPLOY DEV ==="
