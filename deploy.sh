@@ -59,7 +59,6 @@ $VENV_BIN/python manage.py collectstatic --noinput
 echo -e "\e[34m♻️  Restarting $SERVICE_NAME...\e[0m"
 sudo systemctl restart "$SERVICE_NAME"
 
-<<<<<<< HEAD
 # Check if Django can still see your settings
 echo "Checking settings"
 python manage.py check --settings=MikesLists.settings.test
@@ -71,7 +70,7 @@ python manage.py showmigrations --settings=MikesLists.settings.test
 echo "------------------------------------------"
 echo "🎉 ${ENV^^} IS LIVE!"
 echo "------------------------------------------"
-=======
+
 # --- 5. AUTOMATED VERIFICATION ---
 echo -e "\e[35m------------------------------------------"
 echo -e "🔍 RUNNING HEALTH CHECK..."
@@ -91,4 +90,3 @@ VERSION=$(git rev-parse --short HEAD)
 #echo -e "\n\e[32m🎉 ${ENV^^} Deployment Finished!\e[0m"
 #echo -e "\n\e[32m🎉 ${ENV^^} is up and working!\e[0m"
 echo -e "\n\e[32m🎉 ${ENV^^} is up and working! (v.$VERSION)\e[0m"
->>>>>>> 4373f52a84aaa9158fcae7774a6b636b97506ea7
