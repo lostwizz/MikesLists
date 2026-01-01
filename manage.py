@@ -1,4 +1,33 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+###############################################################################
+r"""
+manage.py
+
+
+# TODO:
+# COMMENT:
+# NOTE:
+# USEFULL:
+# LEARN:
+# RECHECK
+# INCOMPLETE
+# SEE NOTES
+# POST
+# HACK
+# FIXME
+# BUG
+# [ ] something to do
+# [x]  i did sometrhing
+
+
+
+"""
+__version__ = "0.0.1.00001-dev"
+__author__ = "Mike Merrett"
+__updated__ = "2025-12-24 22:12:27"
+###############################################################################
+
 import os  # <--- THIS WAS MISSING
 import sys
 
