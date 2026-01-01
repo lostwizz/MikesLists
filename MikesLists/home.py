@@ -23,22 +23,14 @@ views.py
 
 
 """
-__version__ = "0.0.3.00354-dev"
+__version__ = "0.0.0.00003-dev"
 __author__ = "Mike Merrett"
 __updated__ = "2025-12-24 22:12:27"
 ###############################################################################
 
-
-import os
+from django.conf import settings
+from django.shortcuts import render
 
 def home(request):
-    # Get the settings string (e.g., 'MikesLists.settings.live')
-    settings_module = os.environ.get('DJANGO_SETTINGS_MODULE', 'dev')
-
-    # Clean it up to just get 'live', 'test', or 'dev'
-    env_name = settings_module.split('.')[-1]
-
-    context = {
-        'env_name': env_name.upper(),
-    }
-    return render(request, 'home.html', context)
+    env_name = settings.ENV_NAME  # You define this in each settings file
+    return render(request, 'home.html', {"env_name": env_name})

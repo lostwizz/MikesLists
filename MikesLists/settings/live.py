@@ -27,6 +27,7 @@ DEBUG =  True
 
 ALLOWED_HOSTS = ['localhost', 'localhost.local','127.0.0.1', '10.0.0.208', '10.0.0.100', 'pi204.local']
 
+ENV_NAME = "LIVE"
 
 # Application definition
 
@@ -54,7 +55,7 @@ ROOT_URLCONF = 'MikesLists.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
