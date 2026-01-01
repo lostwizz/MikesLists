@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
-from .views import home
+from .home import home
 from .health import health
 
 urlpatterns = [
