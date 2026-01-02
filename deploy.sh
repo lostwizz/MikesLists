@@ -40,6 +40,24 @@ if [[ "$ENV" == "dev" ]]; then
 elif [[ "$ENV" == "test" ]]; then
     echo "🔀 Merging DEV branch into TEST environment..."
     git checkout test
+    if [[ -n "$(git status --porcelain)" ]]; then
+        echo -e "\e[31mUncommitted changes detected in TEST environment!\e[0m"
+        echo "Files with changes:"
+        git status --porcelain
+        echo ""
+        echo "To commit these changes:"
+        echo "git add ."
+        echo "git commit -m 'Your message'"
+        echo ""
+        echo "To stash these changes:"
+        echo "git stash"
+        echo ""
+        echo "To discard these changes:"
+        echo "git checkout -- ."
+        echo ""
+        echo "Please resolve uncommitted changes before deploying."
+        exit 1
+    fi
     if ! git merge origin/dev --no-edit; then
         echo -e "\e[31mMerge conflicts detected!\e[0m"
         echo "Conflicting files:"
@@ -69,6 +87,24 @@ elif [[ "$ENV" == "test" ]]; then
 elif [[ "$ENV" == "live" ]]; then
     echo "🔀 Merging TEST branch into LIVE environment..."
     git checkout live
+    if [[ -n "$(git status --porcelain)" ]]; then
+        echo -e "\e[31mUncommitted changes detected in LIVE environment!\e[0m"
+        echo "Files with changes:"
+        git status --porcelain
+        echo ""
+        echo "To commit these changes:"
+        echo "git add ."
+        echo "git commit -m 'Your message'"
+        echo ""
+        echo "To stash these changes:"
+        echo "git stash"
+        echo ""
+        echo "To discard these changes:"
+        echo "git checkout -- ."
+        echo ""
+        echo "Please resolve uncommitted changes before deploying."
+        exit 1
+    fi
     if ! git merge origin/test --no-edit; then
         echo -e "\e[31mMerge conflicts detected!\e[0m"
         echo "Conflicting files:"
