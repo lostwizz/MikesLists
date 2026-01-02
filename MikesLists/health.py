@@ -1,6 +1,8 @@
 from django.http import JsonResponse
 from django.db import connections
 from django.db.utils import OperationalError
+from django.conf import settings
+
 import shutil
 
 
@@ -14,16 +16,29 @@ def health(request):
         'storage': 'unknown',
     }
 
+    from django.conf import settings
+
     # 1. Check Database
     try:
-        db_conn = connections['default']
-        with db_conn.cursor() as cursor:
+        # Use connection.settings_dict to get the actual DB name from config
+        current_db = connections['default'].settings_dict['NAME']
+
+        # Get the environment name you set in your settings.py
+        env_name = getattr(settings, 'ENV_NAME', 'unknown')
+
+        # Verification logic
+        if env_name.lower() in current_db.lower():
+            checks['database'] = 'ok'
+        else:
+            checks['database'] = f'wrong_env: found {current_db} but expected {env_name}'
+
+        # Still run a dummy query to ensure the connection is actually ALIVE
+        with connections['default'].cursor() as cursor:
             cursor.execute("SELECT 1")
-        checks['database'] = 'ok'
-    except OperationalError:
-        checks['database'] = 'down'
+
     except Exception as e:
         checks['database'] = f'error: {str(e)}'
+
 
     # 2. Check Disk Space (Example: Ensure > 100MB free)
     total, used, free = shutil.disk_usage("/")

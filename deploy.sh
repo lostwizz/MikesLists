@@ -40,12 +40,118 @@ if [[ "$ENV" == "dev" ]]; then
 elif [[ "$ENV" == "test" ]]; then
     echo "🔀 Merging DEV branch into TEST environment..."
     git checkout test
-    git merge origin/dev --no-edit
+    if [[ $(git rev-list --count origin/test..test) -gt 0 ]]; then
+        echo -e "\e[31mTEST branch is ahead of origin/test!\e[0m"
+        echo "Local commits that need to be pushed:"
+        git log --oneline origin/test..test
+        echo ""
+        echo "To push these commits:"
+        echo "git push origin test"
+        echo ""
+        echo "Please push your local commits before deploying."
+        exit 1
+    fi
+    if [[ -n "$(git status --porcelain)" ]]; then
+        echo -e "\e[31mUncommitted changes detected in TEST environment!\e[0m"
+        echo "Files with changes:"
+        git status --porcelain
+        echo ""
+        echo "To commit these changes:"
+        echo "git add ."
+        echo "git commit -m 'Your message'"
+        echo ""
+        echo "To stash these changes:"
+        echo "git stash"
+        echo ""
+        echo "To discard these changes:"
+        echo "git checkout -- ."
+        echo ""
+        echo "Please resolve uncommitted changes before deploying."
+        exit 1
+    fi
+    if ! git merge origin/dev --no-edit; then
+        echo -e "\e[31mMerge conflicts detected!\e[0m"
+        echo "Conflicting files:"
+        git status --porcelain | grep '^UU' | awk '{print $2}'
+        echo ""
+        echo "Differences in conflicting files:"
+        for file in $(git diff --name-only --diff-filter=U); do
+            echo "=== $file ==="
+            git diff $file
+        done
+        echo ""
+        echo "To resolve conflicts by accepting incoming changes (from DEV branch):"
+        echo "git checkout --theirs include_bin/"
+        echo "git add include_bin/"
+        echo "git commit --no-edit"
+        echo ""
+        echo "Or to discard incoming changes (keep TEST version):"
+        echo "git checkout --ours include_bin/"
+        echo "git add include_bin/"
+        echo "git commit --no-edit"
+        echo ""
+        echo "Since include_bin is auto-updated, you probably want to accept incoming (DEV) changes."
+        echo "Run the commands above manually, or modify the script to auto-resolve."
+        exit 1
+    fi
     git push origin test
 elif [[ "$ENV" == "live" ]]; then
     echo "🔀 Merging TEST branch into LIVE environment..."
     git checkout live
-    git merge origin/test --no-edit
+    if [[ $(git rev-list --count origin/live..live) -gt 0 ]]; then
+        echo -e "\e[31mLIVE branch is ahead of origin/live!\e[0m"
+        echo "Local commits that need to be pushed:"
+        git log --oneline origin/live..live
+        echo ""
+        echo "To push these commits:"
+        echo "git push origin live"
+        echo ""
+        echo "Please push your local commits before deploying."
+        exit 1
+    fi
+    if [[ -n "$(git status --porcelain)" ]]; then
+        echo -e "\e[31mUncommitted changes detected in LIVE environment!\e[0m"
+        echo "Files with changes:"
+        git status --porcelain
+        echo ""
+        echo "To commit these changes:"
+        echo "git add ."
+        echo "git commit -m 'Your message'"
+        echo ""
+        echo "To stash these changes:"
+        echo "git stash"
+        echo ""
+        echo "To discard these changes:"
+        echo "git checkout -- ."
+        echo ""
+        echo "Please resolve uncommitted changes before deploying."
+        exit 1
+    fi
+    if ! git merge origin/test --no-edit; then
+        echo -e "\e[31mMerge conflicts detected!\e[0m"
+        echo "Conflicting files:"
+        git status --porcelain | grep '^UU' | awk '{print $2}'
+        echo ""
+        echo "Differences in conflicting files:"
+        for file in $(git diff --name-only --diff-filter=U); do
+            echo "=== $file ==="
+            git diff $file
+        done
+        echo ""
+        echo "To resolve conflicts by accepting incoming changes (from TEST branch):"
+        echo "git checkout --theirs include_bin/"
+        echo "git add include_bin/"
+        echo "git commit --no-edit"
+        echo ""
+        echo "Or to discard incoming changes (keep LIVE version):"
+        echo "git checkout --ours include_bin/"
+        echo "git add include_bin/"
+        echo "git commit --no-edit"
+        echo ""
+        echo "Since include_bin is auto-updated, you probably want to accept incoming (TEST) changes."
+        echo "Run the commands above manually, or modify the script to auto-resolve."
+        exit 1
+    fi
     git push origin live
 fi
 

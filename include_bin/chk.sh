@@ -80,6 +80,9 @@ for ENV in "${ENVS[@]}"; do
         ((OK_COUNT++))
     fi
 
+    ENV_NAME=$($VENV_PY $MANAGE_PY shell -c "from django.conf import settings; print(settings.ENV_NAME)" 2>/dev/null | tail -n 1)
+    echo -e "    ENV_NAME = ${ENV_NAME}"
+
     SET_MODL=$($VENV_PY $MANAGE_PY shell -c "from django.conf import settings; print(settings.SETTINGS_MODULE)" 2>/dev/null | tail -n 1)
     echo -e "    SETTINGS_MODULE = ${SET_MODL}"
     BASE_DIR=$($VENV_PY $MANAGE_PY shell -c "from django.conf import settings; print(settings.BASE_DIR)" 2>/dev/null | tail -n 1)
@@ -103,6 +106,18 @@ for ENV in "${ENVS[@]}"; do
         ((FAIL_COUNT++))
     fi
 done
+
+# Add to chk.sh
+LOG_FILE="/srv/django/MikesLists_dev/logs/debug.log"
+MAX_SIZE=500000000 # 500MB
+if [ -f "$LOG_FILE" ]; then
+    SIZE=$(stat -c%s "$LOG_FILE")
+    if [ "$SIZE" -gt "$MAX_SIZE" ]; then
+        echo -e "  ${YELLOW}⚠ Log file too large: $(du -h $LOG_FILE | awk '{print $1}')${RESET}"
+        ((WARN_COUNT++))
+    fi
+fi
+
 
 # [4] HTTP Endpoint Checks (Enforcing Detailed JSON)
 echo -e "\n${MAGENTA}[4] HTTP Endpoint Checks:${RESET}"

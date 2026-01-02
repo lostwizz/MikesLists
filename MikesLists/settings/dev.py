@@ -82,13 +82,16 @@ WSGI_APPLICATION = 'MikesLists.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',   # MariaDB uses the MySQL backend
-        'NAME': 'MikesLists_test',
-        'USER': 'MikesLists_test',
-        'PASSWORD': '-BoE71/mJW3qNPOz',
+        'NAME': 'MikesLists_dev',
+        'USER': 'MikesLists_dev',
+        'PASSWORD': '-oD)5ncYPx4sH6!u',
         'HOST': '10.0.0.240',     # or IP of your MariaDB server
         'PORT': '3306',          # default MariaDB/MySQL port
         'OPTIONS': {
             'charset': 'utf8mb4',   # recommended for full Unicode support
+        },
+        'TEST': {
+            'NAME': 'test_db_dev',
         },
     }
 }
