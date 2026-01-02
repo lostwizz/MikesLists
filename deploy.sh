@@ -40,6 +40,17 @@ if [[ "$ENV" == "dev" ]]; then
 elif [[ "$ENV" == "test" ]]; then
     echo "🔀 Merging DEV branch into TEST environment..."
     git checkout test
+    if [[ $(git rev-list --count origin/test..test) -gt 0 ]]; then
+        echo -e "\e[31mTEST branch is ahead of origin/test!\e[0m"
+        echo "Local commits that need to be pushed:"
+        git log --oneline origin/test..test
+        echo ""
+        echo "To push these commits:"
+        echo "git push origin test"
+        echo ""
+        echo "Please push your local commits before deploying."
+        exit 1
+    fi
     if [[ -n "$(git status --porcelain)" ]]; then
         echo -e "\e[31mUncommitted changes detected in TEST environment!\e[0m"
         echo "Files with changes:"
@@ -87,6 +98,17 @@ elif [[ "$ENV" == "test" ]]; then
 elif [[ "$ENV" == "live" ]]; then
     echo "🔀 Merging TEST branch into LIVE environment..."
     git checkout live
+    if [[ $(git rev-list --count origin/live..live) -gt 0 ]]; then
+        echo -e "\e[31mLIVE branch is ahead of origin/live!\e[0m"
+        echo "Local commits that need to be pushed:"
+        git log --oneline origin/live..live
+        echo ""
+        echo "To push these commits:"
+        echo "git push origin live"
+        echo ""
+        echo "Please push your local commits before deploying."
+        exit 1
+    fi
     if [[ -n "$(git status --porcelain)" ]]; then
         echo -e "\e[31mUncommitted changes detected in LIVE environment!\e[0m"
         echo "Files with changes:"
