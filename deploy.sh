@@ -49,6 +49,14 @@ elif [[ "$ENV" == "live" ]]; then
     git push origin live
 fi
 
+# --- NEW: Sync Local Binaries ---
+echo -e "\e[34m📂 Syncing local binaries...\e[0m"
+# Create the directory if it doesn't exist
+mkdir -p "$PROJECT_DIR/include_bin"
+# Copy files from your pi home bin to the project folder
+cp -r /home/pi/bin/* "$PROJECT_DIR/include_bin/"
+
+
 # --- 3. DJANGO TASKS ---
 echo -e "\e[34m⚙️  Running Django Tasks...\e[0m"
 # Use the specific venv python
