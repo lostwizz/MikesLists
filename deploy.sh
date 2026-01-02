@@ -84,11 +84,27 @@ elif [[ "$ENV" == "test" ]]; then
     # Ensure local is matched with origin before merge
     git reset --hard origin/test
     if ! git merge origin/dev --no-edit; then
-        echo -e "\e[31mMerge conflicts detected! Attempting auto-resolution for include_bin...\e[0m"
-        # Auto-accept incoming changes for script directories
-        git checkout --theirs include_bin/
-        git add include_bin/
-        git commit --no-edit || echo "No conflicts left to commit."
+        echo -e "\e[31mMerge conflicts detected!\e[0m"
+        echo "Conflicting files:"
+        git status --porcelain | grep '^UU' | awk '{print $2}'
+        echo ""
+        echo "Differences in conflicting files:"
+        for file in $(git diff --name-only --diff-filter=U); do
+            echo "=== $file ==="
+            git diff $file
+        done
+        echo ""
+        echo "To resolve conflicts by accepting incoming changes (from DEV branch):"
+        echo -e "\e[36mgit checkout --theirs deploy.sh\e[0m"
+        echo -e "\e[36mgit add deploy.sh\e[0m"
+        echo -e "\e[36mgit commit --no-edit\e[0m"
+        echo ""
+        echo "Or to discard incoming changes (keep TEST version):"
+        echo -e "\e[36mgit checkout --ours deploy.sh\e[0m"
+        echo -e "\e[36mgit add deploy.sh\e[0m"
+        echo -e "\e[36mgit commit --no-edit\e[0m"
+        echo ""
+        echo "For other files, replace 'deploy.sh' with the filename."
         print_emergency_help
         exit 1
     fi
