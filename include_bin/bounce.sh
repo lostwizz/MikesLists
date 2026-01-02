@@ -60,6 +60,9 @@ for SVC in "${SERVICES[@]}"; do
     fi
 done
 
+sudo journalctl -u gunicorn -n 50 --no-pager
+
+
 # 5. Final Verification
 echo -e "\n${MAGENTA}Running health verification...${RESET}"
 chk.sh
