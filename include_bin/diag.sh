@@ -2,6 +2,7 @@
 # ==========================================
 # Django Deep Diagnostic Tool v1.0
 # ==========================================
+# __version__ = "0.1.0.00045-dev"
 
 # Configuration - Adjust based on environment
 ENV=${1:-dev} # Default to dev if not specified

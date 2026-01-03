@@ -1,5 +1,39 @@
 #!/usr/bin/env bash
+#!/bin/bash
+# ==========================================
+# deploy script which manages the git workflow of dev -> test -> live
+# ==========================================
+# __version__ = "0.0.0.00049-dev"
+
 set -euo pipefail
+
+
+# --- EMERGENCY MANUAL COMMANDS ---
+print_emergency_help() {
+    echo -e "\e[36m\nEMERGENCY MANUAL COMMANDS\e[0m"
+    echo -e "If the script ever fails and you need to clear the way manually, run these commands:"
+    echo -e "To wipe all local changes and start fresh: \e[36mgit reset --hard HEAD\e[0m"
+    echo -e "To delete all untracked files: \e[36mgit clean -fd\e[0m"
+    echo -e "To cancel a stuck merge process: \e[36mgit merge --abort\e[0m"
+}
+
+# if [[ "$ENV" == "live" && "$USER" != "pi" ]]; then
+#     echo "Refusing to deploy to LIVE unless run as pi."
+#     exit 1
+# fi
+
+
+
+
+
+# Ensure the script can be updated during merge by running from /tmp
+SCRIPT_PATH="$(readlink -f "$0")"
+if [[ "$SCRIPT_PATH" == "$(pwd)"* ]]; then
+    TMP_SCRIPT="/tmp/$(basename "$0").$$"
+    cp "$0" "$TMP_SCRIPT"
+    chmod +x "$TMP_SCRIPT"
+    exec bash "$TMP_SCRIPT" "$@"
+fi
 
 # --- 1. AUTO-DETECT ENVIRONMENT ---
 ENV_ARG="${1:-}"
