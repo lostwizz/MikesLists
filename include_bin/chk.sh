@@ -2,7 +2,7 @@
 # ==========================================
 # Django Health Check - Magenta Edition v3.2
 # ==========================================
-# __version__ = "0.1.0.00045-dev"
+# __version__ = "0.1.0.00044-dev"
 
 
 ENVS=("dev" "test" "live")
