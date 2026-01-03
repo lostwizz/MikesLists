@@ -17,9 +17,9 @@ urls.py
 # HACK
 
 """
-__version__ = "0.0.0.00008-dev"
+__version__ = "0.0.0.00010-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-02 21:46:11"
+__updated__ = "2026-01-02 23:52:19"
 ###############################################################################
 
 """
@@ -40,6 +40,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from .view_status import status_view
 
 from .home import home
 from .health import health
@@ -47,6 +48,6 @@ from .health import health
 urlpatterns = [
     path('', home),
     path('admin/', admin.site.urls),
+    path("status/", status_view, name ="status_dashboard"),
     path("health/", health),
 ]
-
