@@ -1,4 +1,12 @@
-#!/usr/bin/env bash
+#!/bin/bash
+# ==========================================
+# Django Restart all services
+# ==========================================
+# __version__ = "0.1.0.00046-dev"
+
+
+
+
 set -euo pipefail
 
 # Colors

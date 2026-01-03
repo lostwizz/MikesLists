@@ -19,7 +19,7 @@ test.py
 """
 __version__ = "0.0.0.00003-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-02 19:52:18"
+__updated__ = "2026-01-02 19:56:39"
 ###############################################################################
 """
 Django settings for MikesLists project.

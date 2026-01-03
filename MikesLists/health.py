@@ -4,6 +4,14 @@
 r"""
 health.py
 
+    this file will return a json string which will let you know that:
+        - the database connection is good
+        - the database is connecting to the correct database (.i.e. MikesLists_dev )
+        - checks disk available (storage)
+
+
+
+
 
 # TODO:
 # COMMENT:
@@ -17,9 +25,9 @@ health.py
 # HACK
 
 """
-__version__ = "0.0.0.00003-dev"
+__version__ = "0.0.0.00016-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-02 19:49:31"
+__updated__ = "2026-01-02 21:42:20"
 ###############################################################################
 
 from django.http import JsonResponse
