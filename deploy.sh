@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+#!/bin/bash
+# ==========================================
+# deploy script which manages the git workflow of dev -> test -> live
+# ==========================================
+# __version__ = "0.0.0.00049-dev"
+
 set -euo pipefail
 
 
@@ -10,6 +16,15 @@ print_emergency_help() {
     echo -e "To delete all untracked files: \e[36mgit clean -fd\e[0m"
     echo -e "To cancel a stuck merge process: \e[36mgit merge --abort\e[0m"
 }
+
+# if [[ "$ENV" == "live" && "$USER" != "pi" ]]; then
+#     echo "Refusing to deploy to LIVE unless run as pi."
+#     exit 1
+# fi
+
+
+
+
 
 # Ensure the script can be updated during merge by running from /tmp
 SCRIPT_PATH="$(readlink -f "$0")"
