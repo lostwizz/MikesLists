@@ -1,3 +1,27 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+###############################################################################
+r"""
+live.py
+
+
+# TODO:
+# COMMENT:
+# NOTE:
+# USEFULL:
+# LEARN:
+# RECHECK:
+# INCOMPLETE:
+# SEE NOTES:
+# POST
+# HACK
+
+"""
+__version__ = "0.0.0.00003-dev"
+__author__ = "Mike Merrett"
+__updated__ = "2026-01-02 19:52:04"
+###############################################################################
+
 """
 Django settings for MikesLists project.
 
