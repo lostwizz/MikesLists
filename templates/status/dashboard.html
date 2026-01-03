@@ -1,0 +1,34 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Status – {{ env|upper }}</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #111; color: #eee; padding: 1.5rem; }
+    h1 { margin-bottom: 1rem; }
+    .badge { padding: 0.1rem 0.4rem; border-radius: 0.25rem; font-size: 0.8rem; }
+    .badge-ok { background-color: #2e7d32; }
+    .badge-warn { background-color: #f9a825; }
+    .badge-fail { background-color: #c62828; }
+    .card { background: #1e1e1e; border-radius: 0.5rem; padding: 1rem; margin-bottom: 0.75rem; }
+    .name { font-weight: 600; }
+    .status-line { display: flex; justify-content: space-between; align-items: center; }
+  </style>
+</head>
+<body>
+  <h1>Status – {{ env|upper }}</h1>
+
+  {% for c in checks %}
+    <div class="card">
+      <div class="status-line">
+        <div class="name">{{ c.name }}</div>
+        <span class="badge badge-{{ c.status }}">{{ c.status|upper }}</span>
+      </div>
+      <div>{{ c.message }}</div>
+    </div>
+  {% empty %}
+    <p>No checks defined.</p>
+  {% endfor %}
+</body>
+</html>
