@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 ###############################################################################
 r"""
-views.py
+home.py
 
 
 # TODO:
@@ -10,22 +10,16 @@ views.py
 # NOTE:
 # USEFULL:
 # LEARN:
-# RECHECK
-# INCOMPLETE
-# SEE NOTES
+# RECHECK:
+# INCOMPLETE:
+# SEE NOTES:
 # POST
 # HACK
-# FIXME
-# BUG
-# [ ] something to do
-# [x]  i did sometrhing
-
-
 
 """
 __version__ = "0.0.0.00003-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2025-12-24 22:12:27"
+__updated__ = "2026-01-02 19:49:31"
 ###############################################################################
 
 from django.conf import settings
