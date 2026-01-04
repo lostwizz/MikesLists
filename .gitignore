@@ -1,0 +1,63 @@
+# ==========================================
+# File: .gitignore
+# Path: .gitignore
+# __version__ = ""
+# __author__ = "Mike Merrett"
+# __updated__ = "2026-01-03 20:57:55"
+# __created__ = ""
+# __description__ = ""
+# ==========================================
+
+# --- OS / Editor Noise ---
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env/
+venv/
+.venv/
+
+# --- Bash / Shell ---
+*.log
+*.tmp
+
+# --- Project Metadata Automation ---
+# Skip generated version reports, audit outputs, and temp headers
+version-report.txt
+header-audit.txt
+*.header.tmp
+
+# --- Backup / Database Dumps ---
+*.sql
+*.sql.gz
+*.dump
+backups/
+db_dumps/
+
+# --- Build Artifacts ---
+build/
+dist/
+*.tar.gz
+
+# --- Environment / Secrets ---
+.env.local
+.env.production
+secrets/
+*.key
+*.pem
+
+# --- IDEs ---
+.vscode/
+.idea/
+*.iml
+
+# --- Misc ---
+*.bak
+*.old

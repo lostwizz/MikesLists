@@ -1,0 +1,123 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Status – {{ env|upper }}</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #111;
+      color: #eee;
+      padding: 1.5rem;
+    }
+    h1 {
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .badge-env {
+      padding: 0.2rem 0.5rem;
+      border-radius: 0.3rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .env-dev { background-color: #1565c0; }
+    .env-test { background-color: #f9a825; }
+    .env-live { background-color: #2e7d32; }
+
+    .card {
+      background: #1e1e1e;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.6rem;
+    }
+    .status-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.25rem;
+    }
+    .name { font-weight: 600; }
+    .badge {
+      padding: 0.15rem 0.45rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+    }
+    .badge-ok { background-color: #2e7d32; }
+    .badge-warn { background-color: #f9a825; color: #000; }
+    .badge-fail { background-color: #c62828; }
+    .restart-box {
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      background: #1e1e1e;
+      border-radius: 0.5rem;
+    }
+    button {
+      padding: 0.4rem 0.9rem;
+      border-radius: 0.3rem;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn-restart {
+      background-color: #f57c00;
+      color: #000;
+    }
+    .btn-restart[disabled] {
+      background-color: #555;
+      color: #999;
+      cursor: not-allowed;
+    }
+    .restart-status {
+      margin-top: 0.4rem;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+    <div style="margin-bottom:1rem;">
+    <a href="/status/" style="color:#90caf9;">Back to dashboard</a>
+</div>
+
+
+  <h1>
+    Status
+    <span class="badge-env env-{{ env }}">
+      {{ env|upper }}
+    </span>
+  </h1>
+
+  {% for c in checks %}
+    <div class="card">
+      <div class="status-line">
+        <div class="name">{{ c.name }}</div>
+        <span class="badge badge-{{ c.status }}">{{ c.status|upper }}</span>
+      </div>
+      <div>{{ c.message }}</div>
+    </div>
+  {% empty %}
+    <p>No checks defined.</p>
+  {% endfor %}
+
+  <div class="restart-box">
+    {% if restart_allowed %}
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn-restart">Restart services (DEV only)</button>
+      </form>
+    {% else %}
+      <button class="btn-restart" disabled>Restart disabled for {{ env|upper }}</button>
+    {% endif %}
+
+    {% if restart_status %}
+      <div class="restart-status">
+        Restart result: {{ restart_status }}
+      </div>
+    {% endif %}
+  </div>
+  <a href="/accounts/logout/" style="color:#90caf9;">Logout</a>
+</body>
+</html>

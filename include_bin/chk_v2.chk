@@ -1,0 +1,163 @@
+#!/bin/bash
+
+# ============================
+#  Django Multi‑Env Health Check
+# ============================
+
+ENVS=("dev" "test" "live")
+SERVICES=("gunicorn-MikesLists-dev" "gunicorn-MikesLists-test" "gunicorn-MikesLists-live" "nginx")
+
+# Define curl endpoints for each environment
+declare -A URLS
+URLS["dev"]="http://localhost:8001/health/"
+URLS["test"]="http://localhost:8002/health/"
+URLS["live"]="http://localhost:80/health/"
+
+# Colors
+GREEN="\e[32m"
+RED="\e[31m"
+YELLOW="\e[33m"
+BLUE="\e[34m"
+RESET="\e[0m"
+
+# Summary counters
+OK_COUNT=0
+FAIL_COUNT=0
+WARN_COUNT=0
+
+echo -e "${BLUE}=========================================="
+echo -e "        Django Environment Health Check"
+echo -e "==========================================${RESET}"
+
+# ---------------------------------------------------------
+# [1] Systemd Service Status
+# ---------------------------------------------------------
+echo -e "\n${BLUE}[1] Service Status:${RESET}"
+for SVC in "${SERVICES[@]}"; do
+    if systemctl is-active --quiet "$SVC"; then
+        echo -e "  ${GREEN}✔ $SVC is RUNNING${RESET}"
+        ((OK_COUNT++))
+    else
+        echo -e "  ${RED}✖ $SVC is NOT RUNNING${RESET}"
+        ((FAIL_COUNT++))
+    fi
+done
+
+# ---------------------------------------------------------
+# [2] Socket Verification
+# ---------------------------------------------------------
+echo -e "\n${BLUE}[2] Socket Verification:${RESET}"
+for ENV in "${ENVS[@]}"; do
+    SOCK="/srv/django/MikesLists_${ENV}/MikesLists.sock"
+    if [ -S "$SOCK" ]; then
+        OWNER=$(stat -c '%U:%G' "$SOCK")
+
+#        if [ "$OWNER" == "pi:www-data" ]; then
+         if [ "$OWNER" == "pi:www-data" ] || [ "$OWNER" == "pi:root" ]; then
+            echo -e "  ${GREEN}✔ $ENV Socket: Found (Owned by $OWNER)${RESET}"
+            ((OK_COUNT++))
+        else
+            echo -e "  ${YELLOW}⚠ $ENV Socket: WRONG OWNER ($OWNER)${RESET}"
+            ((WARN_COUNT++))
+        fi
+    else
+        echo -e "  ${RED}✖ $ENV Socket: NOT FOUND at $SOCK${RESET}"
+        ((FAIL_COUNT++))
+    fi
+done
+
+# ---------------------------------------------------------
+# [3] Recent App Errors
+# ---------------------------------------------------------
+echo -e "\n${BLUE}[3] Recent App Errors (Last 5 lines):${RESET}"
+for ENV in "${ENVS[@]}"; do
+    echo -e "  --- ${ENV} ---"
+    ERRORS=$(sudo journalctl -u "gunicorn-MikesLists-$ENV" -n 5 --no-pager | grep -iE "error|exception|fail")
+    if [[ -z "$ERRORS" ]]; then
+        echo -e "    ${GREEN}No immediate errors found.${RESET}"
+        ((OK_COUNT++))
+    else
+        echo -e "${RED}$ERRORS${RESET}"
+        ((WARN_COUNT++))
+    fi
+done
+
+# ---------------------------------------------------------
+# [4] Nginx Configuration Syntax
+# ---------------------------------------------------------
+echo -e "\n${BLUE}[4] Nginx Config Test:${RESET}"
+if sudo nginx -t > /dev/null 2>&1; then
+    echo -e "  ${GREEN}✔ Nginx configuration is VALID${RESET}"
+    ((OK_COUNT++))
+else
+    echo -e "  ${RED}✖ Nginx configuration has ERRORS${RESET}"
+    ((FAIL_COUNT++))
+fi
+
+# ---------------------------------------------------------
+# [5] HTTP Endpoint Checks
+# ---------------------------------------------------------
+echo -e "\n${BLUE}[5] HTTP Endpoint Checks:${RESET}"
+for ENV in "${ENVS[@]}"; do
+    URL="${URLS[$ENV]}"
+    echo -e "  Checking ${ENV} (${URL})"
+
+    # Measure response time + HTTP code
+    RESULT=$(curl -w "%{http_code} %{time_total}" -o /tmp/health_${ENV}.json -s "$URL")
+    HTTP_CODE=$(echo "$RESULT" | awk '{print $1}')
+    TIME=$(echo "$RESULT" | awk '{print $2}')
+
+    # Display HTTP status
+    if [[ "$HTTP_CODE" == "200" ]]; then
+        echo -e "    ${GREEN}✔ HTTP 200 OK${RESET} (${TIME}s)"
+        ((OK_COUNT++))
+    else
+        echo -e "    ${RED}✖ HTTP $HTTP_CODE${RESET} (${TIME}s)"
+        ((FAIL_COUNT++))
+        continue
+    fi
+
+    # Validate JSON
+    if jq empty /tmp/health_${ENV}.json 2>/dev/null; then
+        echo -e "    ${GREEN}✔ JSON valid${RESET}"
+        ((OK_COUNT++))
+    else
+        echo -e "    ${RED}✖ Invalid JSON${RESET}"
+        ((FAIL_COUNT++))
+        continue
+    fi
+
+    # Check for expected keyword
+    STATUS=$(jq -r '.status // empty' /tmp/health_${ENV}.json)
+    if [[ "$STATUS" == "ok" ]]; then
+        echo -e "    ${GREEN}✔ Status field OK${RESET}"
+        ((OK_COUNT++))
+    else
+        echo -e "    ${YELLOW}⚠ Missing or unexpected status field${RESET}"
+        ((WARN_COUNT++))
+    fi
+done
+
+# ---------------------------------------------------------
+# Summary
+# ---------------------------------------------------------
+echo -e "\n${BLUE}=========================================="
+echo -e "                SUMMARY"
+echo -e "==========================================${RESET}"
+
+echo -e "${GREEN}✔ OK: $OK_COUNT${RESET}"
+echo -e "${YELLOW}⚠ WARNINGS: $WARN_COUNT${RESET}"
+echo -e "${RED}✖ FAILURES: $FAIL_COUNT${RESET}"
+
+if (( FAIL_COUNT > 0 )); then
+    echo -e "\n${RED}Overall Status: FAIL${RESET}"
+elif (( WARN_COUNT > 0 )); then
+    echo -e "\n${YELLOW}Overall Status: WARN${RESET}"
+else
+    echo -e "\n${GREEN}Overall Status: OK${RESET}"
+fi
+
+echo -e "${BLUE}==========================================${RESET}"
+
+
+
