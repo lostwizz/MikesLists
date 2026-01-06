@@ -3,7 +3,7 @@
 # ==========================================
 # deploy script which manages the git workflow of dev -> test -> live
 # ==========================================
-# __version__ = "0.0.0.00049-dev"
+# __version__ = "0.0.0.000050-dev"
 
 set -euo pipefail
 

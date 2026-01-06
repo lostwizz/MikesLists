@@ -2,7 +2,7 @@
 # ==========================================
 # auto increment the build number (4th number in 1.2.3.4-dev)
 # ==========================================
-# __version__ = "0.1.0.00012-dev"
+# __version__ = "0.1.0.000013-dev"
 
 
 # Reload the system: sudo systemctl daemon-reload
@@ -15,7 +15,7 @@
 
 
 #!/bin/bash
-# __version__ = "0.1.0.00012-dev"
+# __version__ = "0.1.0.000013-dev"
 
 PROJECT_DIR="/srv/django/MikesLists_dev"
 BIN_DIR="/home/pi/bin"
