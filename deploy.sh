@@ -3,7 +3,7 @@
 # ==========================================
 # deploy script which manages the git workflow of dev -> test -> live
 # ==========================================
-# __version__ = "0.0.0.000059-dev"
+# __version__ = "0.0.0.000060-dev"
 
 set -euo pipefail
 
@@ -59,6 +59,26 @@ echo -e "🚀 DEPLOYING TO: ${ENV^^}"
 echo -e "------------------------------------------\e[0m"
 
 cd "$PROJECT_DIR"
+
+
+
+# --- SAFETY CHECK: Ensure Git is using SSH, not HTTPS ---
+REMOTE_URL=$(git remote get-url origin)
+
+if [[ "$REMOTE_URL" == https:* ]]; then
+    echo -e "\e[31mERROR: Git remote is using HTTPS, which will cause credential prompts.\e[0m"
+    echo -e "Remote URL: $REMOTE_URL"
+    echo -e "\nFix it with:"
+    echo -e "\e[36mgit remote set-url origin git@github.com:lostwizz/MikesLists.git\e[0m"
+    exit 1
+fi
+
+if [[ "$REMOTE_URL" == https:* ]]; then
+    echo -e "\e[33m⚠️  Remote is HTTPS. Converting to SSH...\e[0m"
+    git remote set-url origin git@github.com:lostwizz/MikesLists.git
+fi
+
+
 
 # --- 2. SAFETY & CLEANUP ---
 echo -e "\e[34m🧹 Checking environment state...\e[0m"
