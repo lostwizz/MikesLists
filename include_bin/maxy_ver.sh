@@ -1,68 +1,65 @@
 #!/bin/bash
 # ==========================================
-#  Script for Finding and Updating Version Numbers (with highest numbers in folder)
+#  Script for Finding and Updating Version Numbers
 # ==========================================
-# __version__ = "0.0.1.00048-dev"
-
-
-
-
-
+# __version__ = "0.0.1.000053-dev"
 
 # Configuration
-SEARCH_DIR="${1:-.}" # Default to current directory if not provided
-TARGET_PATTERN="__version__ ="
+SEARCH_DIR="${1:-.}"
+TARGET_PATTERN='__version__ = "'
+SCRIPT_NAME=$(basename "$0")
+
 echo "Examining files in $SEARCH_DIR..."
 echo "------------------------------------------"
 
-# 1. Find all files and their versions, then display them
-# We store the grep results to avoid searching the disk multiple times
-MAP_DATA=$(grep -r "$TARGET_PATTERN" "$SEARCH_DIR" --include="*.py" --include="*.sh")
+# 1. Gather data, explicitly excluding this script file by name
+MAP_DATA=$(grep -r "$TARGET_PATTERN" "$SEARCH_DIR" --include="*.py" --include="*.sh" | grep -v "$SCRIPT_NAME")
 
 if [[ -z "$MAP_DATA" ]]; then
-    echo "No version strings found in $SEARCH_DIR."
+    echo "No version strings found (excluding $SCRIPT_NAME)."
     exit 1
 fi
 
-# Output the examined files and their versions
+# Clean output for display
 echo "$MAP_DATA" | while read -r line; do
     FILE=$(echo "$line" | cut -d: -f1)
-    VER=$(echo "$line" | awk -F'"' '{print $2}')
-    # Shorten the path for the display
-    SHORT_PATH=$(echo "$FILE" | awk -F/ '{if (NF>2) print "..." $(NF-2) "/" $(NF-1) "/" $NF; else print $0}')
-    echo "$SHORT_PATH: $VER"
+    # Extract just the version string between quotes
+    VER=$(echo "$line" | sed 's/.*"\(.*\)".*/\1/')
+    echo "$FILE: $VER"
 done
 
-# 2. Identify the highest version and which file it belongs to
-# We sort the data and take the very last line
-WINNER_LINE=$(echo "$MAP_DATA" | \
-    sort -t. -k1,1n -k2,2n -k3,3n -k4,4n -k5,5n | \
-    tail -n 1)
-
-MAX_FILE=$(echo "$WINNER_LINE" | cut -d: -f1)
-HIGHEST_VERSION=$(echo "$WINNER_LINE" | awk -F'"' '{print $2}')
+# 2. Determine default (highest) version
+# This extracts all versions, sorts them correctly, and picks the top one
+AUTO_VERSION=$(echo "$MAP_DATA" | sed 's/.*"\(.*\)".*/\1/' | sort -V | tail -n 1)
 
 echo "------------------------------------------"
-echo "Highest version found: $HIGHEST_VERSION"
-echo "Found in: $MAX_FILE"
+echo "Highest version found: $AUTO_VERSION"
 echo "------------------------------------------"
 
-# 3. Optional: Prompt user to update all files
-read -p "Do you want to update all other files to $HIGHEST_VERSION? (y/n): " confirm
+# 3. Prompt for Manual Version Entry
+read -p "Enter new version number [Leave blank for $AUTO_VERSION]: " MANUAL_VERSION
+
+# Use manual version if provided, otherwise use auto version
+FINAL_VERSION=${MANUAL_VERSION:-$AUTO_VERSION}
+
+if [[ -z "$FINAL_VERSION" ]]; then
+    echo "Error: No version determined."
+    exit 1
+fi
+
+echo "Target Version: $FINAL_VERSION"
+read -p "Update all files to $FINAL_VERSION? (y/n): " confirm
 
 if [[ "$confirm" == [yY] ]]; then
     echo "Updating files..."
-    echo "$MAP_DATA" | while read -r line; do
-        FILE=$(echo "$line" | cut -d: -f1)
-        CURRENT_FILE_VERSION=$(echo "$line" | awk -F'"' '{print $2}')
 
-        if [[ "$CURRENT_FILE_VERSION" != "$HIGHEST_VERSION" ]]; then
-            # Perform the replacement
-            sed -i "s|__version__ = \".*\"|__version__ = \"$HIGHEST_VERSION\"|" "$FILE"
+    # Get unique list of files to process
+    FILES_TO_UPDATE=$(echo "$MAP_DATA" | cut -d: -f1 | sort -u)
 
-            SHORT_PATH=$(echo "$FILE" | awk -F/ '{if (NF>2) print "..." $(NF-2) "/" $(NF-1) "/" $NF; else print $0}')
-            echo "Updated $SHORT_PATH: $CURRENT_FILE_VERSION -> $HIGHEST_VERSION"
-        fi
+    for FILE in $FILES_TO_UPDATE; do
+        # Use @ as sed delimiter to safely handle dots and dashes
+        sed -i "s@__version__ = \".*\"@__version__ = \"$FINAL_VERSION\"@" "$FILE"
+        echo "Updated $FILE"
     done
     echo "Update complete."
 else

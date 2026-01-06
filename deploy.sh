@@ -3,7 +3,7 @@
 # ==========================================
 # deploy script which manages the git workflow of dev -> test -> live
 # ==========================================
-# __version__ = "0.0.0.000050-dev"
+# __version__ = "0.0.0.000059-dev"
 
 set -euo pipefail
 
@@ -147,8 +147,47 @@ echo -e "\e[34m⚙️  Running Django Tasks...\e[0m"
 $VENV_BIN/python manage.py migrate
 $VENV_BIN/python manage.py collectstatic --noinput
 
-echo -e "\e[34m♻️  Restarting $SERVICE_NAME...\e[0m"
-sudo systemctl restart "$SERVICE_NAME"
+if [[ "$ENV" == "dev" ]]; then PORT=8000
+elif [[ "$ENV" == "test" ]]; then PORT=9000
+elif [[ "$ENV" == "live" ]]; then PORT=80
+fi
+
+
+echo -e "\e[34m♻️  Restarting application for $ENV...\e[0m"
+
+if [[ "$ENV" == "dev" ]]; then
+    echo -e "\e[36m→ Using Django runserver (DEV)\e[0m"
+
+    # Kill any existing runserver
+    pkill -f "manage.py runserver" 2>/dev/null || true
+
+    # Start runserver in background
+    # nohup $VENV_BIN/python manage.py runserver 0.0.0.0:8000 \
+    #     > "$PROJECT_DIR/runserver.log" 2>&1 &
+    nohup $VENV_BIN/python manage.py runserver 0.0.0.0:$PORT \
+            > "$PROJECT_DIR/runserver.log" 2>&1 &
+
+    sleep 1
+    if pgrep -f "manage.py runserver" >/dev/null; then
+        echo -e "\e[32mRunserver started successfully.\e[0m"
+    else
+        echo -e "\e[31mRunserver failed to start!\e[0m"
+    fi
+
+else
+    # TEST or LIVE → use Gunicorn
+    SERVICE_NAME="gunicorn-MikesLists-$ENV.service"
+    echo -e "\e[36m→ Restarting systemd service: $SERVICE_NAME\e[0m"
+
+    if systemctl list-unit-files | grep -q "$SERVICE_NAME"; then
+        sudo systemctl restart "$SERVICE_NAME"
+        sudo systemctl status "$SERVICE_NAME" --no-pager || true
+    else
+        echo -e "\e[31mERROR: $SERVICE_NAME does not exist!\e[0m"
+        echo "Check: /etc/systemd/system/"
+        exit 1
+    fi
+fi
 
 # --- 5. VERIFICATION ---
 echo -e "\e[35m------------------------------------------"

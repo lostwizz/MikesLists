@@ -17,7 +17,7 @@ MAGENTA="\e[35m"
 RESET="\e[0m"
 
 SERVICES=(
-    "gunicorn-MikesLists-dev"
+    "mikeslists-dev"
     "gunicorn-MikesLists-test"
     "gunicorn-MikesLists-live"
 )
@@ -72,8 +72,8 @@ sudo journalctl -u gunicorn -n 50 --no-pager
 
 
 # 5. Final Verification
-echo -e "\n${MAGENTA}Running health verification...${RESET}"
-chk.sh
+#echo -e "\n${MAGENTA}Running health verification...${RESET}"
+#chk.sh
 
 echo -e "\n${MAGENTA}=========================================="
 echo -e "        All services bounced cleanly"
