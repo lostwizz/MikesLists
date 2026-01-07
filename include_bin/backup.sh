@@ -6,7 +6,7 @@
 # Stores everything in /mnt/AlienMikesBackup/softwareBackups with timestamped filenames
 # Keeps only the newest 15 backups
 #
-# __version__ = "0.1.0.000055-dev"
+# __version__ = "0.1.0.000054-dev"
 # ==============================================================================
 
 set -euo pipefail

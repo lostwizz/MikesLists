@@ -6,7 +6,7 @@
 #   - Post-backup .gz integrity health check
 #   - Self-managing lock file (24h)
 #
-# __version__ = "0.1.0.000054-dev"
+# __version__ = "0.1.0.000053-dev"
 # ==========================================
 
 set -euo pipefail
