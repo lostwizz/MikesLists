@@ -45,7 +45,6 @@ from dotenv import load_dotenv
 #BASE_DIR = Path(__file__).resolve().parent.parent
 BASE_DIR = Path(__file__).resolve().parents[2]
 
-
 load_dotenv(BASE_DIR / ".env")
 
 ENV_NAME = os.getenv("ENV_NAME")
@@ -57,17 +56,11 @@ DEBUG = os.getenv("DEBUG")
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-#)8*p_a=2@br%mi(e*tfiom(87t*mx@u_ro@2(z3u5dmhs0s1h'
-
-
 SECRET_KEY = os.getenv("SECRET_KEY")
-
-
 
 # Application definition
 ROOT_URLCONF = 'MikesLists.urls'
 WSGI_APPLICATION = 'MikesLists.wsgi.application'
-
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -87,6 +80,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -102,9 +96,6 @@ TEMPLATES = [
         },
     },
 ]
-
-
-
 
 
 # Database
@@ -157,7 +148,6 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles_collected'
-
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
