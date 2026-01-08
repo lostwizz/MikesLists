@@ -41,7 +41,7 @@ ALLOWED_HOSTS = ['localhost', 'localhost.local','127.0.0.1',
                 #  '10.0.0.240', 'pi240.local',
                 #  '10.0.0.100'
 
-extra_host = os.getenv("EXTRA_ALLOWED_HOST")
+extra_host = os.getenv("EXTRA_ALLOWED_HOSTS")
 if extra_host:
     ALLOWED_HOSTS.append(extra_host)
 
