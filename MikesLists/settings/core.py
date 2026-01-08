@@ -6,7 +6,7 @@ dev.py
 
 
 """
-__version__ = "0.0.0.000090-dev"
+__version__ = "0.0.0.000091-dev"
 __author__ = "Mike Merrett"
 __updated__ = "2026-01-03 01:15:49"
 ###############################################################################
@@ -28,8 +28,6 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-
-
 
 ALLOWED_HOSTS = ['localhost', 'localhost.local','127.0.0.1',
                  '10.0.0.80', 'pi80.local',
