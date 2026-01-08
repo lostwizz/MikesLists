@@ -2,15 +2,11 @@
 # ==========================================
 # Django deploy changes to dev/test/live
 # ==========================================
-# __version__="0.2.0.00006-dev"
+# __version__="0.2.1-stable"
 
 set -euo pipefail
 
-###############################################
-# DEPLOY SCRIPT — CLEAN, SAFE, NO SYMLINK HELL
-###############################################
-
-# Detect environment from folder name
+# 1. Detect environment from folder name
 ENV_NAME=$(basename "$(pwd)" | sed 's/MikesLists_//')
 ENV_NAME_UPPER=$(echo "$ENV_NAME" | tr '[:lower:]' '[:upper:]')
 
@@ -18,97 +14,59 @@ echo "------------------------------------------"
 echo "🚀 DEPLOYING TO: $ENV_NAME_UPPER"
 echo "------------------------------------------"
 
-
-###############################################
-# --- 0.4. GIT AUTOMATION ---
-###############################################
-if [[ -n "$(git status --porcelain)" ]]; then
-    echo "📦 Changes detected. Committing and Pushing..."
-    # If no message provided via argument, prompt for one
-    MESSAGE="${1:-"Automatic deploy: $(date)"}"
-    git add .
-    git commit -m "$MESSAGE"
-    git push origin "$ENV_NAME"
+# 2. GIT AUTOMATION
+# On DEV: Auto-commit and Push
+# On TEST/LIVE: Reset local folder to match GitHub exactly
+if [[ "$ENV_NAME" == "dev" ]]; then
+    if [[ -n "$(git status --porcelain)" ]]; then
+        echo "📦 DEV: Changes detected. Committing and Pushing..."
+        MESSAGE="${1:-"Automatic deploy: $(date)"}"
+        git add .
+        git commit -m "$MESSAGE"
+        git push origin "$ENV_NAME"
+    else
+        echo "✅ DEV: No local changes to commit."
+    fi
+else
+    echo "🔄 $ENV_NAME_UPPER: Forcing sync with GitHub..."
+    git fetch origin "$ENV_NAME"
+    # This command is critical: it overwrites any local core.py blocks
+    git reset --hard origin/"$ENV_NAME"
 fi
 
-
-###############################################
-# --- 0.6. SAFETY CHECKS ---
-###############################################
-echo "🔄 Pulling latest changes..."
-git fetch origin "$ENV_NAME"
-git reset --hard origin/"$ENV_NAME"  # Forces the server to match GitHub exactly
-
-
-
-
-###############################################
-# 1. Ensure working tree is clean
-###############################################
-if [[ -n "$(git status --porcelain)" ]]; then
-    echo "❌ ERROR: Working tree is dirty."
-    echo "   Fix the following before deploying:"
-    git status
-    exit 1
-fi
-
-###############################################
-# 2. Sync from Git
-###############################################
-echo "🔄 Pulling latest changes..."
-git pull --rebase origin "$ENV_NAME"
-
-
-
-
-###############################################
-# 3. Copy correct .env file (NO SYMLINKS)
-###############################################
+# 3. ENVIRONMENT FILE SETUP
 ENV_SOURCE="/srv/django/deploy/.env_${ENV_NAME}"
 ENV_TARGET="/srv/django/MikesLists_${ENV_NAME}/.env"
 
-echo "🧪 Setting environment file:"
-echo "    $ENV_SOURCE → $ENV_TARGET"
-
-if [[ ! -f "$ENV_SOURCE" ]]; then
+echo "🧪 Setting environment file..."
+if [[ -f "$ENV_SOURCE" ]]; then
+    cp "$ENV_SOURCE" "$ENV_TARGET"
+else
     echo "❌ ERROR: Missing $ENV_SOURCE"
     exit 1
 fi
 
-# Copy .env BEFORE Django runs
-cp "$ENV_SOURCE" "$ENV_TARGET"
-
-
-###############################################
-# 3.5. copy the deploy.sh to the curent env
-###############################################
-ENV_SOURCE="/srv/django/deploy/deploy.sh"
-ENV_TARGET="/srv/django/MikesLists_${ENV_NAME}/deploy.sh"
-
-cp "$ENV_SOURCE" "$ENV_TARGET"
-
-
-###############################################
-# 4. Run Django tasks
-###############################################
-echo "⚙️  Running Django migrations..."
+# 4. DJANGO TASKS
+echo "⚙️  Running Django tasks..."
+# Ensure the correct venv is used if necessary
 python3 manage.py migrate --noinput
-
-echo "📦 Collecting static files..."
 python3 manage.py collectstatic --noinput
 
+# 5. RESTART SERVICES
+# Settings are loaded at process start; a restart is mandatory
+echo "🔁 Restarting Gunicorn and Nginx..."
 
-###############################################
-# 5. Restart services
-###############################################
-echo "🔁 Restarting Gunicorn..."
-sudo systemctl restart gunicorn-"$ENV_NAME"
+# Use a generic name if 'gunicorn-test' doesn't exist, or
+# sudo systemctl restart gunicorn
+if systemctl list-unit-files | grep -q "gunicorn-${ENV_NAME}.service"; then
+    sudo systemctl restart gunicorn-"$ENV_NAME"
+else
+    echo "⚠️  Warning: gunicorn-${ENV_NAME}.service not found. Attempting generic restart..."
+    sudo systemctl restart gunicorn || echo "❌ Could not restart Gunicorn."
+fi
 
-echo "🔁 Restarting Nginx..."
 sudo systemctl reload nginx
 
-###############################################
-# DONE
-###############################################
+echo "------------------------------------------"
 echo "🎉 Deployment to $ENV_NAME_UPPER complete!"
 echo "------------------------------------------"

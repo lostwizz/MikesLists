@@ -6,7 +6,7 @@ dev.py
 
 
 """
-__version__ = "0.0.0.000094-dev"
+__version__ = "0.0.0.000095-dev"
 __author__ = "Mike Merrett"
 __updated__ = "2026-01-03 01:15:49"
 ###############################################################################
@@ -23,6 +23,7 @@ __updated__ = "2026-01-03 01:15:49"
 #this is just so much fun!!!!!
 #this is just so much fun!!!!!
 #this is just so much fun!!!!!
+#i hate git!!!!!!!!!!!!!!
 #this is just so much fun!!!!!
 #this is just so much fun!!!!!
 
