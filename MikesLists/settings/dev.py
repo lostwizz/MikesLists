@@ -13,10 +13,7 @@ __updated__ = "2026-01-03 01:15:49"
 
 from .core import *
 
-
-EXTRA_ALLOWED_HOSTS += []
-
-
+##EXTRA_ALLOWED_HOSTS += []
 
 TEMPLATES[0]['OPTIONS']['context_processors'].append(
     'MikesLists.context_processors.env_name'
