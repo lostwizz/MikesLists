@@ -14,6 +14,7 @@ MAGENTA="\e[35m"
 RESET="\e[0m"
 
 SERVICES=(
+    "mikeslists-dev.service"
     "gunicorn-MikesLists-test"
     "gunicorn-MikesLists-live"
 )
@@ -26,6 +27,32 @@ echo -e "==========================================${RESET}"
 # 1. DEV RUNSERVER CLEANUP
 # ---------------------------------------------------------
 echo -e "\n${MAGENTA}Checking for Django runserver (DEV)...${RESET}"
+
+
+echo -e "\n${MAGENTA}Checking for processes on port 8000 (DEV)...${RESET}"
+
+# Find the PID specifically using port 8000
+PORT_PID=$(sudo lsof -t -i:8000 || true)
+
+if [[ -n "$PORT_PID" ]]; then
+    echo -e "  ${YELLOW}Found process $PORT_PID occupying port 8000${RESET}"
+
+    echo -e "  ${YELLOW}Forcefully clearing port 8000...${RESET}"
+    sudo kill -9 "$PORT_PID" 2>/dev/null || true
+    sleep 2
+
+    # Verify the port is free
+    if sudo lsof -i:8000 >/dev/null; then
+        echo -e "  ${RED}✖ FAILED to clear port 8000. Manual intervention required.${RESET}"
+        exit 1
+    else
+        echo -e "  ${GREEN}✔ Port 8000 is now free${RESET}"
+    fi
+else
+    echo -e "  ${GREEN}✔ Port 8000 is already clear${RESET}"
+fi
+
+
 
 PIDS=$(pgrep -f "manage.py runserver" || true)
 

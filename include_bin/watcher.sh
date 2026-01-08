@@ -27,12 +27,24 @@ set -euo pipefail
 # Stop it: sudo systemctl stop version-bumper.service
 
 
+# sudo systemctl daemon-reload
+# sudo systemctl restart version-watcher.service
+
+
+
 ########################################
 # Configuration
 ########################################
 
+# WATCH_DIRS=(
+#     "/srv/django"
+#     "/home/pi"
+#)
+
 WATCH_DIRS=(
-    "/srv/django"
+    "/srv/django/MikesLists_dev"
+    "/srv/django/MikesLists_test"
+    "/srv/django/MikesLists_live"
     "/home/pi/bin"
 )
 

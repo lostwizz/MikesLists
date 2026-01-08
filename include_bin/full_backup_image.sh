@@ -22,6 +22,12 @@ OUTPUT="${TARGET_DIR}/pi-full-backup-${DATE}.img.gz"
 LOGFILE="${TARGET_DIR}/image-backup-${TIMESTAMP}.log"
 LOCKFILE="/var/lock/pi_full_backup.lock"
 
+echo " dd if=INPUT_DEV bs=16M iflag=fullblock status=progress 2 > >  ${LOGFILE}"
+echo " LOG FILE=${LOGFILE}"
+
+
+
+
 # ------------------------------------------------------------------------------
 # Logging Function
 # ------------------------------------------------------------------------------
@@ -59,6 +65,7 @@ log "=== Starting Full Image Backup ==="
 ROOT_PART=$(findmnt -nvo SOURCE /)
 ROOT_DISK=$(lsblk -no PKNAME "$ROOT_PART")
 INPUT_DEV="/dev/${ROOT_DISK}"
+echo "input_dev= ${INPUT_DEV}"
 
 if [[ ! -b "$INPUT_DEV" ]]; then
     log "ERROR: Could not determine root block device."
@@ -79,6 +86,16 @@ sudo ionice -c3 nice -n 19 dd if="$INPUT_DEV" bs=16M iflag=fullblock status=prog
     | pv -q -L 20m \
     | gzip -1 \
     | sudo tee "${OUTPUT}" >/dev/null
+
+
+#echo "dd dd if="$INPUT_DEV" bs=16M iflag=fullblock status=progress 2>>"${LOGFILE}"
+
+#exit
+
+#sudo ionice -c2 nice -n 6 dd if="$INPUT_DEV" bs=16M iflag=fullblock status=progress 2>>"${LOGFILE}" \
+#    | pv -q -L 20m \
+#    | gzip -1 \
+#    | sudo tee "${OUTPUT}" >/dev/null
 
 sync
 
