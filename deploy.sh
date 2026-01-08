@@ -19,27 +19,27 @@ echo "🚀 DEPLOYING TO: $ENV_NAME_UPPER"
 echo "------------------------------------------"
 
 
-# --- 3. GIT AUTOMATION ---
+###############################################
+# --- 0.4. GIT AUTOMATION ---
+###############################################
 if [[ -n "$(git status --porcelain)" ]]; then
-    echo "📦 Changes detected. Committing..."
-    read -p "Enter commit message: " COMMIT_MSG
+    echo "📦 Changes detected. Committing and Pushing..."
+    # If no message provided via argument, prompt for one
+    MESSAGE="${1:-"Automatic deploy: $(date)"}"
     git add .
-    git commit -m "$COMMIT_MSG"
+    git commit -m "$MESSAGE"
     git push origin "$ENV_NAME"
-else
-    echo "✅ No local changes to commit."
 fi
 
-# --- 4. SAFETY CHECKS ---
-echo "🔍 Checking remote sync..."
-git fetch origin
-LOCAL_HASH=$(git rev-parse HEAD)
-REMOTE_HASH=$(git rev-parse "origin/$ENV_NAME")
 
-if [[ "$LOCAL_HASH" != "$REMOTE_HASH" ]]; then
-    echo "❌ ERROR: Remote branch is ahead. Run 'git pull' manually first."
-    exit 1
-fi
+###############################################
+# --- 0.6. SAFETY CHECKS ---
+###############################################
+echo "🔄 Pulling latest changes..."
+git fetch origin "$ENV_NAME"
+git reset --hard origin/"$ENV_NAME"  # Forces the server to match GitHub exactly
+
+
 
 
 ###############################################
