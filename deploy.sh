@@ -2,7 +2,7 @@
 # ==========================================
 # Django deploy changes to dev/test/live
 # ==========================================
-# __version__="0.2.1-stable"
+# __version__="0.2.2-stable"
 
 set -euo pipefail
 
@@ -29,8 +29,11 @@ if [[ "$ENV_NAME" == "dev" ]]; then
     fi
 else
     echo "🔄 $ENV_NAME_UPPER: Forcing sync with GitHub..."
-    git fetch origin "$ENV_NAME"
-    # This command is critical: it overwrites any local core.py blocks
+    # Ensure we fetch the latest from all branches
+    git fetch --all
+
+    # CRITICAL: This overwrites local files with the latest from the branch.
+    # If core.py is still old, make sure you merged 'dev' into 'test' on GitHub first.
     git reset --hard origin/"$ENV_NAME"
 fi
 
@@ -48,20 +51,20 @@ fi
 
 # 4. DJANGO TASKS
 echo "⚙️  Running Django tasks..."
-# Ensure the correct venv is used if necessary
+# This ensures your migrations and static files are updated
 python3 manage.py migrate --noinput
 python3 manage.py collectstatic --noinput
 
 # 5. RESTART SERVICES
-# Settings are loaded at process start; a restart is mandatory
+# This is mandatory because Django loads settings (like core.py) at startup
 echo "🔁 Restarting Gunicorn and Nginx..."
 
-# Use a generic name if 'gunicorn-test' doesn't exist, or
-# sudo systemctl restart gunicorn
+# Check if the specific service unit exists
 if systemctl list-unit-files | grep -q "gunicorn-${ENV_NAME}.service"; then
     sudo systemctl restart gunicorn-"$ENV_NAME"
 else
-    echo "⚠️  Warning: gunicorn-${ENV_NAME}.service not found. Attempting generic restart..."
+    # Fallback to your primary gunicorn service if the environment-specific one isn't found
+    echo "⚠️  gunicorn-${ENV_NAME}.service not found. Restarting main gunicorn service..."
     sudo systemctl restart gunicorn || echo "❌ Could not restart Gunicorn."
 fi
 
