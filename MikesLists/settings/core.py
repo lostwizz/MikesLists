@@ -5,17 +5,6 @@ r"""
 dev.py
 
 
-# TODO:
-# COMMENT:
-# NOTE:
-# USEFULL:
-# LEARN:
-# RECHECK:
-# INCOMPLETE:
-# SEE NOTES:
-# POST
-# HACK
-
 """
 __version__ = "0.0.0.000006-dev"
 __author__ = "Mike Merrett"
