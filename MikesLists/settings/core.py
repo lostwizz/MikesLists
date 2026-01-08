@@ -6,7 +6,7 @@ dev.py
 
 
 """
-__version__ = "0.0.0.000091-dev"
+__version__ = "0.0.0.000092-dev"
 __author__ = "Mike Merrett"
 __updated__ = "2026-01-03 01:15:49"
 ###############################################################################
@@ -29,6 +29,9 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
+# move allowed hosts to the core
+#   - it will be the same for dev and test
+#   -- live will probably add something like any hosts
 ALLOWED_HOSTS = ['localhost', 'localhost.local','127.0.0.1',
                  '10.0.0.80', 'pi80.local',
                  '10.0.0.208', 'pi208.local',
@@ -41,8 +44,6 @@ ALLOWED_HOSTS = ['localhost', 'localhost.local','127.0.0.1',
 extra_host = os.getenv("EXTRA_ALLOWED_HOST")
 if extra_host:
     ALLOWED_HOSTS.append(extra_host)
-
-
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.

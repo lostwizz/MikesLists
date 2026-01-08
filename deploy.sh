@@ -18,6 +18,30 @@ echo "------------------------------------------"
 echo "🚀 DEPLOYING TO: $ENV_NAME_UPPER"
 echo "------------------------------------------"
 
+
+# --- 3. GIT AUTOMATION ---
+if [[ -n "$(git status --porcelain)" ]]; then
+    echo "📦 Changes detected. Committing..."
+    read -p "Enter commit message: " COMMIT_MSG
+    git add .
+    git commit -m "$COMMIT_MSG"
+    git push origin "$ENV"
+else
+    echo "✅ No local changes to commit."
+fi
+
+# --- 4. SAFETY CHECKS ---
+echo "🔍 Checking remote sync..."
+git fetch origin
+LOCAL_HASH=$(git rev-parse HEAD)
+REMOTE_HASH=$(git rev-parse "origin/$ENV")
+
+if [[ "$LOCAL_HASH" != "$REMOTE_HASH" ]]; then
+    echo "❌ ERROR: Remote branch is ahead. Run 'git pull' manually first."
+    exit 1
+fi
+
+
 ###############################################
 # 1. Ensure working tree is clean
 ###############################################
@@ -72,6 +96,7 @@ python3 manage.py migrate --noinput
 
 echo "📦 Collecting static files..."
 python3 manage.py collectstatic --noinput
+
 
 ###############################################
 # 5. Restart services
