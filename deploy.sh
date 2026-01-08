@@ -25,7 +25,7 @@ if [[ -n "$(git status --porcelain)" ]]; then
     read -p "Enter commit message: " COMMIT_MSG
     git add .
     git commit -m "$COMMIT_MSG"
-    git push origin "$ENV"
+    git push origin "$ENV_NAME"
 else
     echo "✅ No local changes to commit."
 fi
@@ -34,7 +34,7 @@ fi
 echo "🔍 Checking remote sync..."
 git fetch origin
 LOCAL_HASH=$(git rev-parse HEAD)
-REMOTE_HASH=$(git rev-parse "origin/$ENV")
+REMOTE_HASH=$(git rev-parse "origin/$ENV_NAME")
 
 if [[ "$LOCAL_HASH" != "$REMOTE_HASH" ]]; then
     echo "❌ ERROR: Remote branch is ahead. Run 'git pull' manually first."
