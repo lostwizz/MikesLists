@@ -1,10 +1,9 @@
 #!/bin/bash
 # ==========================================
-# Django Multi-Env Deploy Script (V7 - Stable)
+# Django Multi-Env Deploy Script (V9 - Sparse-Aware)
 # ==========================================
 set -euo pipefail
 
-# 1. Initialize variables early to avoid "unbound variable" errors
 BASE_PATH="/srv/django"
 ENV_NAME=$(basename "$(pwd)" | sed 's/MikesLists_//')
 ENV_NAME_UPPER=$(echo "$ENV_NAME" | tr '[:lower:]' '[:upper:]')
@@ -13,7 +12,6 @@ echo "------------------------------------------"
 echo "🚀 TARGET ENV: $ENV_NAME_UPPER"
 echo "------------------------------------------"
 
-# 2. Execute Logic per Environment
 case "$ENV_NAME" in
     dev)
         echo "📦 DEV: Committing and Pushing..."
@@ -33,16 +31,19 @@ case "$ENV_NAME" in
 
         echo "🔄 $ENV_NAME_UPPER: Force-syncing from $SOURCE_BRANCH..."
 
+        # NEW: Disable sparse-checkout if it's blocking us
+        git sparse-checkout disable 2>/dev/null || true
+
         git fetch origin
         git checkout "$ENV_NAME" 2>/dev/null || git checkout -b "$ENV_NAME"
 
-        # Try a clean merge first
-        if ! git merge "origin/$SOURCE_BRANCH" --no-edit -X theirs; then
-            echo "⚠️  Merge blocked. Forcing local state to match $SOURCE_BRANCH..."
+        # Hard reset is better for Test/Live as it ensures a clean environment
+        if ! git reset --hard "origin/$SOURCE_BRANCH"; then
+            echo "⚠️ Reset failed. Clearing locks and retrying..."
+            rm -f .git/index.lock
             git reset --hard "origin/$SOURCE_BRANCH"
         fi
 
-        # Ensure the remote branch is updated
         git push origin "$ENV_NAME" --force
         ;;
 
@@ -54,16 +55,8 @@ esac
 
 # 3. Environment File Setup
 echo "🧪 Syncing environment file..."
-ENV_SOURCE="$BASE_PATH/deploy/.env_${ENV_NAME}"
-ENV_TARGET="$(pwd)/.env"
-
-if [[ -f "$ENV_SOURCE" ]]; then
-    cp "$ENV_SOURCE" "$ENV_TARGET"
-    # Ensure Git never tracks the active .env
-    git rm --cached .env 2>/dev/null || true
-else
-    echo "⚠️ Warning: $ENV_SOURCE not found."
-fi
+cp "$BASE_PATH/deploy/.env_${ENV_NAME}" "$(pwd)/.env"
+git rm --cached .env 2>/dev/null || true
 
 # 4. Django Tasks
 echo "⚙️  Running Django tasks..."
@@ -73,15 +66,7 @@ python3 manage.py collectstatic --noinput
 # 5. Restart Services
 echo "🔁 Restarting Services..."
 SERVICE_NAME="gunicorn-${ENV_NAME}"
-
-# Check if the specific service unit exists
-if systemctl list-unit-files | grep -q "${SERVICE_NAME}.service"; then
-    sudo systemctl restart "$SERVICE_NAME"
-else
-    # Fallback to standard gunicorn if naming differs
-    sudo systemctl restart gunicorn || echo "❌ Could not restart Gunicorn."
-fi
-
+sudo systemctl restart "$SERVICE_NAME" || sudo systemctl restart gunicorn
 sudo systemctl reload nginx
 
 echo "------------------------------------------"

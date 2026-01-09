@@ -8,7 +8,7 @@ dev.py
 """
 __version__ = "0.0.0.000095-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-09 00:01:23"
+__updated__ = "2026-01-09 18:46:03"
 ###############################################################################
 #this is just so much fun!!!!!
 #i hate computers
@@ -36,7 +36,7 @@ from dotenv import load_dotenv
 #   - it will be the same for dev and test
 #   -- live will probably add something like any hosts
 ALLOWED_HOSTS = ['localhost', 'localhost.local','127.0.0.1',
-                 '10.0.0.80', 'pi80.local',
+                 '10.0.0.9', 'pi9.local',
                  '10.0.0.208', 'pi208.local',
                 ]
 
