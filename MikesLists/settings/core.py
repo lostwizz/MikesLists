@@ -8,7 +8,7 @@ dev.py
 """
 __version__ = "0.0.0.000095-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-08 23:43:10"
+__updated__ = "2026-01-08 23:54:52"
 ###############################################################################
 #this is just so much fun!!!!!
 #this is just so much fun!!!!!
@@ -149,6 +149,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 LANGUAGE_CODE = 'en-us'
@@ -160,7 +161,6 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
-
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles_collected'
 
