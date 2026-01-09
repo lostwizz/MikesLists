@@ -21,6 +21,7 @@ if [[ "$ENV_NAME" == "dev" ]]; then
     if [[ -n "$(git status --porcelain)" ]]; then
         echo "📦 DEV: Changes detected. Committing and Pushing..."
         MESSAGE="${1:-"Automatic deploy: $(date)"}"
+        git status
         git add .
         git commit -m "$MESSAGE"
         git push origin "$ENV_NAME"
