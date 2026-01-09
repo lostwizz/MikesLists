@@ -8,15 +8,10 @@ dev.py
 """
 __version__ = "0.0.0.000095-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-08 23:54:52"
+__updated__ = "2026-01-09 00:01:23"
 ###############################################################################
 #this is just so much fun!!!!!
-#this is just so much fun!!!!!
-#this is just so much fun!!!!!
-#this is just so much fun!!!!!
-#this is just so much fun!!!!!
 #i hate computers
-#this is just so much fun!!!!!
 #this is just so much fun!!!!!
 
 
