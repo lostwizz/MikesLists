@@ -8,7 +8,7 @@ dev.py
 """
 __version__ = "0.0.0.000095-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-08 21:14:25"
+__updated__ = "2026-01-08 23:43:10"
 ###############################################################################
 #this is just so much fun!!!!!
 #this is just so much fun!!!!!
@@ -18,15 +18,7 @@ __updated__ = "2026-01-08 21:14:25"
 #i hate computers
 #this is just so much fun!!!!!
 #this is just so much fun!!!!!
-#this is just so much fun!!!!!
-#this is just so much fun!!!!!
-#this is just so much fun!!!!!
-#this is just so much fun!!!!!
-#this is just so much fun!!!!!
-#this is just so much fun!!!!!
-#i hate git!!!!!!!!!!!!!!
-#this is just so much fun!!!!!
-#this is just so much fun!!!!!
+
 
 """
 Django settings for MikesLists project.

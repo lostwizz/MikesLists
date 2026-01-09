@@ -1,64 +1,45 @@
-# ==========================================
-# File: .gitignore
-# Path: .gitignore
-# __version__ = ""
-# __author__ = "Mike Merrett"
-# __updated__ = "2026-01-03 20:57:55"
-# __created__ = ""
-# __description__ = ""
-# ==========================================
-
-# --- OS / Editor Noise ---
-.DS_Store
-Thumbs.db
-*.swp
-*.swo
-*~
-
-# --- Python ---
-__pycache__/
+# Python compiled files
 *.pyc
 *.pyo
-*.pyd
-.env/
-venv/
-.venv/
+__pycache__/
 
-# --- Bash / Shell ---
+# Django stuff
 *.log
-*.tmp
+*.pot
+*.pyc
+db.sqlite3
+*.sqlite3
+*.mo
+*.pyc
 
-# --- Project Metadata Automation ---
-# Skip generated version reports, audit outputs, and temp headers
-version-report.txt
-header-audit.txt
-*.header.tmp
+# Virtual environments
+venv-*/
 
-# --- Backup / Database Dumps ---
-*.sql
-*.sql.gz
-*.dump
-backups/
-db_dumps/
+# Collected static files
+*/staticfiles_collected/
 
-# --- Build Artifacts ---
-build/
-dist/
-*.tar.gz
+# Uploaded media files
+*/media/
 
-# --- Environment / Secrets ---
-.env.local
-.env.production
-secrets/
-*.key
-*.pem
-
-# --- IDEs ---
+# VSCode
 .vscode/
-.idea/
-*.iml
 
-# --- Misc ---
-*.bak
-*.old
+# JetBrains / PyCharm
+.idea/
+
+# macOS system files
+.DS_Store
+
+# Environment variables
 .env
+.env*
+.env.*
+settings/local.py
+
+# pip cache
+*.egg-info/
+dist/
+build/
+.eggs/
+
+*.log*
