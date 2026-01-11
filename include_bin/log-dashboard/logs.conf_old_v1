@@ -1,0 +1,4 @@
+"DEV Journal"|"journalctl -u mikeslists-dev.service -n 50 -f --no-pager"
+#"Nginx Error"|"tail -f /var/log/nginx/error.log"
+#"Nginx Access"|"tail -f /var/log/nginx/access.log"
+"Syslog"|"tail -f /var/log/syslog"

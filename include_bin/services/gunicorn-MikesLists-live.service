@@ -1,0 +1,31 @@
+[Unit]
+Description=gunicorn daemon for MikesLists LIVE
+After=network.target
+
+[Service]
+User=pi
+Group=www-data
+WorkingDirectory=/srv/django/MikesLists_live
+
+StandardOutput=journal
+StandardError=journal
+
+
+# FIX: Point this to the actual bin folder of your live venv
+Environment="PYTHONPATH=/srv/django/MikesLists_live"
+Environment="PATH=/srv/django/venv-live/bin"
+Environment="DJANGO_SETTINGS_MODULE=MikesLists.settings.live"
+EnvironmentFile=/srv/django/MikesLists_live/.env
+
+ExecStart=/srv/django/venv-live/bin/gunicorn \
+          --access-logfile - \
+          --workers 3 \
+          --bind unix:/srv/django/MikesLists_live/MikesLists.sock \
+          MikesLists.wsgi:application
+
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+

@@ -1,0 +1,16 @@
+[Unit]
+Description=Version Auto-Bump Watcher
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/home/pi/bin/watcher.sh --foreground
+Restart=always
+RestartSec=2
+User=pi
+WorkingDirectory=/home/pi/bin
+StandardOutput=append:/var/log/watcher.log
+StandardError=append:/var/log/watcher.log
+
+[Install]
+WantedBy=multi-user.target

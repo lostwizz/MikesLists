@@ -1,0 +1,30 @@
+[Unit]
+Description=gunicorn daemon for MikesLists TEST
+After=network.target
+
+[Service]
+User=pi
+Group=www-data
+WorkingDirectory=/srv/django/MikesLists_test
+
+StandardOutput=journal
+StandardError=journal
+
+
+Environment="PYTHONPATH=/srv/django/MikesLists_test"
+Environment="PATH=/srv/django/venv-test/bin"
+Environment="DJANGO_SETTINGS_MODULE=MikesLists.settings.test"
+EnvironmentFile=/srv/django/MikesLists_test/.env
+
+ExecStart=/srv/django/venv-test/bin/gunicorn \
+          --access-logfile - \
+          --workers 3 \
+          --bind unix:/srv/django/MikesLists_test/MikesLists.sock \
+          MikesLists.wsgi:application
+
+
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

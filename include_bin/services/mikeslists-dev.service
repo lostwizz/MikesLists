@@ -1,0 +1,31 @@
+[Unit]
+Description=Django dev server for MikesLists DEV
+After=network.target
+
+[Service]
+User=pi
+Group=www-data
+WorkingDirectory=/srv/django/MikesLists_dev
+
+StandardOutput=journal
+StandardError=journal
+
+
+Environment="PYTHONPATH=/srv/django/MikesLists_dev"
+##Environment="PATH=/srv/django/venv-dev/bin"
+Environment="PATH=/srv/django/venv-dev/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+Environment="DJANGO_SETTINGS_MODULE=MikesLists.settings.dev"
+Environment="PYTHONUNBUFFERED=1" 
+EnvironmentFile=/srv/django/MikesLists_dev/.env
+
+# Use the virtual environment's python to call manage.py runserver
+ExecStart=/srv/django/venv-dev/bin/python manage.py runserver 0.0.0.0:8000
+
+ExecStartPost=/bin/sh -c 'echo "NEW DEV SESSION STARTED $(date)"'
+
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

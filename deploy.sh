@@ -14,6 +14,30 @@ echo "------------------------------------------"
 
 case "$ENV_NAME" in
     dev)
+
+        set -xeu
+        # --- 4. Sync Local Binaries & Django Tasks ---
+        PROJECT_DIR="/srv/django/MikesLists_$ENV_NAME"
+        echo -e "\e[34m📂 Syncing local binaries...\e[0m"
+        mkdir -p "$PROJECT_DIR/include_bin"
+        cp -r /home/pi/bin/* "$PROJECT_DIR/include_bin/"
+
+        mkdir -p "$PROJECT_DIR/include_bin/log-dashboard"
+        cp -r /home/pi/log-dashboard/* "$PROJECT_DIR/include_bin/log-dashboard"
+
+        mkdir -p "$PROJECT_DIR/include_bin/services"
+        cp -r /etc/systemd/system/full-backup.service   "$PROJECT_DIR/include_bin/services"
+        cp -r /etc/systemd/system/full-backup.timer     "$PROJECT_DIR/include_bin/services"
+        cp -r /etc/systemd/system/gunicorn-MikesLists-live.service     "$PROJECT_DIR/include_bin/services"
+        cp -r /etc/systemd/system/gunicorn-MikesLists-test.service     "$PROJECT_DIR/include_bin/services"
+        cp -r /etc/systemd/system/watcher.service     "$PROJECT_DIR/include_bin/services"
+        cp -r /etc/systemd/system/mikeslists-dev.service     "$PROJECT_DIR/include_bin/services"
+        cp -r /etc/systemd/system/check-ip-change.service     "$PROJECT_DIR/include_bin/services"
+
+        cp -r /usr/local/bin/check_ip_change.sh  "$PROJECT_DIR/include_bin/services"
+
+        set +x
+
         echo "📦 DEV: Committing and Pushing..."
         git rm --cached .env 2>/dev/null || true
         if [[ -n "$(git status --porcelain)" ]]; then

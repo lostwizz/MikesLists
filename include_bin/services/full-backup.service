@@ -1,0 +1,6 @@
+[Unit]
+Description=Full Pi Backup Image
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/full_backup_image.sh
