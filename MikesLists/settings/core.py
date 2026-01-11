@@ -8,7 +8,7 @@ dev.py
 """
 __version__ = "0.0.0.000095-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-09 18:46:03"
+__updated__ = "2026-01-09 22:23:56"
 ###############################################################################
 #this is just so much fun!!!!!
 #i hate computers
@@ -68,7 +68,11 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 
 # Application definition
 ROOT_URLCONF = 'MikesLists.urls'
+
 WSGI_APPLICATION = 'MikesLists.wsgi.application'
+# RUNSERVERPLUS_SERVER_ADDRESS_PORT = "0.0.0.0:8000"
+
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -148,8 +152,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
-#TIME_ZONE = 'America/Toronto'
+#TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Toronto'
 #TIME_ZONE = 'America/Whitehorse'
 USE_I18N = True
 USE_TZ = True

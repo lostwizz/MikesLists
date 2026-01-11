@@ -1,45 +1,37 @@
-# Python compiled files
-*.pyc
-*.pyo
+# Python bytecode
 __pycache__/
+*.py[cod]
+*$py.class
 
-# Django stuff
+# Django specific
 *.log
-*.pot
-*.pyc
 db.sqlite3
 *.sqlite3
-*.mo
-*.pyc
+# Changed from */staticfiles_collected/ to be more specific
+staticfiles_collected/
+media/
 
-# Virtual environments
-venv-*/
-
-# Collected static files
-*/staticfiles_collected/
-
-# Uploaded media files
-*/media/
-
-# VSCode
-.vscode/
-
-# JetBrains / PyCharm
-.idea/
-
-# macOS system files
-.DS_Store
-
-# Environment variables
+# Environment & Secrets
 .env
 .env*
-.env.*
-settings/local.py
+!.env_test
+!.env_dev
+!.env_live
+# (Note: Use the ! lines only if you WANT the templates tracked,
+# otherwise keep .env* to hide everything)
 
-# pip cache
+# Development Tools
+.vscode/
+.idea/
+.DS_Store
+
+# Distribution / Build
 *.egg-info/
 dist/
 build/
 .eggs/
+venv/
+venv-*/
 
-*.log*
+.ruff*
+.ruff_cache/*
