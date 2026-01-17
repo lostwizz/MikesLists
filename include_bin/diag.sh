@@ -2,7 +2,7 @@
 # ==========================================
 # Django Deep Diagnostic Tool v2.1 (verbose)
 # ==========================================
-# __version__="2.1.0"
+# __version__="2.2.2"
 
 #############################################
 # COLORS (ANSI-safe)
@@ -38,9 +38,16 @@ show_help() {
     echo "Options:"
     echo "  --all              Run all diagnostics (default)"
     echo "  --fail-fast        Stop on first failure"
+    echo " "
+    echo "  --environment      Only run environment diagnostics"
     echo "  --gunicorn         Only run Gunicorn diagnostics"
     echo "  --django           Only run Django diagnostics"
+    echo "  --ruff             Only run Ruff diagnostics"
+    echo "  --flake            Only run flake8 diagnostics"
+    echo "  --lint             Only run Lint (ruff and flake)"
+    echo "  --static           Only run statics diagnostics"
     echo "  --db               Only run database diagnostics"
+    echo "  --check_tests      Only run python test scripts"
     echo "  --nginx            Only run Nginx diagnostics"
     echo "  --git              Only run Git diagnostics"
     echo "  --env              Only validate environment variables"
@@ -64,7 +71,7 @@ for arg in "$@"; do
         --all)
             RUN_ALL=true
             ;;
-        --gunicorn|--django|--db|--nginx|--git|--env|--permissions|--packages|--lint|--static)
+        --gunicorn|--django|--db|--nginx|--git|--env|--permissions|--packages|--lint|--static|--environment|--check_tests)
             RUN_ALL=false
             RUN_SECTION["$arg"]=true
             ;;
@@ -125,7 +132,7 @@ run_section() {
     local func="$2"
 
     if $RUN_ALL || [[ ${RUN_SECTION["--$name"]} == true ]]; then
-        echo -e "\n${MAGENTA}=== [$name] =========================================${RESET}"
+        echo -e "\n${MAGENTA}=== [$name] --> use --$name =========================================${RESET}"
         $func
         local status=$?
 
@@ -265,6 +272,15 @@ check_django() {
     run_cmd "manage.py check" \
         $VENV_PATH/bin/python "$PROJECT_PATH/manage.py" check
     [[ $? -ne 0 ]] && fail=true
+
+
+    echo -e "\n${YELLOW}[1.5] manage.py check --deploy${RESET}"
+    run_cmd "manage.py check" \
+        $VENV_PATH/bin/python "$PROJECT_PATH/manage.py" check --deploy
+    [[ $? -ne 0 ]] && fail=true
+
+
+
 
     echo -e "\n${YELLOW}[2] python syntax scan${RESET}"
     SYNTAX_ERRORS=0
@@ -458,21 +474,6 @@ check_db() {
     #############################################
     echo -e "\n${YELLOW}[1] django ensure_connection test${RESET}"
     echo -e "${BLUE}running:${RESET} $MANAGE  shell -c 'from django.db import connection; connection.ensure_connection(); print(\"OK\")'"
-    #echo "AAAAAA"
-    #    DB_OUTPUT=$($MANAGE shell -c "from django.db import connection; connection.ensure_connection(); print('OK')" 2>&1)
-    # DB_OUTPUT=$($MANAGE shell --quiet-load -v 3 -c "from django.db import connection; connection.ensure_connection(); print('OK')" 2>&1)
-
-    # if [[ "$DB_OUTPUT" != "OK" ]]; then
-    #     echo -e "${RED}✖ django failed to connect to the database${RESET}"
-    #     echo -e "${YELLOW}reason (exception from Django):${RESET}"
-    #     echo "$DB_OUTPUT"
-    #     fail=true
-    # else
-    #     echo -e "${GREEN}✔ django connected successfully${RESET}"
-    # fi
-
-    # 3. second try of command
-    #echo "BBBBBBBBBB"
 
     DB_OUTPUT=$( $MANAGE shell -c "from django.db import connection; connection.ensure_connection(); print('OK')" 2>&1  )
     echo "${BLUE}  will remove   'objects imported automatically' ${RESET}"
@@ -491,13 +492,65 @@ check_db() {
         fail=true
     fi
 
-#echo "CCCCCCCCCCC"
-
-
-
     $fail && return 1 || return 0
 }
 
+
+
+#############################################
+# SECTION 6.5 — python test code
+#############################################
+check_tests() {
+    echo -e "${CYAN}checking python tests${RESET}"
+
+    local fail=false
+
+    echo -e "\n${YELLOW}[1] manage.py test --noinput -v 3 --debug-mode --debug-sql --shuffle ${RESET}"
+    echo "--- Running Django Tests ---"
+    run_cmd "manage.py test" $VENV_PATH/bin/python "$PROJECT_PATH/manage.py" test --noinput -v 3 --debug-mode --debug-sql --shuffle;
+    [[ $? -ne 0 ]] && fail=true
+
+    echo -e "\n${YELLOW}[2] manage.py test ToDo.tests --settings=MikesLists.settings.dev --noinput${RESET}"
+    echo "--- Running Django Tests ---"
+    run_cmd "manage.py test2" $VENV_PATH/bin/python "$PROJECT_PATH/manage.py" test ToDo.tests --settings=MikesLists.settings.dev --noinput;
+    [[ $? -ne 0 ]] && fail=true
+
+    echo -e "\n${YELLOW}[3] manage.py makemigrations --dry-run --check ${RESET}"
+    echo "--- Running Django migrations ---"
+    run_cmd "manage.py makemigrations" $VENV_PATH/bin/python "$PROJECT_PATH/manage.py" makemigrations --dry-run --check;
+    [[ $? -ne 0 ]] && fail=true
+
+
+    echo -e "\n${YELLOW}[4] Checking for unapplied migrations...${RESET}"
+    echo "--- Running Django migrations check ---"
+    # Capture the output of showmigrations
+    MIGRATIONS_STATUS=$($VENV_PATH/bin/python "$PROJECT_PATH/manage.py" showmigrations | grep "\[ \]")
+
+    if [ -n "$MIGRATIONS_STATUS" ]; then
+        echo -e "${RED}Error: Unapplied migrations found:${RESET}"
+        echo "$MIGRATIONS_STATUS"
+        fail=true
+    else
+        echo -e "${GREEN}All migrations are applied.${RESET}"
+    fi
+
+    echo -e "\n${YELLOW}[5] manage.py test ToDo.tests --settings=MikesLists.settings.dev --noinput${RESET}"
+    echo "--- Running Django Tests ---"
+    run_cmd "manage.py test2" $VENV_PATH/bin/python "$PROJECT_PATH/manage.py" test ToDo.tests --settings=MikesLists.settings.dev --noinput --force-color;
+    [[ $? -ne 0 ]] && fail=true
+
+    echo -e "\n${YELLOW}[6]Checking Extension Dependencies --- ${RESET}"
+    run_cmd "check for libstdc++6" dpkg -l | grep -q libstdc++6
+    if dpkg -l | grep -q libstdc++6; then
+        echo "[OK] libstdc++6 is installed."
+    else
+        echo "[WARN] libstdc++6 missing. This may cause Todo Tree issues."
+        echo -e "${RED}✖ tests failed ${RESET}"
+        fail=true
+    fi
+
+    $fail && return 1 || return 0
+}
 
 
 #############################################
@@ -957,7 +1010,10 @@ check_packages() {
 check_static_analysis() {
 
     # list of codes to ignore ( like unused imports )
-    IGNORES="E302,E303,E402,E501,E231,E222,E251,E265,W292,F401,F811"
+    # error codes found here -> https://pycodestyle.pycqa.org/en/latest/intro.html#error-codes
+    #      or at https://flake8.pycqa.org/en/latest/user/error-codes.html
+    #
+    IGNORES="E302,E303,E402,E501,E231,E222,E251,E265,W292,F401,F811,F405,F403"
     #IGNORES=""
 
     local mode="$1"   # "ruff", "flake", or empty for both
@@ -997,8 +1053,8 @@ check_static_analysis() {
         echo -e "${BLUE}running:${RESET} flake8 $PROJECT_PATH --config=/dev/null --ignore=${IGNORES}"
 
         FLAKE_OUT=$("$VENV_PATH/bin/flake8" "$PROJECT_PATH" \
-            --config=/dev/null \
-            --ignore=${IGNORES} 2>&1)
+            --config=/dev/null  \
+            --ignore=${IGNORES}  2>&1)
             # --ignore=E302,E303,E402,E501,E231,E222,E251,E265,W292,F401,F811 2>&1)
         FLAKE_STATUS=$?
 
@@ -1095,7 +1151,7 @@ main() {
     fi
 
     echo -e "${MAGENTA}=================================================${RESET}"
-    echo -e "${MAGENTA}     Django Deep Diagnostic Tool v2.1 (${ENV})    ${RESET}"
+    echo -e "${MAGENTA}     Django Deep Diagnostic Tool v2.2 (${ENV})    ${RESET}"
     echo -e "${MAGENTA}=================================================${RESET}"
 
     #############################################
@@ -1125,6 +1181,10 @@ main() {
 
     run_section "db" check_db
     record_summary "db" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+
+    run_section "check_tests" check_tests
+    record_summary "check_tests"  $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+
 
     run_section "nginx" check_nginx
     record_summary "nginx" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)

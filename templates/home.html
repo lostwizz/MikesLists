@@ -1,1 +1,13 @@
-Environment: {{ env_name }}
+<!DOCTYPE html>
+<html>
+<body>
+    <h1>Environment: {{ env_name }}</h1>
+
+    <div id="main-content">
+        {% block content %}
+        <p>If you see this, the child template isn't overriding this block.</p>
+        {% endblock %}
+    </div>
+
+</body>
+</html>

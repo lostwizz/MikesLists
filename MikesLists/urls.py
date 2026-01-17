@@ -5,21 +5,11 @@ r"""
 urls.py
 
 
-# TODO:
-# COMMENT:
-# NOTE:
-# USEFULL:
-# LEARN:
-# RECHECK:
-# INCOMPLETE:
-# SEE NOTES:
-# POST
-# HACK
 
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-03 00:17:13"
+__updated__ = "2026-01-17 01:15:18"
 ###############################################################################
 
 """
@@ -41,16 +31,31 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
-
+from django.contrib.auth import views as auth_views
 
 from .view_status import status_view
 from .home import home
 from .health import health
 
+
+
+
 urlpatterns = [
-    path('', home),
-    path('admin/', admin.site.urls),
-    path("status/", status_view, name ="status_dashboard"),
-    path("accounts/", include("django.contrib.auth.urls")),
+    path("admin/", admin.site.urls),
+    path("accounts/", include("accounts.urls")),   # This handles login/logout
+    path("status/", status_view, name="status_dashboard"),
     path("health/", health),
+    path("", include("ToDo.urls")),               # This makes ToDo the homepage
 ]
+
+# urlpatterns = [
+#     # path('', home),
+#     path("", include("ToDo.urls")),
+#     path("admin/", admin.site.urls),
+#     path("status/", status_view, name="status_dashboard"),
+#     # path("accounts/", include("django.contrib.auth.urls")),
+#     path("accounts/", include("accounts.urls")),  # All auth URLs start with /accounts/
+#     path("health/", health),
+#     path("login/", auth_views.LoginView.as_view(), name="login"),
+#     path("todo/", include("ToDo.urls")),
+# ]

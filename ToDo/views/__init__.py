@@ -2,20 +2,20 @@
 # -*- coding: utf-8 -*-
 ###############################################################################
 r"""
-live.py
+__init__.py
+
+
 
 
 """
-__version__ = "0.0.0.000070-dev"
+__version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-14 22:05:37"
+__updated__ = "2026-01-17 00:52:06"
 ###############################################################################
+from .list_views import *
+from .item_views import *
+from .auth_views import *
 
 
-from .core import *  # noqa: F403
-
-# EXTRA_ALLOWED_HOSTS += []
-
-TEMPLATES[0]["OPTIONS"]["context_processors"].append(
-    "MikesLists.context_processors.env_name"
-)
+from . import item_views
+from . import list_views

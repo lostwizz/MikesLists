@@ -5,21 +5,10 @@ r"""
 home.py
 
 
-# TODO:
-# COMMENT:
-# NOTE:
-# USEFULL:
-# LEARN:
-# RECHECK:
-# INCOMPLETE:
-# SEE NOTES:
-# POST
-# HACK
-
 """
 __version__ = "0.0.0.000004-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-02 19:49:31"
+__updated__ = "2026-01-17 00:44:14"
 ###############################################################################
 
 from django.conf import settings

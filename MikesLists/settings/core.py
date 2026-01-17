@@ -8,11 +8,11 @@ dev.py
 """
 __version__ = "0.0.0.000095-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-09 22:23:56"
+__updated__ = "2026-01-17 01:13:19"
 ###############################################################################
-#this is just so much fun!!!!!
-#i hate computers
-#this is just so much fun!!!!!
+# this is just so much fun!!!!!
+# i hate computers
+# this is just so much fun!!!!!
 
 
 """
@@ -35,14 +35,22 @@ from dotenv import load_dotenv
 # move allowed hosts to the core
 #   - it will be the same for dev and test
 #   -- live will probably add something like any hosts
-ALLOWED_HOSTS = ['localhost', 'localhost.local','127.0.0.1',
-                 '10.0.0.9', 'pi9.local',
-                 '10.0.0.208', 'pi208.local',
-                ]
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "localhost",
+    "localhost.local",
+    "pidj",
+    "pidj.local",
+    "10.0.0.9",
+    "pi9.local",
+    "10.0.0.208",
+    "AlienMike.local",
+    "AlienMike",
+]
 
-                # '10.0.0.156', 'pi156.local',
-                #  '10.0.0.240', 'pi240.local',
-                #  '10.0.0.100'
+# '10.0.0.156', 'pi156.local',
+#  '10.0.0.240', 'pi240.local',
+#  '10.0.0.100'
 
 extra_host = os.getenv("EXTRA_ALLOWED_HOSTS")
 if extra_host:
@@ -50,7 +58,7 @@ if extra_host:
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-#BASE_DIR = Path(__file__).resolve().parent.parent
+# BASE_DIR = Path(__file__).resolve().parent.parent
 BASE_DIR = Path(__file__).resolve().parents[2]
 
 load_dotenv(BASE_DIR / ".env")
@@ -67,43 +75,57 @@ DEBUG = os.getenv("DEBUG")
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 # Application definition
-ROOT_URLCONF = 'MikesLists.urls'
+ROOT_URLCONF = "MikesLists.urls"
 
-WSGI_APPLICATION = 'MikesLists.wsgi.application'
+WSGI_APPLICATION = "MikesLists.wsgi.application"
 # RUNSERVERPLUS_SERVER_ADDRESS_PORT = "0.0.0.0:8000"
+
+# Where to go after logging in
+LOGIN_REDIRECT_URL = '/'  # Use the 'name' of your list index view
+
+# Where to go after logging out
+LOGOUT_REDIRECT_URL = 'login'
+
+# The URL for the login page
+LOGIN_URL = 'login'
 
 
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "reversion",
+    'accounts',
+    "ToDo",
 ]
 
+# path('todo/', include('ToDo.urls'))
+
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / "templates"],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
@@ -114,18 +136,18 @@ TEMPLATES = [
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': os.getenv("DB_ENGINE"),
-        'NAME': os.getenv("DB_NAME"),
-        'USER': os.getenv("DB_USER"),
-        'PASSWORD': os.getenv("DB_PASSWORD"),
-        'HOST': os.getenv("DB_HOST"),
-        'PORT': os.getenv("DB_PORT", "3306"),
-        'OPTIONS': {
-            'charset': 'utf8mb4',
+    "default": {
+        "ENGINE": os.getenv("DB_ENGINE"),
+        "NAME": os.getenv("DB_NAME"),
+        "USER": os.getenv("DB_USER"),
+        "PASSWORD": os.getenv("DB_PASSWORD"),
+        "HOST": os.getenv("DB_HOST"),
+        "PORT": os.getenv("DB_PORT", "3306"),
+        "OPTIONS": {
+            "charset": "utf8mb4",
         },
-        'TEST': {
-            'NAME': f"test_{os.getenv('DB_NAME')}",
+        "TEST": {
+            "NAME": f"test_{os.getenv('DB_NAME')}",
         },
     }
 }
@@ -135,34 +157,46 @@ DATABASES = {
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
-LANGUAGE_CODE = 'en-us'
-#TIME_ZONE = 'UTC'
-TIME_ZONE = 'America/Toronto'
-#TIME_ZONE = 'America/Whitehorse'
+LANGUAGE_CODE = "en-us"
+# TIME_ZONE = 'UTC'
+TIME_ZONE = "America/Toronto"
+# TIME_ZONE = 'America/Whitehorse'
 USE_I18N = True
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
-STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles_collected'
+STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles_collected"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+
+EMAIL_HOST = "mail.merrett.ca"        # or your provider
+EMAIL_PORT = 465                     # 465 for SSL
+# EMAIL_USE_TLS = True
+EMAIL_USE_SSL = True
+EMAIL_HOST_USER = "public@merrett.ca"
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")

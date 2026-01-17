@@ -1,0 +1,13 @@
+<head>
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+
+{% if user.is_authenticated %}
+  <p>Hello, {{ user.username }}!</p>
+  <form action="{% url 'logout' %}" method="post">
+    {% csrf_token %}
+    <button type="submit">Logout</button>
+  </form>
+{% else %}
+  <a href="{% url 'login' %}">Login</a>
+{% endif %}

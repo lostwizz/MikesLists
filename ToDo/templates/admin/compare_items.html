@@ -1,0 +1,33 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<div id="content-main">
+    <h1>Comparing Versions: {{ item1.title }}</h1>
+
+    <table style="width:100%; border-collapse: collapse; margin-top: 20px;">
+        <thead>
+            <tr style="background: #f8f8f8; border-bottom: 2px solid #ccc;">
+                <th style="padding: 10px; text-align: left;">Field</th>
+                <th style="padding: 10px; text-align: left;">{{ item1.title }} (v{{ item1.version }})</th>
+                <th style="padding: 10px; text-align: left;">{{ item2.title }} (v{{ item2.version }})</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for field, values in diff.items %}
+            <tr style="border-bottom: 1px solid #eee;">
+                <td style="padding: 10px; font-weight: bold; color: #666;">{{ field|capfirst }}</td>
+                <td style="padding: 10px; background-color: #fff0f0;">{{ values.v1 }}</td>
+                <td style="padding: 10px; background-color: #f0fff0;">{{ values.v2 }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3" style="padding: 20px; text-align: center;">No differences found in the core fields.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div style="margin-top: 30px;">
+        <a href="javascript:history.back()" class="button" style="background: #79aec8; padding: 10px 15px; color: white; text-decoration: none; border-radius: 4px;">Back to Items</a>
+    </div>
+</div>
+{% endblock %}
