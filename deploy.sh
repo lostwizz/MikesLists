@@ -48,7 +48,7 @@ case "$ENV_NAME" in
         git status -sbv
         # git status -v
         # git log --oneline --graph --all
-        git show
+        git --no-pager show --oneline
         # git branch -vv
 
         # git clean -n
@@ -62,7 +62,7 @@ case "$ENV_NAME" in
 
             COMMIT_MSG="Dev update: $(date +'%Y-%m-%d %H:%M') - ${COMMIT_MSG}"
 
-            COMMIT_MSG="${USER_INPUT:-"Manual update"}"
+            # COMMIT_MSG="${USER_INPUT:-"Manual update"}"
             git add .
             git commit -m "${COMMIT_MSG}"
             git push origin dev
