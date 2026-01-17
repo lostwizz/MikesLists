@@ -10,7 +10,7 @@ urls.py
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-17 00:53:33"
+__updated__ = "2026-01-17 18:27:27"
 ###############################################################################
 
 from django.urls import path
@@ -27,5 +27,3 @@ urlpatterns = [
     path('', views.list_dashboard, name='dashboard'),
     path('items/', views.todo_item, name='todo_items'),
 ]
-
-

@@ -8,7 +8,7 @@ dev.py
 """
 __version__ = "0.0.0.000095-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-17 01:13:19"
+__updated__ = "2026-01-17 18:23:21"
 ###############################################################################
 # this is just so much fun!!!!!
 # i hate computers
@@ -30,7 +30,10 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 import os
 from pathlib import Path
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
+from decouple import config
+
+
 
 # move allowed hosts to the core
 #   - it will be the same for dev and test
@@ -52,7 +55,8 @@ ALLOWED_HOSTS = [
 #  '10.0.0.240', 'pi240.local',
 #  '10.0.0.100'
 
-extra_host = os.getenv("EXTRA_ALLOWED_HOSTS")
+# extra_host = os.getenv("EXTRA_ALLOWED_HOSTS")
+extra_host = config("EXTRA_ALLOWED_HOSTS", default="")
 if extra_host:
     ALLOWED_HOSTS.append(extra_host)
 
@@ -61,18 +65,21 @@ if extra_host:
 # BASE_DIR = Path(__file__).resolve().parent.parent
 BASE_DIR = Path(__file__).resolve().parents[2]
 
-load_dotenv(BASE_DIR / ".env")
+# load_dotenv(BASE_DIR / ".env")
 
-ENV_NAME = os.getenv("ENV_NAME")
+# ENV_NAME = os.getenv("ENV_NAME")
+ENV_NAME = config("ENV_NAME")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG")
+# DEBUG = os.getenv("DEBUG")
+DEBUG = config("DEBUG")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("SECRET_KEY")
+# SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY = config("SECRET_KEY")
 
 # Application definition
 ROOT_URLCONF = "MikesLists.urls"
@@ -135,19 +142,35 @@ TEMPLATES = [
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# DATABASES = {
+#     "default": {
+#         "ENGINE": os.getenv("DB_ENGINE"),
+#         "NAME": os.getenv("DB_NAME"),
+#         "USER": os.getenv("DB_USER"),
+#         "PASSWORD": os.getenv("DB_PASSWORD"),
+#         "HOST": os.getenv("DB_HOST"),
+#         "PORT": os.getenv("DB_PORT", "3306"),
+#         "OPTIONS": {
+#             "charset": "utf8mb4",
+#         },
+#         "TEST": {
+#             "NAME": f"test_{os.getenv('DB_NAME')}",
+#         },
+#     }
+# }
 DATABASES = {
     "default": {
-        "ENGINE": os.getenv("DB_ENGINE"),
-        "NAME": os.getenv("DB_NAME"),
-        "USER": os.getenv("DB_USER"),
-        "PASSWORD": os.getenv("DB_PASSWORD"),
-        "HOST": os.getenv("DB_HOST"),
-        "PORT": os.getenv("DB_PORT", "3306"),
+        "ENGINE": config("DB_ENGINE"),
+        "NAME": config("DB_NAME"),
+        "USER": config("DB_USER"),
+        "PASSWORD": config("DB_PASSWORD"),
+        "HOST": config("DB_HOST"),
+        "PORT": config("DB_PORT", default="3306"),
         "OPTIONS": {
             "charset": "utf8mb4",
         },
         "TEST": {
-            "NAME": f"test_{os.getenv('DB_NAME')}",
+            "NAME": f"test_{config('DB_NAME')}",
         },
     }
 }
@@ -199,4 +222,4 @@ EMAIL_USE_SSL = True
 EMAIL_HOST_USER = "public@merrett.ca"
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")

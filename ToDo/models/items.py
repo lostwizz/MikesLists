@@ -34,7 +34,7 @@ Since this is a structural change, you need to migrate:
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-17 17:32:03"
+__updated__ = "2026-01-17 18:26:46"
 ###############################################################################
 
 import re
@@ -46,6 +46,7 @@ from django.db import models
 
 from .typeflag import TypeFlags
 from .itemstatus import ItemStatus
+
 
 # =================================================================
 # =================================================================
@@ -59,14 +60,14 @@ class Items(models.Model):
     completed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     payload = models.CharField(max_length=1000, blank=True, null=True)
-    status = models.CharField(max_length=20, choices=ItemStatus.choices, default=ItemStatus.ACTIVE)
+    status = models.CharField(
+        max_length=20, choices=ItemStatus.choices, default=ItemStatus.ACTIVE
+    )
     created_user = models.CharField(max_length=100, blank=True, null=True)
 
     typeflag = models.CharField(
         max_length=20, choices=TypeFlags.choices, default=TypeFlags.CHECKMARK
     )
-
-
 
     # -----------------------------------------------------------------
     def __str__(self):

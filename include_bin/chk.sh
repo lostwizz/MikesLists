@@ -278,6 +278,8 @@ check_drift() {
                 ;;
         esac
     done
+    echo "run this line to do the updates: \n /srv/django/venv-dev/bin/pip freeze > /tmp/reqs.txt && /srv/django/venv-test/bin/pip install -r /tmp/reqs.txt"
+
 }
 
 check_drift "dev" "test"

@@ -38,6 +38,7 @@ show_help() {
     echo "Options:"
     echo "  --all              Run all diagnostics (default)"
     echo "  --fail-fast        Stop on first failure"
+    echo "  --ff               fail-fast alias"
     echo " "
     echo "  --environment      Only run environment diagnostics"
     echo "  --gunicorn         Only run Gunicorn diagnostics"
@@ -65,7 +66,7 @@ for arg in "$@"; do
         dev|test|live)
             ENV="$arg"
             ;;
-        --fail-fast)
+        --fail-fast|--ff)
             FAIL_FAST=true
             ;;
         --all)
@@ -672,13 +673,17 @@ check_envvars() {
     # 3. Required variables
     #############################################
     REQUIRED=(
-        "SECRET_KEY"
+        "ENV_NAME"
+        "DJANGO_SETTINGS_MODULE"
         "DEBUG"
+        "SECRET_KEY"
+        "DB_ENGINE"
         "DB_HOST"
         "DB_PORT"
         "DB_USER"
         "DB_PASSWORD"
         "DB_NAME"
+        "EMAIL_HOST_PASSWORD"
     )
 
     echo -e "\n${YELLOW}[1] checking required variables${RESET}"

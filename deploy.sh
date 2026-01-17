@@ -31,6 +31,8 @@ case "$ENV_NAME" in
         cp -rv /etc/systemd/system/{full-backup.service,full-backup.timer,gunicorn-MikesLists-live.service,gunicorn-MikesLists-test.service,watcher.service,mikeslists-dev.service,check-ip-change.service} "$PROJECT_DIR/include_bin/services/"
         cp -rv /usr/local/bin/check_ip_change.sh "$PROJECT_DIR/include_bin/services"
 
+        pip freeze | grep -E "Django|reversion|whitenoise|gunicorn|psycopg2" > requirements.txt
+        pip freeze > requirements-dev.txt
 
         echo "📦 DEV: Reviewing Changes..."
         # echo -e "\n🔍 \e[32mCURRENT GIT STATUS:\e[0m"
@@ -78,6 +80,16 @@ case "$ENV_NAME" in
         [[ "$ENV_NAME" == "live" ]] && SOURCE_BRANCH="test"
 
         echo "🔄 $ENV_NAME_UPPER: Force-syncing from $SOURCE_BRANCH..."
+        # ... (your existing git reset/pull logic) ...
+
+        # --- NEW: Auto-sync Python Dependencies ---
+        echo "🐍 Checking for dependency changes..."
+        VENV_PATH="/srv/django/venv-${ENV_NAME}"
+
+        if [ -f "requirements.txt" ]; then
+            $VENV_PATH/bin/pip install -r requirements.txt --quiet
+            echo "✅ Dependencies synced."
+        fi
 
         # NEW: Disable sparse-checkout if it's blocking us
         git sparse-checkout disable 2>/dev/null || true

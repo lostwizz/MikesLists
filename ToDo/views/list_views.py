@@ -10,7 +10,7 @@ for the lists this is the view
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-17 17:30:30"
+__updated__ = "2026-01-17 18:27:48"
 ###############################################################################
 
 
@@ -30,7 +30,7 @@ def list_dashboard(request):
     # 2. Define the context dictionary
     context = {
         'lists': all_lists,
-        'env_name': getattr(settings, 'ENV_NAME', 'Development'), # Add this!
+        'env_name': getattr(settings, 'ENV_NAME', 'Development'),  # Add this!
     }
 
     # 3. Pass the context to the template
