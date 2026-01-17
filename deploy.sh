@@ -21,29 +21,55 @@ case "$ENV_NAME" in
         mkdir -p "$PROJECT_DIR/include_bin"
         cp -rv /home/pi/bin/* "$PROJECT_DIR/include_bin/"
 
-        mkdir -p "$PROJECT_DIR/include_bin/log-dashboard"
-        cp -rv /home/pi/log-dashboard/* "$PROJECT_DIR/include_bin/log-dashboard"
+        # mkdir -p "$PROJECT_DIR/include_bin/log-dashboard"
+        # cp -rv /home/pi/log-dashboard/* "$PROJECT_DIR/include_bin/log-dashboard"
 
         mkdir -p "$PROJECT_DIR/include_bin/services"
-        cp -rv /etc/systemd/system/full-backup.service   "$PROJECT_DIR/include_bin/services"
-        cp -rv /etc/systemd/system/full-backup.timer     "$PROJECT_DIR/include_bin/services"
-        cp -rv /etc/systemd/system/gunicorn-MikesLists-live.service     "$PROJECT_DIR/include_bin/services"
-        cp -rv /etc/systemd/system/gunicorn-MikesLists-test.service     "$PROJECT_DIR/include_bin/services"
-        cp -rv /etc/systemd/system/watcher.service     "$PROJECT_DIR/include_bin/services"
-        cp -rv /etc/systemd/system/mikeslists-dev.service     "$PROJECT_DIR/include_bin/services"
-        cp -rv /etc/systemd/system/check-ip-change.service     "$PROJECT_DIR/include_bin/services"
+        # Verbose copy so you see the files moving
+        cp -rv /home/pi/bin/* "$PROJECT_DIR/include_bin/"
+        cp -rv /home/pi/log-dashboard/* "$PROJECT_DIR/include_bin/log-dashboard"
+        cp -rv /etc/systemd/system/{full-backup.service,full-backup.timer,gunicorn-MikesLists-live.service,gunicorn-MikesLists-test.service,watcher.service,mikeslists-dev.service,check-ip-change.service} "$PROJECT_DIR/include_bin/services/"
+        cp -rv /usr/local/bin/check_ip_change.sh "$PROJECT_DIR/include_bin/services"
 
-        cp -rv /usr/local/bin/check_ip_change.sh  "$PROJECT_DIR/include_bin/services"
+
+        echo "📦 DEV: Reviewing Changes..."
+        # echo -e "\n🔍 \e[32mCURRENT GIT STATUS:\e[0m"
+        # 1. Shows a short summary of branch/files
+        git status -sb
+
+        # Ensure .env is ignored before checking for changes
+        git rm --cached .env 2>/dev/null || true
+
+        # 2. Shows the ACTUAL code changes you just made (the cp commands)
+        # This is better than 'git show' here because 'git show' looks at the PAST.
+        # git diff
+
+        # git status
+        git status -sbv
+        # git status -v
+        # git log --oneline --graph --all
+        git show
+        # git branch -vv
+
+        # git clean -n
 
         echo "📦 DEV: Committing and Pushing..."
         git rm --cached .env 2>/dev/null || true
         if [[ -n "$(git status --porcelain)" ]]; then
+            echo -e "\n📝 \e[33mChanges detected. Enter commit message:\e[0m"
+            # This reads your input and stores it in $COMMIT_MSG
+            read -r -p "> " COMMIT_MSG
+
+            COMMIT_MSG="Dev update: $(date +'%Y-%m-%d %H:%M') - ${COMMIT_MSG}"
+
+            COMMIT_MSG="${USER_INPUT:-"Manual update"}"
             git add .
-            git commit -m "${1:-"Dev update: $(date)"}"
+            git commit -m "${COMMIT_MSG}"
             git push origin dev
         else
             git push origin dev || echo "Already up to date."
         fi
+        git status
         ;;
 
     test|live)
