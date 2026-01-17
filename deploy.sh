@@ -15,7 +15,6 @@ echo "------------------------------------------"
 case "$ENV_NAME" in
     dev)
 
-        set -xeu
         # --- 4. Sync Local Binaries & Django Tasks ---
         PROJECT_DIR="/srv/django/MikesLists_$ENV_NAME"
         echo -e "\e[34m📂 Syncing local binaries...\e[0m"
@@ -35,8 +34,6 @@ case "$ENV_NAME" in
         cp -rv /etc/systemd/system/check-ip-change.service     "$PROJECT_DIR/include_bin/services"
 
         cp -rv /usr/local/bin/check_ip_change.sh  "$PROJECT_DIR/include_bin/services"
-
-        set +x
 
         echo "📦 DEV: Committing and Pushing..."
         git rm --cached .env 2>/dev/null || true
