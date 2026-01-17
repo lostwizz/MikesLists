@@ -16,7 +16,6 @@ Since this is a structural change, you need to migrate:
         Apply Migration: python manage.py migrate ToDo --settings=MikesLists.settings.dev
 
 
-
 # TODO:
 # COMMENT:
 # NOTE:
@@ -35,7 +34,7 @@ Since this is a structural change, you need to migrate:
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-17 00:22:56"
+__updated__ = "2026-01-17 17:32:03"
 ###############################################################################
 
 import re
@@ -66,6 +65,8 @@ class Items(models.Model):
     typeflag = models.CharField(
         max_length=20, choices=TypeFlags.choices, default=TypeFlags.CHECKMARK
     )
+
+
 
     # -----------------------------------------------------------------
     def __str__(self):

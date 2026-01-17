@@ -47,8 +47,8 @@ case "$ENV_NAME" in
         # git status
         # git status -sbv
         # git status -v
-        # git log --oneline --graph --all
-        git --no-pager show --oneline
+        git --no-pager log --oneline --graph --all
+        # git --no-pager show --oneline
         # git branch -vv
 
         # git clean -n
@@ -69,6 +69,7 @@ case "$ENV_NAME" in
         else
             git push origin dev || echo "Already up to date."
         fi
+        git --no-pager log --oneline --graph --all
         git status
         ;;
 
