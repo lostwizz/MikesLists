@@ -45,7 +45,7 @@ case "$ENV_NAME" in
         # git diff
 
         # git status
-        git status -sbv
+        # git status -sbv
         # git status -v
         # git log --oneline --graph --all
         git --no-pager show --oneline
