@@ -1,13 +1,28 @@
-<!DOCTYPE html>
-<html>
-<body>
-    <h1>Environment: {{ env_name }}</h1>
+{% extends "base.html" %}
 
-    <div id="main-content">
-        {% block content %}
-        <p>If you see this, the child template isn't overriding this block.</p>
-        {% endblock %}
+{% block title %}Home - MikesLists{% endblock %}
+
+{% block content %}
+
+    <div class="container mt-4">
+        <div class="jumbotron p-5 mb-4 bg-light rounded-3 shadow-sm">
+            <h1 class="display-4">EnvironmentT: <span class="badge bg-primary">{{ env }}</span></h1>
+            <p class="lead">Welcome to the MikesLists Dashboard.</p>
+            <hr class="my-4">
+
+            {% if user.is_authenticated %}
+                <div class="alert alert-success">
+                    <h4>Hello, {{ user.username }}!</h4>
+                    <p>You are logged in and ready to manage your lists.</p>
+                </div>
+                <div id="todo-app">
+                    <h3>Your Lists</h3>
+                    </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <p>Please <a href="{% url 'accounts:login' %}">login</a> to see your private lists.</p>
+                </div>
+            {% endif %}
+        </div>
     </div>
-
-</body>
-</html>
+{% endblock %}

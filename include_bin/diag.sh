@@ -325,6 +325,25 @@ check_django() {
         echo -e "${YELLOW}⚠ staticfiles_collected missing — run collectstatic${RESET}"
     fi
 
+
+
+    # Look back only 30 seconds to avoid old "ghost" errors
+    LOOKBACK="30 seconds ago"
+    echo -e "\n${YELLOW}[5] checking for attribute errors (Last $LOOKBACK) ${RESET}"
+    SERVICE="mikeslists-dev.service"
+
+    # Search for the specific AttributeError
+    CURRENT_ERROR=$(journalctl -u $SERVICE --since "$LOOKBACK" --no-pager | grep "AttributeError: module 'MikesLists.context_processors' has no attribute 'env_name'")
+
+    if [ ! -z "$CURRENT_ERROR" ]; then
+        echo "${RED}✖ ALERT: Context Processor Error detected NOW."
+        echo "${RED}✖ Check: /srv/django/MikesLists_dev/MikesLists/context_processors.py"
+        echo "${RED}✖ Error Detail: $CURRENT_ERROR"
+        fail=true
+    else
+        echo -e "${GREEN}✔ No active context processor errors found."
+    fi
+
     $fail && return 1 || return 0
 }
 

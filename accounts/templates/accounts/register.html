@@ -1,10 +1,41 @@
-{% extends "home.html" %}
+{% extends "base.html" %}
+{% load static %}
+{% load widget_tweaks %}
 
 {% block content %}
-    <h2>Create an Account</h2>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Register</button>
-    </form>
+<div class="login-container">
+    <div class="login-card">
+        <div class="text-center mb-4">
+            <img src="{% static 'images/logo.png' %}" alt="MikesLists Logo" class="login-logo">
+        </div>
+
+        <h2 class="text-center">Create Account</h2>
+        <p class="text-center text-muted">Join MikesLists today</p>
+
+        <form method="post">
+            {% csrf_token %}
+
+            {% for field in form %}
+                <div class="form-group mb-3">
+                    {{ field.label_tag }}
+                    {{ field|add_class:"form-control" }}
+                    {% if field.help_text %}
+                        <small class="form-text text-muted">{{ field.help_text }}</small>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+
+            <button type="submit" class="btn-login mb-3">Register</button>
+
+            <div class="text-center mt-3">
+                <p class="small text-muted">Already have an account?
+                    <a href="{% url 'accounts:login' %}" class="text-primary text-decoration-none fw-bold">Login here</a>
+                </p>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}

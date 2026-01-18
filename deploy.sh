@@ -82,14 +82,6 @@ case "$ENV_NAME" in
         echo "🔄 $ENV_NAME_UPPER: Force-syncing from $SOURCE_BRANCH..."
         # ... (your existing git reset/pull logic) ...
 
-        # --- NEW: Auto-sync Python Dependencies ---
-        echo "🐍 Checking for dependency changes..."
-        VENV_PATH="/srv/django/venv-${ENV_NAME}"
-
-        if [ -f "requirements.txt" ]; then
-            $VENV_PATH/bin/pip install -r requirements.txt --quiet
-            echo "✅ Dependencies synced."
-        fi
 
         # NEW: Disable sparse-checkout if it's blocking us
         git sparse-checkout disable 2>/dev/null || true
@@ -104,6 +96,17 @@ case "$ENV_NAME" in
             git reset --hard "origin/$SOURCE_BRANCH"
         fi
 
+
+        # --- NEW: Auto-sync Python Dependencies ---
+        echo "🐍 Checking for dependency changes..."
+        VENV_PATH="/srv/django/venv-${ENV_NAME}"
+
+        if [ -f "requirements.txt" ]; then
+            $VENV_PATH/bin/pip install -r requirements.txt
+            ####  --quiet
+            echo "✅ Dependencies synced."
+        fi
+
         git push origin "$ENV_NAME" --force
         ;;
 
@@ -115,8 +118,8 @@ esac
 
 # 3. Environment File Setup
 echo "🧪 Syncing environment file..."
-cp "$BASE_PATH/deploy/.env_${ENV_NAME}" "$(pwd)/.env"
-git rm --cached .env 2>/dev/null || true
+# cp "$BASE_PATH/deploy/.env_${ENV_NAME}" "$(pwd)/.env"
+# git rm --cached .env 2>/dev/null || true
 
 # 4. Django Tasks
 echo "⚙️  Running Django tasks..."

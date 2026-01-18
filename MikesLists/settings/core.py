@@ -8,11 +8,8 @@ dev.py
 """
 __version__ = "0.0.0.000095-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-17 18:23:21"
+__updated__ = "2026-01-18 00:09:26"
 ###############################################################################
-# this is just so much fun!!!!!
-# i hate computers
-# this is just so much fun!!!!!
 
 
 """
@@ -30,7 +27,6 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 import os
 from pathlib import Path
-# from dotenv import load_dotenv
 from decouple import config
 
 
@@ -51,10 +47,6 @@ ALLOWED_HOSTS = [
     "AlienMike",
 ]
 
-# '10.0.0.156', 'pi156.local',
-#  '10.0.0.240', 'pi240.local',
-#  '10.0.0.100'
-
 # extra_host = os.getenv("EXTRA_ALLOWED_HOSTS")
 extra_host = config("EXTRA_ALLOWED_HOSTS", default="")
 if extra_host:
@@ -62,23 +54,18 @@ if extra_host:
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-# BASE_DIR = Path(__file__).resolve().parent.parent
 BASE_DIR = Path(__file__).resolve().parents[2]
-
-# load_dotenv(BASE_DIR / ".env")
 
 # ENV_NAME = os.getenv("ENV_NAME")
 ENV_NAME = config("ENV_NAME")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = os.getenv("DEBUG")
 DEBUG = config("DEBUG")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# SECRET_KEY = os.getenv("SECRET_KEY")
 SECRET_KEY = config("SECRET_KEY")
 
 # Application definition
@@ -91,10 +78,10 @@ WSGI_APPLICATION = "MikesLists.wsgi.application"
 LOGIN_REDIRECT_URL = '/'  # Use the 'name' of your list index view
 
 # Where to go after logging out
-LOGOUT_REDIRECT_URL = 'login'
+LOGOUT_REDIRECT_URL = 'accounts:login'
 
 # The URL for the login page
-LOGIN_URL = 'login'
+LOGIN_URL = 'accounts:login'
 
 
 
@@ -108,6 +95,7 @@ INSTALLED_APPS = [
     "reversion",
     'accounts',
     "ToDo",
+    "widget_tweaks",
 ]
 
 # path('todo/', include('ToDo.urls'))
@@ -133,6 +121,8 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                'MikesLists.context_processors.export_env_vars',
+                # 'MikesLists.context_processors.env_name',
             ],
         },
     },
@@ -142,22 +132,7 @@ TEMPLATES = [
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": os.getenv("DB_ENGINE"),
-#         "NAME": os.getenv("DB_NAME"),
-#         "USER": os.getenv("DB_USER"),
-#         "PASSWORD": os.getenv("DB_PASSWORD"),
-#         "HOST": os.getenv("DB_HOST"),
-#         "PORT": os.getenv("DB_PORT", "3306"),
-#         "OPTIONS": {
-#             "charset": "utf8mb4",
-#         },
-#         "TEST": {
-#             "NAME": f"test_{os.getenv('DB_NAME')}",
-#         },
-#     }
-# }
+
 DATABASES = {
     "default": {
         "ENGINE": config("DB_ENGINE"),

@@ -10,7 +10,7 @@ urls.py
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-17 01:08:18"
+__updated__ = "2026-01-17 22:09:52"
 ###############################################################################
 
 
@@ -23,6 +23,9 @@ from django.urls import path
 from django.contrib.auth import views as auth_views
 
 from . import views  # The dot means "from this current folder"
+
+
+app_name = 'accounts'
 
 urlpatterns = [
     path(

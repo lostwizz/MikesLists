@@ -8,7 +8,7 @@ dev.py
 """
 __version__ = "0.0.0.000006-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-17 18:25:22"
+__updated__ = "2026-01-18 00:20:06"
 ###############################################################################
 
 # WSGI_REQUEST_HANDLER = "MikesLists.logging.request_handler.RequestHandlerWithIPAndUser"
@@ -20,9 +20,9 @@ from .core import *  # noqa: F403
 
 EXTRA_ALLOWED_HOSTS = []
 
-TEMPLATES[0]["OPTIONS"]["context_processors"].append(  # noqa: F405
-    "MikesLists.context_processors.env_name"
-)
+# TEMPLATES[0]["OPTIONS"]["context_processors"].append(  # noqa: F405
+#     "MikesLists.context_processors.env_name"
+# )
 
 
 AUTH_PASSWORD_VALIDATORS = []  # This disables all checks (NOT for production!)
