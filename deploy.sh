@@ -31,8 +31,8 @@ case "$ENV_NAME" in
         cp -rv /etc/systemd/system/{full-backup.service,full-backup.timer,gunicorn-MikesLists-live.service,gunicorn-MikesLists-test.service,watcher.service,mikeslists-dev.service,check-ip-change.service} "$PROJECT_DIR/include_bin/services/"
         cp -rv /usr/local/bin/check_ip_change.sh "$PROJECT_DIR/include_bin/services"
 
-        pip freeze | grep -E "Django|reversion|whitenoise|gunicorn|psycopg2" > requirements.txt
-        pip freeze > requirements-dev.txt
+        # pip freeze | grep -E "Django|reversion|whitenoise|gunicorn|psycopg2|python-decouple" > requirements.txt
+        # pip freeze > requirements-dev.txt
 
         echo "📦 DEV: Reviewing Changes..."
         # echo -e "\n🔍 \e[32mCURRENT GIT STATUS:\e[0m"
@@ -47,9 +47,9 @@ case "$ENV_NAME" in
         # git diff
 
         # git status
-        # git status -sbv
+        git status -sbv
         # git status -v
-        git --no-pager log --oneline --graph --all
+        # git --no-pager log --oneline --graph --all
         # git --no-pager show --oneline
         # git branch -vv
 
