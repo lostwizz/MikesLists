@@ -9,7 +9,7 @@ urls.py
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-17 22:10:38"
+__updated__ = "2026-01-18 14:06:23"
 ###############################################################################
 
 """
@@ -43,7 +43,9 @@ from .health import health
 urlpatterns = [
     path("admin/", admin.site.urls),
     # path("accounts/", include("accounts.urls")),   # This handles login/logout
-    path('accounts/', include('accounts.urls', namespace='accounts')),
+    # path('accounts/', include('accounts.urls', namespace='accounts')),
+    path('accounts/', include('django.contrib.auth.urls')),
+
     path("status/", status_view, name="status_dashboard"),
     path("health/", health),
     path("", include("ToDo.urls")),               # This makes ToDo the homepage

@@ -10,7 +10,7 @@ for the lists this is the view
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-17 22:50:40"
+__updated__ = "2026-01-18 13:48:28"
 ###############################################################################
 
 
@@ -20,10 +20,14 @@ from django.shortcuts import render
 from django.conf import settings
 from decouple import config
 
+from django.contrib import messages
+
 from ToDo.models.lists import Lists
 
 
 # -----------------------------------------------------------------
+
+
 
 
 # -----------------------------------------------------------------
@@ -31,6 +35,8 @@ from ToDo.models.lists import Lists
 def list_dashboard(request):
     # 1. Get the data from the database
     all_lists = Lists.objects.all()
+
+    messages.success(request, "Dashboard loaded in DEV mode!")
 
     # 2. Define the context dictionary
     context = {
@@ -56,6 +62,7 @@ def list_management(request):
 
 
 # -----------------------------------------------------------------
+
 # -----------------------------------------------------------------
 # -----------------------------------------------------------------
 # -----------------------------------------------------------------

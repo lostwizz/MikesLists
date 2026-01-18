@@ -9,15 +9,14 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 
 
-
 from django.http import HttpResponseForbidden
 
 ALLOWED_IPS = ["10.0.0.0/24", "127.0.0.1"]
 
+
 def ip_allowed(request):
     ip = request.META.get("REMOTE_ADDR")
     return ip.startswith("10.0.0.") or ip == "127.0.0.1"
-
 
 
 @dataclass
@@ -72,33 +71,53 @@ def collect_checks() -> list[CheckResult]:
 
     try:
         connections["default"].cursor()
-        checks.append(CheckResult(name="Database connectivity", status="ok", message="OK"))
+        checks.append(
+            CheckResult(name="Database connectivity", status="ok", message="OK")
+        )
     except OperationalError as e:
-        checks.append(CheckResult(name="Database connectivity", status="fail", message=str(e)))
+        checks.append(
+            CheckResult(name="Database connectivity", status="fail", message=str(e))
+        )
 
     # Migrations
     result = run(f"{sys.executable} manage.py showmigrations --plan")
     if result.returncode == 0:
         pending = any("[ ]" in line for line in result.stdout.splitlines())
         if pending:
-            checks.append(CheckResult(name="Migrations", status="warn", message="Pending migrations exist"))
+            checks.append(
+                CheckResult(
+                    name="Migrations", status="warn", message="Pending migrations exist"
+                )
+            )
         else:
-            checks.append(CheckResult(name="Migrations", status="ok", message="All migrations applied"))
+            checks.append(
+                CheckResult(
+                    name="Migrations", status="ok", message="All migrations applied"
+                )
+            )
     else:
-        checks.append(CheckResult(name="Migrations", status="fail", message=result.stderr.strip()))
+        checks.append(
+            CheckResult(name="Migrations", status="fail", message=result.stderr.strip())
+        )
 
     # System basics (simple versions of CLI checks)
-    disk = run("df -h / | awk 'NR==2 {print $5 \" used (\" $4 \" free)\"}'")
+    disk = run('df -h / | awk \'NR==2 {print $5 " used (" $4 " free)"}\'')
     if disk.returncode == 0:
-        checks.append(CheckResult(name="Disk on /", status="ok", message=disk.stdout.strip()))
+        checks.append(
+            CheckResult(name="Disk on /", status="ok", message=disk.stdout.strip())
+        )
 
     load = run("cut -d' ' -f1-3 /proc/loadavg")
     if load.returncode == 0:
-        checks.append(CheckResult(name="Load average", status="ok", message=load.stdout.strip()))
+        checks.append(
+            CheckResult(name="Load average", status="ok", message=load.stdout.strip())
+        )
 
-    mem = run("free -h | awk 'NR==2 {print $3 \" used / \" $2 \" total\"}'")
+    mem = run('free -h | awk \'NR==2 {print $3 " used / " $2 " total"}\'')
     if mem.returncode == 0:
-        checks.append(CheckResult(name="Memory", status="ok", message=mem.stdout.strip()))
+        checks.append(
+            CheckResult(name="Memory", status="ok", message=mem.stdout.strip())
+        )
 
     return checks
 
@@ -110,12 +129,13 @@ def status_view(request: HttpRequest) -> HttpResponse:
     if not ip_allowed(request):
         return HttpResponseForbidden("IP not allowed")
 
-
     env = getattr(settings, "ENV_NAME", "dev").lower()
     checks = collect_checks()
 
     # Handle JSON API
-    if request.headers.get("Accept") == "application/json" or request.GET.get("format") == "json":
+    if (
+        request.headers.get("Accept") == "application/json" or request.GET.get("format") == "json"
+    ):
         data = {
             "env": env,
             "checks": [asdict(c) for c in checks],

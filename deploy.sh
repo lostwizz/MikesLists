@@ -37,7 +37,7 @@ case "$ENV_NAME" in
         echo "📦 DEV: Reviewing Changes..."
         # echo -e "\n🔍 \e[32mCURRENT GIT STATUS:\e[0m"
         # 1. Shows a short summary of branch/files
-        git status -sb
+        # git status -sb
 
         # Ensure .env is ignored before checking for changes
         git rm --cached .env 2>/dev/null || true
@@ -127,10 +127,11 @@ python3 manage.py migrate --noinput
 python3 manage.py collectstatic --noinput
 
 # 5. Restart Services
-echo "🔁 Restarting Services..."
-SERVICE_NAME="gunicorn-${ENV_NAME}"
-sudo systemctl restart "$SERVICE_NAME" || sudo systemctl restart gunicorn
-sudo systemctl reload nginx
+# echo "🔁 Restarting Services..."
+# SERVICE_NAME="gunicorn-${ENV_NAME}"
+# sudo systemctl restart "$SERVICE_NAME" || sudo systemctl restart gunicorn
+# sudo systemctl reload nginx
+# /home/pi/bin/bounce.sh
 
 echo "------------------------------------------"
 echo "🎉 $ENV_NAME_UPPER Deployment Complete!"

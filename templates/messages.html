@@ -1,10 +1,32 @@
 {% if messages %}
-    <div class="container mt-3">
+    <div id="django-messages" class="container mt-3">
         {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-lg border-2"
+                 role="alert"
+                 style="border-left: 5px solid;">
+
+                <strong>
+                    {% if message.tags == 'success' %}✓{% elif message.tags == 'error' %}✕{% endif %}
+                    {{ message.tags|upper }}:
+                </strong>
                 {{ message }}
+
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         {% endfor %}
     </div>
+
+    <script>
+        // Auto-dismiss after 5 seconds
+        setTimeout(function() {
+            const messageContainer = document.getElementById('django-messages');
+            if (messageContainer) {
+                const alerts = messageContainer.querySelectorAll('.alert');
+                alerts.forEach(function(alert) {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                });
+            }
+        }, 5000);
+    </script>
 {% endif %}

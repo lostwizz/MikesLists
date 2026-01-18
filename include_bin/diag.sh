@@ -344,6 +344,54 @@ check_django() {
         echo -e "${GREEN}✔ No active context processor errors found."
     fi
 
+    # Check for template partials
+    echo -e "\n${YELLOW}[6] checking template partials${RESET}"
+    TEMPLATE_DIR="/srv/django/MikesLists_dev/templates"
+    PARTIALS=("head.html" "navbar.html" "footer.html" "messages.html" "base.html")
+
+    for file in "${PARTIALS[@]}"; do
+        if [ -f "$TEMPLATE_DIR/$file" ]; then
+            echo "${GREEN}✔  Found $file"
+        else
+            echo "${RED}✖  ERROR: $file is missing from $TEMPLATE_DIR"
+            fail=true
+        fi
+    done
+
+    echo -e "\n${YELLOW}[7] checking for NoReverseMatch errors ${RESET}"
+    URL_ERROR=$(journalctl -u mikeslists-dev.service -n 50 --no-pager | grep "NoReverseMatch")
+
+    if [ ! -z "$URL_ERROR" ]; then
+        echo "${RED}✖  URL ERROR: A link in your template is broken."
+        echo "Check if 'path(\"accounts/\", include(\"django.contrib.auth.urls\"))' is in urls.py"
+        fail=true
+    else
+        echo "${GREEN}✔  no ReverseMatch errors Found $file"
+    fi
+
+
+    echo "--- Checking Auth Templates ---"
+    echo -e "\n${YELLOW}[8] checking Auth Templates${RESET}"
+    # Check the global registration path
+    if [ -f "/srv/django/MikesLists_dev/templates/registration/login.html" ]; then
+        echo "${GREEN}✔  Auth Login template found."
+    else
+        echo "${RED}✖  ERROR: registration/login.html not found in global templates."
+        fail=true
+    fi
+
+    # Check if the app-specific template is there instead
+    if [ -f "/srv/django/MikesLists_dev/accounts/templates/accounts/login.html" ]; then
+        echo "${YELLOW}⚠ [INFO] Found login.html in accounts app folder."
+        warn=true
+    fi
+
+
+
+
+
+
+
     $fail && return 1 || return 0
 }
 

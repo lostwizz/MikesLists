@@ -1,33 +1,35 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm mb-4">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary">
     <div class="container">
-        <a class="navbar-brand fw-bold" href="/">🚀 MikesLists</a>
+        <a class="navbar-brand fw-bold" href="/">
+            MikesLists
+            <span class="badge rounded-pill bg-warning text-dark ms-2" style="font-size: 0.7rem;">
+                {{ env|upper }}
+            </span>
+        </a>
+
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
 
         <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-                {% if user.is_authenticated %}
-                    <li class="nav-item text-light me-3">Environment: {{ env|default:"NOT_FOUND_IN_CONTEXT" }}
-                    </li>
-                    <li class="nav-item">
-                        <span class="nav-link text-light me-3">Welcome, {{ user.username }}</span>
-                    </li>
-                    <li class="nav-item">
-                        <form action="{% url 'accounts:logout' %}" method="post" class="d-inline">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-outline-light btn-sm">Logout</button>
-                        </form>
-                    </li>
-                {% else %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'accounts:login' %}">Login</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="btn btn-primary btn-sm ms-lg-2" href="{% url 'accounts:register' %}">Sign Up</a>
-                    </li>
-                {% endif %}
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Dashboard</a>
+                </li>
             </ul>
+
+            <div class="d-flex align-items-center">
+                {% if user.is_authenticated %}
+                    <span class="text-light me-3 small">Hi, {{ user.username }}</span>
+                    <form action="{% url 'logout' %}" method="post" class="m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Logout</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-outline-primary btn-sm">Login</a>
+                {% endif %}
+            </div>
         </div>
     </div>
 </nav>
+
