@@ -25,6 +25,7 @@ case "$ENV_NAME" in
         # cp -rv /home/pi/log-dashboard/* "$PROJECT_DIR/include_bin/log-dashboard"
 
         mkdir -p "$PROJECT_DIR/include_bin/services"
+        mkdir -p "$PROJECT_DIR/include_bin/log-dashboard"
         # Verbose copy so you see the files moving
         cp -rv /home/pi/bin/* "$PROJECT_DIR/include_bin/"
         cp -rv /home/pi/log-dashboard/* "$PROJECT_DIR/include_bin/log-dashboard"
