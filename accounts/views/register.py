@@ -3,14 +3,14 @@
 ###############################################################################
 r"""
 register.py
-
-
+accounts.views.register
+/srv/django/MikesLists_dev/accounts/views/register.py
 
 
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-17 01:35:55"
+__updated__ = "2026-01-18 15:19:27"
 ###############################################################################
 
 

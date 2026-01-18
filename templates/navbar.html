@@ -21,15 +21,15 @@
             <div class="d-flex align-items-center">
                 {% if user.is_authenticated %}
                     <span class="text-light me-3 small">Hi, {{ user.username }}</span>
-                    <form action="{% url 'logout' %}" method="post" class="m-0">
+                    <form action="{% url 'accounts:logout' %}" method="post" class="m-0">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-outline-danger btn-sm">Logout</button>
                     </form>
                 {% else %}
-                    <a href="{% url 'login' %}" class="btn btn-outline-primary btn-sm">Login</a>
+                    <a href="{% url 'accounts:register' %}" class="btn btn-outline-success btn-sm me-2">Register</a>
+                    <a href="{% url 'accounts:login' %}" class="btn btn-outline-primary btn-sm">Login</a>
                 {% endif %}
             </div>
         </div>
     </div>
 </nav>
-

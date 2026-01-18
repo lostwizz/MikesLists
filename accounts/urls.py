@@ -3,14 +3,15 @@
 ###############################################################################
 r"""
 urls.py
-
+accounts.urls
+/srv/django/MikesLists_dev/accounts/urls.py
 
 
 
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-17 22:09:52"
+__updated__ = "2026-01-18 15:36:26"
 ###############################################################################
 
 
@@ -20,19 +21,20 @@ __updated__ = "2026-01-17 22:09:52"
 
 # accounts/urls.py
 from django.urls import path
+from .views import register ##as register_view
 from django.contrib.auth import views as auth_views
 
-from . import views  # The dot means "from this current folder"
-
-
+# from . import views  # The dot means "from this current folder"
+# from .views import register as register_view # Import the module from your views folder
 app_name = 'accounts'
 
 urlpatterns = [
     path(
         'login/',
-        auth_views.LoginView.as_view(template_name='accounts/login.html'),
+        auth_views.LoginView.as_view(template_name='registration/login.html'),
         name='login'
     ),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
-    path('register/', views.register, name='register'),
+
+    path('register/', register, name='register'),
 ]
