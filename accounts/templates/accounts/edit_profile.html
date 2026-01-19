@@ -18,10 +18,10 @@
                             <div class="mb-3">
                                 <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
                                 <input type="{{ field.field.widget.input_type|default:'text' }}"
-                                       name="{{ field.html_name }}"
-                                       value="{{ field.value|default_if_none:'' }}"
-                                       class="form-control bg-dark text-white border-dark"
-                                       id="{{ field.id_for_label }}">
+                                        name="{{ field.html_name }}"
+                                        value="{{ field.value|default_if_none:'' }}"
+                                        class="form-control bg-dark text-white border-dark"
+                                        id="{{ field.id_for_label }}">
                                 {% if field.errors %}
                                     <div class="text-danger small">{{ field.errors }}</div>
                                 {% endif %}
@@ -29,34 +29,34 @@
                         {% endif %}
                     {% endfor %}
 
-<div class="mb-3">
-    <label class="form-label text-warning">My Assigned Groups</label>
-    <div class="p-3 bg-dark rounded border border-dark">
-        {% if not user.is_superuser %}
-            {# DIRECT CHECK: Ask the user object for its groups #}
-            {% for group in user.groups.all %}
-                <div class="form-check mb-2">
-                    <input type="checkbox" class="form-check-input bg-dark border-secondary opacity-75" checked disabled style="pointer-events: none;">
-                    <label class="form-check-label ms-2 text-white">
-                        {{ group.name }}
-                    </label>
-                </div>
-            {% empty %}
-                <small class="text-white opacity-50 italic">No groups currently assigned.</small>
-            {% endfor %}
-        {% else %}
-            {# ADMIN VIEW: Show the full editable form #}
-            {% for checkbox in form.groups %}
-                <div class="form-check mb-2">
-                    {{ checkbox.tag }}
-                    <label class="form-check-label ms-2 text-white" for="{{ checkbox.id_for_label }}">
-                        {{ checkbox.choice_label }}
-                    </label>
-                </div>
-            {% endfor %}
-        {% endif %}
-    </div>
-</div>
+                    <div class="mb-3">
+                        <label class="form-label text-warning">My Assigned Groups</label>
+                        <div class="p-3 bg-dark rounded border border-dark">
+                            {% if not user.is_superuser %}
+                                {# DIRECT CHECK: Ask the user object for its groups #}
+                                {% for group in user.groups.all %}
+                                    <div class="form-check mb-2">
+                                        <input type="checkbox" class="form-check-input bg-dark border-secondary opacity-75" checked disabled style="pointer-events: none;">
+                                        <label class="form-check-label ms-2 text-white">
+                                            {{ group.name }}
+                                        </label>
+                                    </div>
+                                {% empty %}
+                                    <small class="text-white opacity-50 italic">No groups currently assigned.</small>
+                                {% endfor %}
+                            {% else %}
+                                {# ADMIN VIEW: Show the full editable form #}
+                                {% for checkbox in form.groups %}
+                                    <div class="form-check mb-2">
+                                        {{ checkbox.tag }}
+                                        <label class="form-check-label ms-2 text-white" for="{{ checkbox.id_for_label }}">
+                                            {{ checkbox.choice_label }}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
 
                     <div class="mb-3">
                         <label class="form-label">Preferences</label>

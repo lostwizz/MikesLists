@@ -11,7 +11,7 @@ accounts.models.signals
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-19 00:02:10"
+__updated__ = "2026-01-19 17:06:17"
 ###############################################################################
 
 
@@ -31,26 +31,26 @@ def create_user_profile(sender, instance, created, **kwargs):
         # 2. Assign the 'Read Only' group
 
         try:
-            group = Group.objects.get(name='Read Only')
+            group = Group.objects.get(name="Read Only")
             instance.groups.add(group)
         except Group.DoesNotExist:
             # This prevents the app from crashing if you haven't
             # created the group in the Admin panel yet
-            admin_emails = User.objects.filter(is_superuser=True).values_list('email', flat=True)
+            admin_emails = User.objects.filter(is_superuser=True).values_list(
+                "email", flat=True
+            )
             if admin_emails:
                 send_mail(
-                            'Missing Database Group Notification',
-                            f"User '{instance.username}' was created, but the 'Read Only' group does not exist.",
-                            'noreply@mikeslists.local',
-                            list(admin_emails),
-                            fail_silently=True,
-                            )
-
-
+                    "Missing Database Group Notification",
+                    f"User '{instance.username}' was created, but the 'Read Only' group does not exist.",
+                    "noreply@mikeslists.local",
+                    list(admin_emails),
+                    fail_silently=True,
+                )
 
 
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
     # This ensures the profile is saved whenever the user is saved
-    if hasattr(instance, 'profile'):
+    if hasattr(instance, "profile"):
         instance.profile.save()

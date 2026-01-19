@@ -10,7 +10,7 @@ MikesLists.settings.core
 """
 __version__ = "0.0.0.000095-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-18 23:56:53"
+__updated__ = "2026-01-19 17:04:21"
 ###############################################################################
 
 
@@ -31,10 +31,27 @@ import os
 from pathlib import Path
 from decouple import config
 
+import accounts
+import ToDo
 
-ADMINS = [("Mike", "mmerrett@merrett.ca"),
-            ('pi', 'admin@merrett.ca'),
-            ]
+
+def ready():
+    accounts.assign_permissions()
+
+    try:
+        accounts.assign_permissions()
+    except Exception as e:
+        print(f"Error during ready(): {e}")
+
+
+def accounts_post_configure_signal(sender, **kwargs):
+    ready()
+
+
+ADMINS = [
+    ("Mike", "mmerrett@merrett.ca"),
+    ("pi", "admin@merrett.ca"),
+]
 
 # move allowed hosts to the core
 #   - it will be the same for dev and test
@@ -50,6 +67,7 @@ ALLOWED_HOSTS = [
     "10.0.0.208",
     "AlienMike.local",
     "AlienMike",
+    "10.0.0.100",
 ]
 
 # extra_host = os.getenv("EXTRA_ALLOWED_HOSTS")
@@ -80,14 +98,13 @@ WSGI_APPLICATION = "MikesLists.wsgi.application"
 # RUNSERVERPLUS_SERVER_ADDRESS_PORT = "0.0.0.0:8000"
 
 # Where to go after logging in
-LOGIN_REDIRECT_URL = '/'  # Use the 'name' of your list index view
+LOGIN_REDIRECT_URL = "/"  # Use the 'name' of your list index view
 
 # Where to go after logging out
-LOGOUT_REDIRECT_URL = 'login'
+LOGOUT_REDIRECT_URL = "login"
 
 # The URL for the login page
-LOGIN_URL = 'login'
-
+LOGIN_URL = "login"
 
 
 INSTALLED_APPS = [
@@ -98,10 +115,10 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "reversion",
-    'accounts',
+    "accounts",
     "ToDo",
     "widget_tweaks",
-    'django_extensions',
+    "django_extensions",
 ]
 
 # path('todo/', include('ToDo.urls'))
@@ -127,7 +144,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                'MikesLists.context_processors.export_env_vars',
+                "MikesLists.context_processors.export_env_vars",
                 # 'MikesLists.context_processors.env_name',
             ],
         },
@@ -196,8 +213,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
-EMAIL_HOST = "mail.merrett.ca"        # or your provider
-EMAIL_PORT = 465                     # 465 for SSL
+EMAIL_HOST = "mail.merrett.ca"  # or your provider
+EMAIL_PORT = 465  # 465 for SSL
 # EMAIL_USE_TLS = True
 EMAIL_USE_SSL = True
 EMAIL_HOST_USER = "public@merrett.ca"

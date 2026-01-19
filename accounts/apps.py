@@ -10,7 +10,7 @@ accounts.apps
 """
 __version__ = "0.0.0.000070-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-18 23:35:23"
+__updated__ = "2026-01-19 17:05:33"
 ###############################################################################
 
 
@@ -18,7 +18,8 @@ from django.apps import AppConfig
 
 
 class AccountsConfig(AppConfig):
-    default_auto_field = 'django.db.models.BigAutoField'
-    name = 'accounts'
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "accounts"
+
     def ready(self):
         import accounts.models.signals

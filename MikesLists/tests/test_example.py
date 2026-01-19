@@ -3,12 +3,13 @@
 ###############################################################################
 r"""
 test_example.py
-
+test_example
+/srv/django/MikesLists_dev/MikesLists/tests/test_example.py
 
 """
 __version__ = "0.0.1.000005-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-19 18:45:36"
+__updated__ = "2026-01-19 16:45:14"
 ###############################################################################
 import pytest
 

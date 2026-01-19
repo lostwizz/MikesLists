@@ -33,6 +33,7 @@ B_MAGENTA=$'\033[1;35m'
 #############################################
 ENV="dev"
 FAIL_FAST=false
+DEBUG=false
 RUN_ALL=true
 declare -A RUN_SECTION
 
@@ -52,6 +53,7 @@ show_help() {
     echo "  --all              Run all diagnostics (default)"
     echo "  --fail-fast        Stop on first failure"
     echo "  --ff               fail-fast alias"
+    echo "  --debug            Run in debug mode (show output from commands)"
     echo " "
     echo "  --environment      Only run environment diagnostics"
     echo "  --gunicorn         Only run Gunicorn diagnostics"
@@ -99,6 +101,9 @@ for arg in "$@"; do
             show_help
             exit 0
             ;;
+        --debug )
+            DEBUG=true
+            ;;
         *)
             echo -e "${RED}Unknown argument: $arg${RESET}"
             show_help
@@ -127,7 +132,14 @@ run_cmd() {
     echo -e "${BLUE}running:${RESET} ${CYAN}${cmd[*]}${RESET}"
     local OUTPUT
     OUTPUT=$("${cmd[@]}" 2>&1)
+    # )
     local STATUS=$?
+
+    if $DEBUG; then
+        echo -e "${YELLOW}output:${RESET}"
+        echo "$OUTPUT"
+    fi
+
 
     if [[ $STATUS -ne 0 ]]; then
         echo -e "${RED}❌ ${label} failed (exit ${STATUS})${RESET}"
@@ -792,21 +804,33 @@ check_tests() {
 
     echo -e "\n${YELLOW}[1] manage.py test --noinput -v 3 --debug-mode --debug-sql --shuffle ${RESET}"
     echo "--- Running Django Tests ---"
-    run_cmd "manage.py test" $VENV_PATH/bin/python "$PROJECT_PATH/manage.py" test --noinput -v 3 --debug-mode --debug-sql --shuffle;
+    run_cmd "manage.py test" $VENV_PATH/bin/python "$PROJECT_PATH/manage.py" test --noinput -v 3 --debug-mode --debug-sql --traceback --force-color --shuffle;
     [[ $? -ne 0 ]] && fail=true
 
     echo -e "\n${YELLOW}[2] manage.py test ToDo.tests --settings=MikesLists.settings.dev --noinput${RESET}"
     echo "--- Running Django Tests ---"
-    run_cmd "manage.py test2" $VENV_PATH/bin/python "$PROJECT_PATH/manage.py" test ToDo.tests --settings=MikesLists.settings.dev --noinput;
+
+    run_cmd "manage.py test2" $VENV_PATH/bin/python "$PROJECT_PATH/manage.py" test ToDo.tests --settings=MikesLists.settings.dev --noinput -v 3 --debug-mode --traceback --force-color  --shuffle;
     [[ $? -ne 0 ]] && fail=true
 
-    echo -e "\n${YELLOW}[3] manage.py makemigrations --dry-run --check ${RESET}"
+    echo -e "\n${YELLOW}[3] manage.py test ToDo.tests --settings=MikesLists.settings.dev --noinput${RESET}"
+    echo "--- Running Django Tests ---"
+    run_cmd "manage.py test3" $VENV_PATH/bin/python "$PROJECT_PATH/manage.py" test accounts.tests --settings=MikesLists.settings.dev --noinput -v 3 --debug-mode --traceback --force-color --shuffle;
+    [[ $? -ne 0 ]] && fail=true
+
+    echo -e "\n${YELLOW}[4] manage.py test ToDo.tests --settings=MikesLists.settings.dev --noinput${RESET}"
+    echo "--- Running Django Tests ---"
+    run_cmd "manage.py test4" $VENV_PATH/bin/python "$PROJECT_PATH/manage.py" test MikesLists.tests --settings=MikesLists.settings.dev --noinput -v 3 --debug-mode --traceback --force-color --shuffle;
+    [[ $? -ne 0 ]] && fail=true
+
+
+    echo -e "\n${YELLOW}[5] manage.py makemigrations --dry-run --check ${RESET}"
     echo "--- Running Django migrations ---"
     run_cmd "manage.py makemigrations" $VENV_PATH/bin/python "$PROJECT_PATH/manage.py" makemigrations --dry-run --check;
     [[ $? -ne 0 ]] && fail=true
 
 
-    echo -e "\n${YELLOW}[4] Checking for unapplied migrations...${RESET}"
+    echo -e "\n${YELLOW}[6] Checking for unapplied migrations...${RESET}"
     echo "--- Running Django migrations check ---"
     # Capture the output of showmigrations
     MIGRATIONS_STATUS=$($VENV_PATH/bin/python "$PROJECT_PATH/manage.py" showmigrations | grep "\[ \]")
@@ -819,12 +843,7 @@ check_tests() {
         echo -e "${GREEN}All migrations are applied.${RESET}"
     fi
 
-    echo -e "\n${YELLOW}[5] manage.py test ToDo.tests --settings=MikesLists.settings.dev --noinput${RESET}"
-    echo "--- Running Django Tests ---"
-    run_cmd "manage.py test2" $VENV_PATH/bin/python "$PROJECT_PATH/manage.py" test ToDo.tests --settings=MikesLists.settings.dev --noinput --force-color;
-    [[ $? -ne 0 ]] && fail=true
-
-    echo -e "\n${YELLOW}[6]Checking Extension Dependencies --- ${RESET}"
+    echo -e "\n${YELLOW}[7]Checking Extension Dependencies --- ${RESET}"
     run_cmd "check for libstdc++6" dpkg -l | grep -q libstdc++6
     if dpkg -l | grep -q libstdc++6; then
         echo "[OK] libstdc++6 is installed."

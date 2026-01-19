@@ -3,6 +3,8 @@
 ###############################################################################
 r"""
 test_db.py
+ToDo.tests.test_db
+/srv/django/MikesLists_dev/ToDo/tests/test_db.py
 
 # how to run tests:
 #       python manage.py test ToDo --settings=MikesLists.settings.dev
@@ -10,5 +12,5 @@ test_db.py
 """
 __version__ = "0.0.1.000002-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-15 20:47:15"
+__updated__ = "2026-01-19 16:43:39"
 ###############################################################################
