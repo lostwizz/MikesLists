@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile | MikesLists{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card bg-secondary text-white shadow-lg">
+            <div class="card-header border-bottom border-dark d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">Profile Details</h3>
+                <a href="{% url 'accounts:edit_profile' %}" class="btn btn-sm btn-primary">Edit Profile</a>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h5 class="text-warning border-bottom border-dark pb-2">Account Information</h5>
+                    <p><strong>Username:</strong> {{ user.username }}</p>
+                    <p><strong>Email:</strong> {{ user.email }}</p>
+                    <p><strong>Full Name:</strong> {{ user.first_name }} {{ user.last_name|default:"" }}</p>
+                    <p><strong>Member Since:</strong> {{ user.date_joined|date:"F j, Y" }}</p>
+                </div>
+
+                <div class="mb-4">
+                    <h5 class="text-warning border-bottom border-dark pb-2">Groups & Permissions</h5>
+                    <div class="d-flex flex-wrap gap-2 mt-2">
+                        {% for group in user.groups.all %}
+                            <span class="badge bg-dark border border-info px-3 py-2">{{ group.name }}</span>
+                        {% empty %}
+                            <small class="text-muted italic">Not assigned to any groups.</small>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <h5 class="text-warning border-bottom border-dark pb-2">Preferences</h5>
+                    <ul class="list-unstyled">
+                        <li>
+                            <i class="bi bi-check2-circle text-success me-2"></i>
+                            Email Notifications: <span class="badge bg-success">Enabled</span>
+                        </li>
+                        <li>
+                            <i class="bi bi-moon-stars text-info me-2"></i>
+                            Theme: <span class="badge bg-dark">Dark Mode</span>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+            <div class="card-footer text-center border-top border-dark">
+                <a href="/" class="btn btn-link text-white-50 text-decoration-none">Return to Dashboard</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -9,7 +9,7 @@ MikesLists.context_processors
 """
 __version__ = "0.0.0.000004-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-18 20:45:46"
+__updated__ = "2026-01-18 22:21:25"
 ###############################################################################
 
 
@@ -21,7 +21,7 @@ from django.conf import settings
 def export_env_vars(request):
 
     X = getattr(settings, "ENV_NAME", "dev")
-    print(f"@@@{ X=}@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    # print(f"@@@{ X=}@@@")
     return {"env": X}
 
 

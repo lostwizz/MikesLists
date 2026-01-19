@@ -15,6 +15,7 @@
                         <strong>Error:</strong> Your username and password didn't match. Please try again.
                     </div>
                 {% endif %}
+
                 <form method="post">
                     {% csrf_token %}
 
@@ -36,6 +37,15 @@
                         <button type="submit" class="btn btn-primary">Sign In</button>
                     </div>
                 </form>
+
+                <div class="mt-3 text-center">
+                    <p class="mb-1">
+                        <a href="{% url 'password_reset' %}" class="text-info">Forgot your password?</a>
+                    </p>
+                    <p class="mb-0">
+                        Don't have an account? <a href="{% url 'accounts:register' %}" class="text-info">Sign up here</a>
+                    </p>
+                </div>
             </div>
             <div class="card-footer text-center border-top border-dark">
                 <small>Environment: <span class="text-warning">{{ env|upper }}</span></small>

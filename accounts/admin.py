@@ -10,9 +10,12 @@ accounts.admin
 """
 __version__ = "0.0.0.000070-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-18 20:51:21"
+__updated__ = "2026-01-18 23:17:49"
 ###############################################################################
 
 from django.contrib import admin
+from .models.profile import Profile
 
-# Register your models here.
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'theme_preference', 'email_notifications')

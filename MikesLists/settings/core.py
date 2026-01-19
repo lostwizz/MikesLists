@@ -10,7 +10,7 @@ MikesLists.settings.core
 """
 __version__ = "0.0.0.000095-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-18 20:47:28"
+__updated__ = "2026-01-18 21:26:00"
 ###############################################################################
 
 
@@ -80,12 +80,9 @@ WSGI_APPLICATION = "MikesLists.wsgi.application"
 LOGIN_REDIRECT_URL = '/'  # Use the 'name' of your list index view
 
 # Where to go after logging out
-# LOGOUT_REDIRECT_URL = 'accounts:login'
-# LOGOUT_REDIRECT_URL = '/accounts/login'
 LOGOUT_REDIRECT_URL = 'login'
 
 # The URL for the login page
-# LOGIN_URL = 'accounts:login'
 LOGIN_URL = 'login'
 
 

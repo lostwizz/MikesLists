@@ -11,7 +11,7 @@ accounts.urls
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-18 20:30:13"
+__updated__ = "2026-01-18 22:07:17"
 ###############################################################################
 
 
@@ -21,12 +21,16 @@ __updated__ = "2026-01-18 20:30:13"
 
 # accounts/urls.py
 from django.urls import path, include
-from .views import register ##as register_view
+from .views import register
 from django.contrib.auth import views as auth_views
+
+from . import views
 
 # from . import views  # The dot means "from this current folder"
 # from .views import register as register_view # Import the module from your views folder
 app_name = 'accounts'
+
+#
 
 urlpatterns = [
     path(
@@ -35,6 +39,10 @@ urlpatterns = [
         name='login'
     ),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    path('profile/', views.profile_view, name='profile_view'),
+    path('profile/edit/', views.edit_profile, name='edit_profile'),
+    path('accounts/', include('django.contrib.auth.urls')),
 
     path('register/', register, name='register'),
+    path('', include('django.contrib.auth.urls')),
 ]

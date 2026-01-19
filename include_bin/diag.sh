@@ -7,23 +7,26 @@
 #############################################
 # COLORS (ANSI-safe)
 #############################################
-RED='\033[31m'
-GREEN='\033[32m'
-YELLOW='\033[33m'
-CYAN='\033[36m'
+
+
+RED=$'\033[31m'
+GREEN=$'\033[32m'
+YELLOW=$'\033[33m'
+CYAN=$'\033[36m'
 BLUE=$'\033[34m'
 MAGENTA=$'\033[35m'
-RESET='\033[0m'
-
+RESET=$'\033[0m'
 
 
 # Bold Colors (Better for symbols like ✓ and ✖)
-B_RED='\033[1;31m'
-B_GREEN='\033[1;32m'
-B_YELLOW='\033[1;33m'
-B_CYAN='\033[1;36m'
+B_RED=$'\033[1;31m'
+B_GREEN=$'\033[1;32m'
+B_YELLOW=$'\033[1;33m'
+B_CYAN=$'\033[1;36m'
 B_BLUE=$'\033[1;34m'
 B_MAGENTA=$'\033[1;35m'
+
+
 
 #############################################
 # DEFAULTS
@@ -277,7 +280,7 @@ check_gunicorn() {
 #############################################
 check_django() {
 
-    echo -e "${CYAN}running django diagnostics${RESET}"
+    echo -e "${CYAN}*4* running django diagnostics${RESET}"
 
     local fail=false
 
@@ -348,24 +351,24 @@ check_django() {
     CURRENT_ERROR=$(journalctl -u $SERVICE --since "$LOOKBACK" --no-pager | grep "AttributeError: module 'MikesLists.context_processors' has no attribute 'env_name'")
 
     if [ ! -z "$CURRENT_ERROR" ]; then
-        echo "${RED}❌ ALERT: Context Processor Error detected NOW."
-        echo "${RED}❌ Check: /srv/django/MikesLists_dev/MikesLists/context_processors.py"
-        echo "${RED}❌ Error Detail: $CURRENT_ERROR"
+        echo -e "${RED}❌ ALERT: Context Processor Error detected NOW."
+        echo -e "${RED}❌ Check: /srv/django/MikesLists_dev/MikesLists/context_processors.py"
+        echo -e "${RED}❌ Error Detail: $CURRENT_ERROR"
         fail=true
     else
         echo -e "${GREEN}✓ No active context processor errors found."
     fi
 
     # Check for template partials
-    echo -e "\n${YELLOW}[6] checking template partials${RESET}"
+    echo -e "\n${B_YELLOW}[6] checking template partials${RESET}"
     TEMPLATE_DIR="/srv/django/MikesLists_dev/templates"
     PARTIALS=("head.html" "navbar.html" "footer.html" "messages.html" "base.html")
 
     for file in "${PARTIALS[@]}"; do
         if [ -f "$TEMPLATE_DIR/$file" ]; then
-            echo "${GREEN}✓  Found $file"
+            echo -e "${B_GREEN}✓  ${RESET}Found $file"
         else
-            echo "${RED}❌  ERROR: $file is missing from $TEMPLATE_DIR"
+            echo -e "${B_RED}❌  ${RESET}ERROR: $file is missing from $TEMPLATE_DIR"
             fail=true
         fi
     done
@@ -374,28 +377,28 @@ check_django() {
     URL_ERROR=$(journalctl -u mikeslists-dev.service -n 50 --no-pager | grep "NoReverseMatch")
 
     if [ ! -z "$URL_ERROR" ]; then
-        echo "${RED}❌  URL ERROR: A link in your template is broken."
+        echo -e "${B_RED}❌  ${RESET}URL ERROR: A link in your template is broken."
         echo "Check if 'path(\"accounts/\", include(\"django.contrib.auth.urls\"))' is in urls.py"
         fail=true
     else
-        echo "${GREEN}✓  no ReverseMatch errors Found $file"
+        echo -e "${B_GREEN}✓  ${RESET}no ReverseMatch errors Found $file"
     fi
 
 
     echo "--- Checking Auth Templates ---"
-    echo -e "\n${YELLOW}[8] checking Auth Templates${RESET}"
+    echo -e "\n${B_YELLOW}[8] checking Auth Templates${RESET}"
     # Check the global registration path
     if [ -f "/srv/django/MikesLists_dev/accounts/templates/registration/login.html" ]; then
-        echo "${GREEN}✓  Auth Login template found."
+        echo -e "${B_GREEN}✓  ${RESET}Auth Login template found."
     else
-        echo "${RED}❌  ERROR: registration/login.html not found in global templates."
+        echo -e "${B_RED}❌  ${RESET}ERROR: registration/login.html not found in global templates."
         fail=true
     fi
 
     echo -e "\n${YELLOW}[9] checking that login.html is where expected ${RESET}"
     # Check if the app-specific template is there instead
     if [ -f "/srv/django/MikesLists_dev/accounts/templates/registration/login.html" ]; then
-        echo "${GREEN}✓ [INFO] Found login.html in accounts/templates/registration folder."
+        echo -e "${GREEN}✓ ${RESET}[INFO] Found login.html in accounts/templates/registration folder."
         warn=true
     fi
 
