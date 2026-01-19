@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+###############################################################################
+r"""
+context_processors.py
+MikesLists.context_processors
+/srv/django/MikesLists_dev/MikesLists/context_processors.py
+
+"""
+__version__ = "0.0.0.000004-dev"
+__author__ = "Mike Merrett"
+__updated__ = "2026-01-18 20:45:46"
+###############################################################################
+
+
+
 # MikesLists/context_processors.py
 from django.conf import settings
 

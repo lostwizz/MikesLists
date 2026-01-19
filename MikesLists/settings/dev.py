@@ -3,12 +3,13 @@
 ###############################################################################
 r"""
 dev.py
-
+MikesLists.settings.dev
+/srv/django/MikesLists_dev/MikesLists/settings/dev.py
 
 """
 __version__ = "0.0.0.000006-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-18 00:20:06"
+__updated__ = "2026-01-18 20:47:12"
 ###############################################################################
 
 # WSGI_REQUEST_HANDLER = "MikesLists.logging.request_handler.RequestHandlerWithIPAndUser"

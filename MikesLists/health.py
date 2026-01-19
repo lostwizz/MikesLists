@@ -3,6 +3,9 @@
 ###############################################################################
 r"""
 health.py
+MikesLists.health
+/srv/django/MikesLists_dev/MikesLists/health.py
+
 
     this file will return a json string which will let you know that:
         - the database connection is good
@@ -11,23 +14,10 @@ health.py
 
 
 
-
-
-# TODO:
-# COMMENT:
-# NOTE:
-# USEFULL:
-# LEARN:
-# RECHECK:
-# INCOMPLETE:
-# SEE NOTES:
-# POST
-# HACK
-
 """
 __version__ = "0.0.0.000025-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-02 21:42:20"
+__updated__ = "2026-01-18 20:45:02"
 ###############################################################################
 
 from django.http import JsonResponse

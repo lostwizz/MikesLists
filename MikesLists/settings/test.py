@@ -3,12 +3,13 @@
 ###############################################################################
 r"""
 test.py
-
+MikesLists.settings.test
+/srv/django/MikesLists_dev/MikesLists/settings/test.py
 
 """
 __version__ = "0.0.0.000060-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-18 14:57:27"
+__updated__ = "2026-01-18 20:46:49"
 ###############################################################################
 
 from .core import *  # noqa: F403

@@ -4,13 +4,14 @@
 r"""
 __init__.py
 
-
+ToDo.views
+/srv/django/MikesLists_dev/ToDo/views/__init__.py
 
 
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-17 22:09:09"
+__updated__ = "2026-01-18 20:39:40"
 ###############################################################################
 from .list_views import *
 from .item_views import *

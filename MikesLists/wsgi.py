@@ -3,23 +3,13 @@
 ###############################################################################
 r"""
 wsgi.py
-
-
-# TODO:
-# COMMENT:
-# NOTE:
-# USEFULL:
-# LEARN:
-# RECHECK:
-# INCOMPLETE:
-# SEE NOTES:
-# POST
-# HACK
+MikesLists.wsgi
+/srv/django/MikesLists_dev/MikesLists/wsgi.py
 
 """
 __version__ = "0.0.0.000004-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-02 19:50:21"
+__updated__ = "2026-01-18 20:43:18"
 ###############################################################################
 
 """

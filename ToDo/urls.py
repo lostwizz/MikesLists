@@ -3,6 +3,8 @@
 ###############################################################################
 r"""
 urls.py
+ToDo.urls
+/srv/django/MikesLists_dev/ToDo/urls.py
 
     ToDo app's urls.py
 
@@ -10,7 +12,7 @@ urls.py
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-17 18:27:27"
+__updated__ = "2026-01-18 20:37:55"
 ###############################################################################
 
 from django.urls import path
@@ -26,4 +28,5 @@ urlpatterns = [
     # path('item/<int:item_id>/toggle/', views.item_toggle_status, name='item_toggle_status'),
     path('', views.list_dashboard, name='dashboard'),
     path('items/', views.todo_item, name='todo_items'),
+    path('item/new/', views.item_create, name='item_create'),
 ]

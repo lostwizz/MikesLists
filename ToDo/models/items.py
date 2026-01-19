@@ -3,6 +3,9 @@
 ###############################################################################
 r"""
 items.py
+ToDo.models.items
+/srv/django/MikesLists_dev/ToDo/models/items.py
+
 
     ToDo app's models.py
 
@@ -34,7 +37,7 @@ Since this is a structural change, you need to migrate:
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-17 18:26:46"
+__updated__ = "2026-01-18 20:42:11"
 ###############################################################################
 
 import re

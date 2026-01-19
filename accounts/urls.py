@@ -11,7 +11,7 @@ accounts.urls
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-18 15:36:26"
+__updated__ = "2026-01-18 20:30:13"
 ###############################################################################
 
 
@@ -20,7 +20,7 @@ __updated__ = "2026-01-18 15:36:26"
 # from .views import login as custom_views  # if you wrote your own
 
 # accounts/urls.py
-from django.urls import path
+from django.urls import path, include
 from .views import register ##as register_view
 from django.contrib.auth import views as auth_views
 

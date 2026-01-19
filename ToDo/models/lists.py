@@ -3,6 +3,8 @@
 ###############################################################################
 r"""
 lists.py
+ToDo.models.lists
+/srv/django/MikesLists_dev/ToDo/models/lists.py
 
     ToDo app's lists.py
 
@@ -29,7 +31,7 @@ Since this is a structural change, you need to migrate:
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-16 21:28:17"
+__updated__ = "2026-01-18 20:41:11"
 ###############################################################################
 
 from django.db import models

@@ -10,7 +10,7 @@ accounts.views.register
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-18 15:19:27"
+__updated__ = "2026-01-18 15:43:45"
 ###############################################################################
 
 
@@ -38,4 +38,4 @@ def register(request):
     else:
         form = CustomUserCreationForm()
 
-    return render(request, 'accounts/register.html', {'form': form})
+    return render(request, 'registration/register.html', {'form': form})

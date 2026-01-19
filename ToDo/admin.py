@@ -3,25 +3,17 @@
 ###############################################################################
 r"""
 admin.py
+ToDo.admin
+/srv/django/MikesLists_dev/ToDo/admin.py
+
 
     ToDo app's  admin.py
 
 
-# TODO:
-# COMMENT:
-# NOTE:
-# USEFULL:
-# LEARN:
-# RECHECK:
-# INCOMPLETE:
-# SEE NOTES:
-# POST
-# HACK
-
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-16 21:27:50"
+__updated__ = "2026-01-18 20:39:14"
 ###############################################################################
 
 from django.contrib import admin, messages

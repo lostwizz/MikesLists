@@ -3,23 +3,14 @@
 ###############################################################################
 r"""
 asgi.py
+MikesLists.asgi
+/srv/django/MikesLists_dev/MikesLists/asgi.py
 
-
-# TODO:
-# COMMENT:
-# NOTE:
-# USEFULL:
-# LEARN:
-# RECHECK:
-# INCOMPLETE:
-# SEE NOTES:
-# POST
-# HACK
 
 """
 __version__ = "0.0.0.000004-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-02 19:51:24"
+__updated__ = "2026-01-18 20:46:13"
 ###############################################################################
 
 """

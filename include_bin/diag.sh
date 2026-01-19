@@ -7,13 +7,23 @@
 #############################################
 # COLORS (ANSI-safe)
 #############################################
-RED=$'\033[31m'
-GREEN=$'\033[32m'
-YELLOW=$'\033[33m'
+RED='\033[31m'
+GREEN='\033[32m'
+YELLOW='\033[33m'
+CYAN='\033[36m'
 BLUE=$'\033[34m'
-CYAN=$'\033[36m'
 MAGENTA=$'\033[35m'
-RESET=$'\033[0m'
+RESET='\033[0m'
+
+
+
+# Bold Colors (Better for symbols like ✓ and ✖)
+B_RED='\033[1;31m'
+B_GREEN='\033[1;32m'
+B_YELLOW='\033[1;33m'
+B_CYAN='\033[1;36m'
+B_BLUE=$'\033[1;34m'
+B_MAGENTA=$'\033[1;35m'
 
 #############################################
 # DEFAULTS
@@ -43,6 +53,8 @@ show_help() {
     echo "  --environment      Only run environment diagnostics"
     echo "  --gunicorn         Only run Gunicorn diagnostics"
     echo "  --django           Only run Django diagnostics"
+    echo "  --route_audits     Only run Route Audits"
+    echo "  --url_audits       Only run URL Audits"
     echo "  --ruff             Only run Ruff diagnostics"
     echo "  --flake            Only run flake8 diagnostics"
     echo "  --lint             Only run Lint (ruff and flake)"
@@ -72,7 +84,7 @@ for arg in "$@"; do
         --all)
             RUN_ALL=true
             ;;
-        --gunicorn|--django|--db|--nginx|--git|--env|--permissions|--packages|--lint|--static|--environment|--check_tests)
+        --gunicorn|--django|--route_audits|--url_audit|--db|--nginx|--git|--env|--permissions|--packages|--lint|--static|--environment|--check_tests)
             RUN_ALL=false
             RUN_SECTION["$arg"]=true
             ;;
@@ -115,12 +127,12 @@ run_cmd() {
     local STATUS=$?
 
     if [[ $STATUS -ne 0 ]]; then
-        echo -e "${RED}✖ ${label} failed (exit ${STATUS})${RESET}"
+        echo -e "${RED}❌ ${label} failed (exit ${STATUS})${RESET}"
         echo -e "${YELLOW}output:${RESET}"
         echo "$OUTPUT"
         return $STATUS
     else
-        echo -e "${GREEN}✔ ${label} succeeded${RESET}"
+        echo -e "${GREEN}✓ ${label} succeeded${RESET}"
         return 0
     fi
 }
@@ -165,42 +177,42 @@ validate_environment() {
 
     echo -e "${BLUE}checking project directory:${RESET} $PROJECT_PATH"
     if [[ ! -d "$PROJECT_PATH" ]]; then
-        echo -e "${RED}✖ missing project directory${RESET}"
+        echo -e "${RED}❌ missing project directory${RESET}"
         fail=true
     else
-        echo -e "${GREEN}✔ project directory exists${RESET}"
+        echo -e "${GREEN}✓ project directory exists${RESET}"
     fi
 
     echo -e "${BLUE}checking virtualenv:${RESET} $VENV_PATH"
     if [[ ! -d "$VENV_PATH" ]]; then
-        echo -e "${RED}✖ missing virtualenv${RESET}"
+        echo -e "${RED}❌ missing virtualenv${RESET}"
         fail=true
     else
-        echo -e "${GREEN}✔ virtualenv exists${RESET}"
+        echo -e "${GREEN}✓ virtualenv exists${RESET}"
     fi
 
     echo -e "${BLUE}checking python binary:${RESET} $VENV_PATH/bin/python"
     if [[ ! -x "$VENV_PATH/bin/python" ]]; then
-        echo -e "${RED}✖ python binary missing or not executable${RESET}"
+        echo -e "${RED}❌ python binary missing or not executable${RESET}"
         fail=true
     else
-        echo -e "${GREEN}✔ python binary found${RESET}"
+        echo -e "${GREEN}✓ python binary found${RESET}"
     fi
 
     echo -e "${BLUE}checking manage.py:${RESET} $PROJECT_PATH/manage.py"
     if [[ ! -f "$PROJECT_PATH/manage.py" ]]; then
-        echo -e "${RED}✖ manage.py missing${RESET}"
+        echo -e "${RED}❌ manage.py missing${RESET}"
         fail=true
     else
-        echo -e "${GREEN}✔ manage.py found${RESET}"
+        echo -e "${GREEN}✓ manage.py found${RESET}"
     fi
 
     echo -e "${BLUE}checking .env:${RESET} $ENV_FILE"
     if [[ ! -f "$ENV_FILE" ]]; then
-        echo -e "${RED}✖ .env missing${RESET}"
+        echo -e "${RED}❌ .env missing${RESET}"
         fail=true
     else
-        echo -e "${GREEN}✔ .env found${RESET}"
+        echo -e "${GREEN}✓ .env found${RESET}"
     fi
 
     $fail && return 1 || return 0
@@ -221,35 +233,35 @@ check_gunicorn() {
 
     echo -e "${BLUE}checking systemd unit:${RESET} $SERVICE"
     if ! systemctl list-unit-files | grep -q "$SERVICE"; then
-        echo -e "${RED}✖ gunicorn service not found${RESET}"
+        echo -e "${RED}❌ gunicorn service not found${RESET}"
         return 1
     fi
-    echo -e "${GREEN}✔ gunicorn service exists${RESET}"
+    echo -e "${GREEN}✓ gunicorn service exists${RESET}"
 
     echo -e "${BLUE}checking systemctl state:${RESET}"
     STATE=$(systemctl is-active "$SERVICE")
     SUBSTATE=$(systemctl show -p SubState --value "$SERVICE")
     echo -e "  state: ${CYAN}$STATE${RESET}"
     echo -e "  substate: ${CYAN}$SUBSTATE${RESET}"
-    [[ "$STATE" != "active" ]] && echo -e "${RED}✖ gunicorn not active${RESET}" && fail=true
+    [[ "$STATE" != "active" ]] && echo -e "${RED}❌ gunicorn not active${RESET}" && fail=true
 
     echo -e "${BLUE}checking restart count:${RESET}"
     RESTARTS=$(systemctl show "$SERVICE" -p NRestarts --value)
     echo -e "  restarts: ${CYAN}$RESTARTS${RESET}"
-    (( RESTARTS > 3 )) && echo -e "${RED}✖ restart loop detected${RESET}" && fail=true
+    (( RESTARTS > 3 )) && echo -e "${RED}❌ restart loop detected${RESET}" && fail=true
 
     echo -e "${BLUE}checking worker processes:${RESET}"
     WORKERS=$(pgrep -f "gunicorn.*MikesLists_${ENV}" | wc -l)
     echo -e "  workers: ${CYAN}$WORKERS${RESET}"
-    (( WORKERS == 0 )) && echo -e "${RED}✖ no workers running${RESET}" && fail=true
+    (( WORKERS == 0 )) && echo -e "${RED}❌ no workers running${RESET}" && fail=true
 
     echo -e "${BLUE}checking master processes:${RESET}"
     MASTERS=$(pgrep -f "gunicorn.*master.*MikesLists_${ENV}" | wc -l)
     echo -e "  masters: ${CYAN}$MASTERS${RESET}"
-    (( MASTERS > 1 )) && echo -e "${RED}✖ multiple masters detected${RESET}" && fail=true
+    (( MASTERS > 1 )) && echo -e "${RED}❌ multiple masters detected${RESET}" && fail=true
 
     echo -e "${BLUE}checking socket:${RESET} /run/gunicorn.sock"
-    [[ -S "/run/gunicorn.sock" ]] && echo -e "${GREEN}✔ socket exists${RESET}" || echo -e "${YELLOW}⚠ socket missing (maybe using TCP)${RESET}"
+    [[ -S "/run/gunicorn.sock" ]] && echo -e "${GREEN}✓ socket exists${RESET}" || echo -e "${YELLOW}⚠ socket missing (maybe using TCP)${RESET}"
 
     echo -e "${BLUE}recent logs:${RESET}"
     sudo journalctl -u "$SERVICE" -n 20 --no-pager | sed \
@@ -288,22 +300,22 @@ check_django() {
     while IFS= read -r -d '' file; do
         echo -e "${BLUE}compiling:${RESET} $file"
         $VENV_PATH/bin/python -m py_compile "$file" 2>&1 || {
-            echo -e "${RED}✖ syntax error:${RESET} $file"
+            echo -e "${RED}❌ syntax error:${RESET} $file"
             ((SYNTAX_ERRORS++))
         }
     done < <(find "$PROJECT_PATH" -name '*.py' -print0)
 
     if (( SYNTAX_ERRORS == 0 )); then
-        echo -e "${GREEN}✔ no syntax errors${RESET}"
+        echo -e "${GREEN}✓ no syntax errors${RESET}"
     else
-        echo -e "${RED}✖ $SYNTAX_ERRORS python files contain syntax errors${RESET}"
+        echo -e "${RED}❌ $SYNTAX_ERRORS python files contain syntax errors${RESET}"
         fail=true
     fi
 
     echo -e "\n${YELLOW}[3] migration status${RESET}"
     MIG=$($MANAGE showmigrations 2>&1)
     if [[ $? -ne 0 ]]; then
-        echo -e "${RED}✖ showmigrations failed${RESET}"
+        echo -e "${RED}❌ showmigrations failed${RESET}"
         echo "$MIG"
         fail=true
     else
@@ -313,14 +325,14 @@ check_django() {
             echo "$MIG" | grep '\[ \]'
             fail=true
         else
-            echo -e "${GREEN}✔ all migrations applied${RESET}"
+            echo -e "${GREEN}✓ all migrations applied${RESET}"
         fi
     fi
 
     echo -e "\n${YELLOW}[4] checking staticfiles_collected${RESET}"
     STATIC_DIR="$PROJECT_PATH/staticfiles_collected"
     if [[ -d "$STATIC_DIR" ]]; then
-        echo -e "${GREEN}✔ staticfiles_collected exists${RESET}"
+        echo -e "${GREEN}✓ staticfiles_collected exists${RESET}"
     else
         echo -e "${YELLOW}⚠ staticfiles_collected missing — run collectstatic${RESET}"
     fi
@@ -336,12 +348,12 @@ check_django() {
     CURRENT_ERROR=$(journalctl -u $SERVICE --since "$LOOKBACK" --no-pager | grep "AttributeError: module 'MikesLists.context_processors' has no attribute 'env_name'")
 
     if [ ! -z "$CURRENT_ERROR" ]; then
-        echo "${RED}✖ ALERT: Context Processor Error detected NOW."
-        echo "${RED}✖ Check: /srv/django/MikesLists_dev/MikesLists/context_processors.py"
-        echo "${RED}✖ Error Detail: $CURRENT_ERROR"
+        echo "${RED}❌ ALERT: Context Processor Error detected NOW."
+        echo "${RED}❌ Check: /srv/django/MikesLists_dev/MikesLists/context_processors.py"
+        echo "${RED}❌ Error Detail: $CURRENT_ERROR"
         fail=true
     else
-        echo -e "${GREEN}✔ No active context processor errors found."
+        echo -e "${GREEN}✓ No active context processor errors found."
     fi
 
     # Check for template partials
@@ -351,9 +363,9 @@ check_django() {
 
     for file in "${PARTIALS[@]}"; do
         if [ -f "$TEMPLATE_DIR/$file" ]; then
-            echo "${GREEN}✔  Found $file"
+            echo "${GREEN}✓  Found $file"
         else
-            echo "${RED}✖  ERROR: $file is missing from $TEMPLATE_DIR"
+            echo "${RED}❌  ERROR: $file is missing from $TEMPLATE_DIR"
             fail=true
         fi
     done
@@ -362,38 +374,240 @@ check_django() {
     URL_ERROR=$(journalctl -u mikeslists-dev.service -n 50 --no-pager | grep "NoReverseMatch")
 
     if [ ! -z "$URL_ERROR" ]; then
-        echo "${RED}✖  URL ERROR: A link in your template is broken."
+        echo "${RED}❌  URL ERROR: A link in your template is broken."
         echo "Check if 'path(\"accounts/\", include(\"django.contrib.auth.urls\"))' is in urls.py"
         fail=true
     else
-        echo "${GREEN}✔  no ReverseMatch errors Found $file"
+        echo "${GREEN}✓  no ReverseMatch errors Found $file"
     fi
 
 
     echo "--- Checking Auth Templates ---"
     echo -e "\n${YELLOW}[8] checking Auth Templates${RESET}"
     # Check the global registration path
-    if [ -f "/srv/django/MikesLists_dev/templates/registration/login.html" ]; then
-        echo "${GREEN}✔  Auth Login template found."
+    if [ -f "/srv/django/MikesLists_dev/accounts/templates/registration/login.html" ]; then
+        echo "${GREEN}✓  Auth Login template found."
     else
-        echo "${RED}✖  ERROR: registration/login.html not found in global templates."
+        echo "${RED}❌  ERROR: registration/login.html not found in global templates."
         fail=true
     fi
 
+    echo -e "\n${YELLOW}[9] checking that login.html is where expected ${RESET}"
     # Check if the app-specific template is there instead
-    if [ -f "/srv/django/MikesLists_dev/accounts/templates/accounts/login.html" ]; then
-        echo "${YELLOW}⚠ [INFO] Found login.html in accounts app folder."
+    if [ -f "/srv/django/MikesLists_dev/accounts/templates/registration/login.html" ]; then
+        echo "${GREEN}✓ [INFO] Found login.html in accounts/templates/registration folder."
         warn=true
     fi
 
 
+    $fail && return 1 || return 0
+}
+
+#!/bin/bash
+
+route_audits() {
+    echo "========================================"
+    echo "   4.5 ROUTE AUDIT"
+    echo "========================================"
+
+    echo -e "${YELLOW}[1]just show urls  ${RESET}"
+    cd "$PROJECT_PATH" && "$VENV_PATH/bin/python3" manage.py show_urls
+
+    echo -e "${YELLOW}[2]just show urls  ${RESET}"
+    cd "$PROJECT_PATH" && "$VENV_PATH/bin/python3" manage.py list_model_info
+
+    echo -e "${YELLOW}[3]validate templates  ${RESET}"
+    cd "$PROJECT_PATH" && "$VENV_PATH/bin/python3" manage.py validate_templates
+
+    echo -e "${YELLOW}[4] show permissions  ${RESET}"
+    cd "$PROJECT_PATH" && "$VENV_PATH/bin/python3" manage.py show_permissions --all
 
 
 
+    echo -e "${YELLOW}[5]running route audits ${RESET}"
+    # 1. Extract ALL unique URL names from all templates
+    # Matches patterns like {% url 'name' %} or {% url 'namespace:name' %}
+    # ALL_URLS=$(grep -rhE "{% url '[^']*' %}" /srv/django/MikesLists_dev/templates/ | sed -E "s/.*'([^']*)'.*/\1/" | sort -u)
+
+    # ALL_URLS=$(grep -rhE "{% url '[^']*' %}" $PROJ_DIR/templates/ $PROJ_DIR/accounts/templates/ | sed -E "s/.*'([^']*)'.*/\1/" | sort -u)
+    echo "Caching Django URL map..."
+    URL_MAP=$(cd "$PROJECT_PATH" && "$VENV_PATH/bin/python3" manage.py show_urls)
+
+    # DEBUG: Check if we have links to audit
+    echo "Debug: Found ${#LINKS[@]} links to check."
+
+    for LINK_NAME in "${LINKS[@]}"; do
+        echo " --- $LINK_NAME"
+
+        # 2. Search the cache for the EXACT name in the name column
+        # Django show_urls format: /path/  namespace:name  view_path
+        MATCH=$(echo "$URL_MAP" | awk -v name="$LINK_NAME" '$2 == name {print $0}')
+
+        if [ -z "$MATCH" ]; then
+            echo -e "${RED}❌  ERROR: '$LINK_NAME' not found in any urls.py.${RESET}"
+            fail=true
+        else
+            # Extract the View path (usually the last column)
+            VIEW_FINAL=$(echo "$MATCH" | awk '{print $NF}')
+            echo -e "${GREEN}✅  SUCCESS: Maps to $VIEW_FINAL${RESET}"
+        fi
+        echo "----------------------------------------------------"
+    done
+
+    echo -e "${YELLOW}[6] checking export_env_vars in core.py ${RESET}"
+    if grep -q "export_env_vars" "/srv/django/MikesLists_dev/MikesLists/settings/core.py"; then
+        echo -e "${GREEN}✓ Environment Context Processor is active."
+    else
+        echo -e "${YELLOW}⚠ Environment badge may not display correctly."
+    fi
+
+    $fail && return 1 || return 0
+}
+
+
+url_audit() {
+    #!/bin/bash
+    PROJ_DIR="/srv/django/MikesLists_dev"
+
+    warn=false
+    fail=false
+
+    echo "===================================================="
+    echo "   [ 4.7 ] TWO-WAY URL & VIEW CONSISTENCY AUDIT"
+    echo "===================================================="
+
+    echo -e "\n${YELLOW}[1] Auditing URL Patterns to Views ${RESET}"
+    cd $PROJECT_PATH && $VENV_PATH/bin/python3 manage.py show_urls | sort -u | while read -r line; do
+        URL_PATTERN=$(echo "$line" | awk '{print $1}')
+        VIEW_PATH=$(echo "$line" | awk '{print $NF}')
+
+        # 1. Broaden Internal Filter
+        # Catches django paths, admin/accounts namespaces, and common auth view names
+        if [[ "$VIEW_PATH" == *"django."* ]] || [[ "$VIEW_PATH" == *":"* ]] || \
+           [[ "$VIEW_PATH" =~ ^(password_|login|logout|reset) ]]; then
+            echo -e "${B_GREEN}✓ ${RESET} $URL_PATTERN  View: ${CYAN}$VIEW_PATH ${RESET}(Django Internal/Auth)"
+            continue
+        fi
+
+        # 2. Extract Identifier (Handle Class-Based Views)
+        CLEAN_NAME=$(echo "$VIEW_PATH" | rev | cut -d. -f1 | rev | sed 's/.as_view//g')
+
+        # 3. Primary Search: Look for 'def' or 'class' (Excluding urls.py and tests)
+        FILE_LOC=$(grep -rlE --include="*.py" "(def|class) $CLEAN_NAME" "$PROJ_DIR" \
+            --exclude-dir={venv-dev,venv,__pycache__,static,media,.git,staticfiles_collected,tests} \
+            --exclude="urls.py")
+
+        if [ -n "$FILE_LOC" ]; then
+            SHORT_LOC=$(echo "$FILE_LOC" | head -n 1 | sed "s|$PROJ_DIR/||g")
+            echo -e "${B_GREEN}✓ ${RESET} $URL_PATTERN  View: ${CYAN}'$CLEAN_NAME'${RESET} found in $SHORT_LOC"
+        else
+            # 4. Final Fallback: Check for the name inside ANY view file (even as a string)
+            # This helps catch cases where the URL name is different from the function name
+            FALLBACK_LOC=$(grep -rl "$CLEAN_NAME" "$PROJ_DIR" --include="*views*.py" --exclude-dir={venv-dev,venv,__pycache__} | head -n 1)
+
+            if [ -n "$FALLBACK_LOC" ]; then
+                SHORT_LOC=$(echo "$FALLBACK_LOC" | sed "s|$PROJ_DIR/||g")
+                echo -e "${B_YELLOW}⚠ ${RESET} $URL_PATTERN Alias: ${CYAN}'$CLEAN_NAME'${RESET} referenced in $SHORT_LOC"
+                warn=true
+            else
+                # echo -e "${B_RED}❌ ${RESET} $URL_PATTERN  ${RED} Missing${RESET}: No definition or reference found for ${CYAN}'$CLEAN_NAME'${RESET}"
+                echo -e "${B_YELLOW}⚠ ${RESET}  $URL_PATTERN  ${RED} Missing${RESET}: No definition or reference found for ${CYAN}'$CLEAN_NAME'${RESET}"
+                warn=true
+            fi
+        fi
+    done
+    echo ""
+
+    echo -e "\n${YELLOW}[2] Auditing Views to URL Patterns (Reverse Check)${RESET}"
+
+    # echo "[Step 2] Auditing Views to URL Patterns (Reverse Check)..."
+    # This Python snippet finds all functions in your views and checks if they exist in urlpatterns
+cd $PROJECT_PATH && $VENV_PATH/bin/python3 << END
+import os
+import sys
+import django
+
+# 1. Setup Environment
+sys.path.insert(0, '$PROJECT_PATH')
+os.environ['DJANGO_SETTINGS_MODULE'] = 'MikesLists.settings.core'
+
+try:
+    from django.conf import settings
+    django.setup()
+    if not hasattr(settings, 'ROOT_URLCONF'):
+        sys.exit(1) # Fatal: Settings misconfigured
+except Exception:
+    sys.exit(1) # Fatal: Django couldn't start
+
+from django.urls import get_resolver
+
+def get_all_views(resolver):
+    views = set()
+    try:
+        patterns = getattr(resolver, 'url_patterns', [])
+    except Exception:
+        return views
+    for pattern in patterns:
+        if hasattr(pattern, 'url_patterns'):
+            views.update(get_all_views(pattern))
+        elif hasattr(pattern, 'callback'):
+            cb = pattern.callback
+            if hasattr(cb, '__name__'):
+                views.add(cb.__name__)
+            if hasattr(cb, 'view_class'):
+                views.add(cb.view_class.__name__)
+    return views
+
+# Get active views
+active_views = get_all_views(get_resolver())
+orphan_count = 0
+
+# Scan apps for orphan views
+apps = ['accounts', 'ToDo']
+for app in apps:
+    paths = [os.path.join('$PROJ_DIR', app, 'views'), os.path.join('$PROJ_DIR', app, 'views.py')]
+    for path in [p for p in paths if os.path.exists(p)]:
+        walker = os.walk(path) if os.path.isdir(path) else [(os.path.dirname(path), [], [os.path.basename(path)])]
+        for root, _, files in walker:
+            for file in files:
+                if file.endswith('.py') and file != '__init__.py':
+                    with open(os.path.join(root, file), 'r') as f_content:
+                        for line in f_content:
+                            if line.startswith(('def ', 'class ')):
+                                name = line.replace('def ', '').replace('class ', '').split('(')[0].split(':')[0].strip()
+                                if name not in active_views and not name.startswith('_') and "Test" not in name:
+                                    orphan_count += 1
+                                    display_path = os.path.join(root, file).replace('$PROJ_DIR/', '')
+                                    print(f"${B_YELLOW}⚠ ORPHAN:${RESET} {display_path} -> '${B_CYAN}{name}${RESET}' has no URL mapping.")
+
+# Final Logic for Exit Codes
+if orphan_count > 0:
+    print(f"\n${B_YELLOW}⚠${RESET} Found {orphan_count} orphaned view(s).")
+    sys.exit(2)  # 2 = Warning (Orphans exist)
+else:
+    print(f"\n${B_GREEN}✔${RESET} All views are correctly mapped to URLs.")
+    sys.exit(0)  # 0 = Success
+END
+
+    # --- BASH CAPTURE LOGIC ---
+    PYTHON_RESULT=$?
+
+    if [ $PYTHON_RESULT -eq 0 ]; then
+        echo -e "${B_GREEN}****** Section [2] Passed: No Orphans Found ******${RESET}"
+    elif [ $PYTHON_RESULT -eq 2 ]; then
+        echo -e "${B_YELLOW}****** Section [2] Finished: Review Warnings Above ******${RESET}"
+        # We return 0 here so the overall script doesn't "crash" due to a warning
+        warn = true
+    else
+        echo -e "${B_RED}****** Section [2] Failed: Fatal Setup Error ******${RESET}"
+        fail = true
+
+    fi
 
 
     $fail && return 1 || return 0
 }
+
 
 
 
@@ -417,18 +631,18 @@ check_git() {
     echo -e "${BLUE}reading current branch:${RESET}"
     BRANCH=$(git -C "$PROJECT_PATH" rev-parse --abbrev-ref HEAD 2>&1)
     if [[ $? -ne 0 ]]; then
-        echo -e "${RED}✖ cannot determine git branch${RESET}"
+        echo -e "${RED}❌ cannot determine git branch${RESET}"
         echo "$BRANCH"
         fail=true
     else
-        echo -e "${GREEN}✔ branch:${RESET} ${CYAN}$BRANCH${RESET}"
+        echo -e "${GREEN}✓ branch:${RESET} ${CYAN}$BRANCH${RESET}"
     fi
 
     # 3. Working tree status
     echo -e "${BLUE}checking working tree status:${RESET}"
     CHANGES=$(git -C "$PROJECT_PATH" status --porcelain)
     if [[ -z "$CHANGES" ]]; then
-        echo -e "${GREEN}✔ working tree clean${RESET}"
+        echo -e "${GREEN}✓ working tree clean${RESET}"
     else
         echo -e "${YELLOW}⚠ working tree has changes:${RESET}"
         echo "$CHANGES"
@@ -438,7 +652,7 @@ check_git() {
     echo -e "${BLUE}checking untracked files:${RESET}"
     UNTRACKED=$(git -C "$PROJECT_PATH" ls-files --others --exclude-standard)
     if [[ -z "$UNTRACKED" ]]; then
-        echo -e "${GREEN}✔ no untracked files${RESET}"
+        echo -e "${GREEN}✓ no untracked files${RESET}"
     else
         echo -e "${YELLOW}⚠ untracked files:${RESET}"
         echo "$UNTRACKED"
@@ -448,7 +662,7 @@ check_git() {
     echo -e "${BLUE}checking staged changes:${RESET}"
     STAGED=$(git -C "$PROJECT_PATH" diff --cached --name-only)
     if [[ -z "$STAGED" ]]; then
-        echo -e "${GREEN}✔ no staged changes${RESET}"
+        echo -e "${GREEN}✓ no staged changes${RESET}"
     else
         echo -e "${YELLOW}⚠ staged but uncommitted changes:${RESET}"
         echo "$STAGED"
@@ -458,7 +672,7 @@ check_git() {
     echo -e "${BLUE}reading last commit:${RESET}"
     HASH=$(git -C "$PROJECT_PATH" rev-parse HEAD 2>/dev/null)
     if [[ -z "$HASH" ]]; then
-        echo -e "${RED}✖ cannot read last commit${RESET}"
+        echo -e "${RED}❌ cannot read last commit${RESET}"
         fail=true
     else
         LAST_AUTHOR=$(git -C "$PROJECT_PATH" log -1 --pretty='%an')
@@ -504,7 +718,7 @@ check_db() {
     # Required vars
     for var in DB_HOST DB_PORT DB_USER DB_PASSWORD DB_NAME; do
         if [[ -z "${!var}" ]]; then
-            echo -e "${RED}✖ missing required DB variable: $var${RESET}"
+            echo -e "${RED}❌ missing required DB variable: $var${RESET}"
             fail=true
         fi
     done
@@ -516,10 +730,10 @@ check_db() {
         if [[ $? -ne 0 ]]; then
             echo -e "${YELLOW}⚠ cannot read DB engine from Django settings${RESET}"
         else
-            echo -e "${GREEN}✔ DB engine from settings:${RESET} $DB_ENGINE"
+            echo -e "${GREEN}✓ DB engine from settings:${RESET} $DB_ENGINE"
         fi
     else
-        echo -e "${GREEN}✔ DB engine from .env:${RESET} $DB_ENGINE"
+        echo -e "${GREEN}✓ DB engine from .env:${RESET} $DB_ENGINE"
     fi
 
     echo -e "${YELLOW}note:${RESET} django.db.backends.mysql is a python module, not a file — correct for MariaDB"
@@ -531,9 +745,9 @@ check_db() {
     echo -e "${BLUE}running:${RESET} ping -c 1 -W 1 \"$DB_HOST\""
 
     if ping -c 1 -W 1 "$DB_HOST" >/dev/null 2>&1; then
-        echo -e "${GREEN}✔ ping successful${RESET}"
+        echo -e "${GREEN}✓ ping successful${RESET}"
     else
-        echo -e "${RED}✖ cannot reach DB host: $DB_HOST${RESET}"
+        echo -e "${RED}❌ cannot reach DB host: $DB_HOST${RESET}"
         fail=true
     fi
 
@@ -552,9 +766,9 @@ check_db() {
         | grep -v "objects imported automatically"
     )
     if echo "$DB_OUTPUT" | grep -q "OK"; then
-        echo -e "${GREEN}✔ django connected successfully${RESET}"
+        echo -e "${GREEN}✓ django connected successfully${RESET}"
     else
-        echo -e "${RED}✖ django failed to connect to the database${RESET}"
+        echo -e "${RED}❌ django failed to connect to the database${RESET}"
         echo -e "${YELLOW}reason (exception from Django):${RESET}"
         echo "$DB_OUTPUT"
         fail=true
@@ -613,7 +827,7 @@ check_tests() {
         echo "[OK] libstdc++6 is installed."
     else
         echo "[WARN] libstdc++6 missing. This may cause Todo Tree issues."
-        echo -e "${RED}✖ tests failed ${RESET}"
+        echo -e "${RED}❌ tests failed ${RESET}"
         fail=true
     fi
 
@@ -638,7 +852,7 @@ check_nginx() {
         echo -e "${YELLOW}⚠ nginx is not installed on this system${RESET}"
         return 0
     else
-        echo -e "${GREEN}✔ nginx binary found${RESET}"
+        echo -e "${GREEN}✓ nginx binary found${RESET}"
     fi
 
     #############################################
@@ -646,9 +860,9 @@ check_nginx() {
     #############################################
     echo -e "${BLUE}checking nginx service state (systemctl is-active nginx)${RESET}"
     if systemctl is-active --quiet nginx; then
-        echo -e "${GREEN}✔ nginx service is running${RESET}"
+        echo -e "${GREEN}✓ nginx service is running${RESET}"
     else
-        echo -e "${RED}✖ nginx service is NOT running${RESET}"
+        echo -e "${RED}❌ nginx service is NOT running${RESET}"
         fail=true
     fi
 
@@ -668,9 +882,9 @@ check_nginx() {
     UPSTREAM_ERRORS=$(sudo journalctl -u nginx -n 50 --no-pager 2>&1 | grep -Ei "upstream|connect|refused|timeout")
 
     if [[ -z "$UPSTREAM_ERRORS" ]]; then
-        echo -e "${GREEN}✔ no upstream-related errors found in recent logs${RESET}"
+        echo -e "${GREEN}✓ no upstream-related errors found in recent logs${RESET}"
     else
-        echo -e "${RED}✖ upstream-related errors detected:${RESET}"
+        echo -e "${RED}❌ upstream-related errors detected:${RESET}"
         echo "$UPSTREAM_ERRORS" | sed \
             -e "s/error/${RED}error${RESET}/Ig" \
             -e "s/warning/${YELLOW}warning${RESET}/Ig" \
@@ -689,9 +903,9 @@ check_nginx() {
     echo -e "  http status: ${CYAN}${HTTP_CODE}${RESET}"
 
     if [[ "$HTTP_CODE" == "200" || "$HTTP_CODE" == "301" || "$HTTP_CODE" == "302" ]]; then
-        echo -e "${GREEN}✔ nginx (or local HTTP server) is responding on 127.0.0.1${RESET}"
+        echo -e "${GREEN}✓ nginx (or local HTTP server) is responding on 127.0.0.1${RESET}"
     else
-        echo -e "${RED}✖ nginx/local HTTP upstream not returning a healthy status${RESET}"
+        echo -e "${RED}❌ nginx/local HTTP upstream not returning a healthy status${RESET}"
         fail=true
     fi
 
@@ -714,7 +928,7 @@ check_envvars() {
     #############################################
     echo -e "${BLUE}checking .env file:${RESET} $ENV_FILE"
     if [[ ! -f "$ENV_FILE" ]]; then
-        echo -e "${RED}✖ .env file missing: $ENV_FILE${RESET}"
+        echo -e "${RED}❌ .env file missing: $ENV_FILE${RESET}"
         return 1
     fi
 
@@ -757,11 +971,11 @@ check_envvars() {
 
     for key in "${REQUIRED[@]}"; do
         if [[ -z "${VARS[$key]}" ]]; then
-            echo -e "${RED}✖ missing required variable:${RESET} $key"
+            echo -e "${RED}❌ missing required variable:${RESET} $key"
             missing_list+=("$key")
             fail=true
         else
-            echo -e "${GREEN}✔ $key=${CYAN}${VARS[$key]}${RESET}"
+            echo -e "${GREEN}✓ $key=${CYAN}${VARS[$key]}${RESET}"
         fi
     done
 
@@ -779,7 +993,7 @@ check_envvars() {
     done
 
     if (( EMPTY_COUNT == 0 )); then
-        echo -e "${GREEN}✔ no empty values found${RESET}"
+        echo -e "${GREEN}✓ no empty values found${RESET}"
     fi
 
     #############################################
@@ -792,7 +1006,7 @@ check_envvars() {
             echo -e "${YELLOW}⚠ duplicate key found:${RESET} $key (later entries override earlier ones)"
         done
     else
-        echo -e "${GREEN}✔ no duplicate keys${RESET}"
+        echo -e "${GREEN}✓ no duplicate keys${RESET}"
     fi
 
     #############################################
@@ -857,10 +1071,10 @@ check_permissions() {
         if [[ "$OWNER" != "pi:pi" ]]; then
             echo -e "${YELLOW}⚠ expected owner pi:www-data (current: $OWNER)${RESET}"
         else
-            echo -e "${GREEN}✔ ownership OK${RESET}"
+            echo -e "${GREEN}✓ ownership OK${RESET}"
         fi
     else
-        echo -e "${RED}✖ project directory missing${RESET}"
+        echo -e "${RED}❌ project directory missing${RESET}"
         fail=true
     fi
 
@@ -877,10 +1091,10 @@ check_permissions() {
         if [[ "$VENV_OWNER" != "pi:django" ]]; then
             echo -e "${YELLOW}⚠ virtualenv should typically be owned by pi:pi (current: $VENV_OWNER)${RESET}"
         else
-            echo -e "${GREEN}✔ virtualenv ownership OK${RESET}"
+            echo -e "${GREEN}✓ virtualenv ownership OK${RESET}"
         fi
     else
-        echo -e "${RED}✖ virtualenv directory missing${RESET}"
+        echo -e "${RED}❌ virtualenv directory missing${RESET}"
         fail=true
     fi
 
@@ -897,10 +1111,10 @@ check_permissions() {
         if [[ "$PERMS" -lt 644 ]]; then
             echo -e "${YELLOW}⚠ manage.py permissions are restrictive (expected 644 or more)${RESET}"
         else
-            echo -e "${GREEN}✔ manage.py permissions OK${RESET}"
+            echo -e "${GREEN}✓ manage.py permissions OK${RESET}"
         fi
     else
-        echo -e "${RED}✖ manage.py missing${RESET}"
+        echo -e "${RED}❌ manage.py missing${RESET}"
         fail=true
     fi
 
@@ -919,7 +1133,7 @@ check_permissions() {
         if [[ "$STATIC_PERMS" -lt 755 ]]; then
             echo -e "${YELLOW}⚠ staticfiles_collected should be world-readable (755) for nginx${RESET}"
         else
-            echo -e "${GREEN}✔ staticfiles_collected permissions OK${RESET}"
+            echo -e "${GREEN}✓ staticfiles_collected permissions OK${RESET}"
         fi
     else
         echo -e "${YELLOW}⚠ staticfiles_collected directory missing${RESET}"
@@ -940,7 +1154,7 @@ check_permissions() {
         if [[ "$MEDIA_PERMS" -lt 775 ]]; then
             echo -e "${YELLOW}⚠ media directory should be writable (775) for uploads${RESET}"
         else
-            echo -e "${GREEN}✔ media directory permissions OK${RESET}"
+            echo -e "${GREEN}✓ media directory permissions OK${RESET}"
         fi
     else
         echo -e "${YELLOW}⚠ media directory under staticfiles_collected missing${RESET}"
@@ -954,10 +1168,10 @@ check_permissions() {
     TEST_FILE="$PROJECT_PATH/.diag_write_test"
     echo -e "${BLUE}running:${RESET} touch \"$TEST_FILE\""
     if touch "$TEST_FILE" 2>/dev/null; then
-        echo -e "${GREEN}✔ project directory is writable${RESET}"
+        echo -e "${GREEN}✓ project directory is writable${RESET}"
         rm -f "$TEST_FILE"
     else
-        echo -e "${RED}✖ project directory is NOT writable by current user (${USER})${RESET}"
+        echo -e "${RED}❌ project directory is NOT writable by current user (${USER})${RESET}"
         fail=true
     fi
 
@@ -986,7 +1200,7 @@ check_packages() {
         return 0
     fi
 
-    echo -e "${GREEN}✔ requirements.txt found${RESET}"
+    echo -e "${GREEN}✓ requirements.txt found${RESET}"
 
     #############################################
     # 2. Get installed packages
@@ -994,7 +1208,7 @@ check_packages() {
     echo -e "${BLUE}running:${RESET} $VENV_PATH/bin/pip freeze"
     INSTALLED=$($VENV_PATH/bin/pip freeze 2>&1)
     if [[ $? -ne 0 ]]; then
-        echo -e "${RED}✖ unable to read installed packages from pip${RESET}"
+        echo -e "${RED}❌ unable to read installed packages from pip${RESET}"
         echo -e "${YELLOW}output:${RESET}"
         echo "$INSTALLED"
         return 1
@@ -1012,13 +1226,13 @@ check_packages() {
         pkg=$(echo "$req" | cut -d'=' -f1 | cut -d'<' -f1 | cut -d'>' -f1)
 
         if ! echo "$INSTALLED" | grep -qi "^${pkg}=="; then
-            echo -e "${RED}✖ missing:${RESET} $req"
+            echo -e "${RED}❌ missing:${RESET} $req"
             MISSING=$((MISSING + 1))
         fi
     done < "$REQUIREMENTS_FILE"
 
     if (( MISSING == 0 )); then
-        echo -e "${GREEN}✔ no missing packages${RESET}"
+        echo -e "${GREEN}✓ no missing packages${RESET}"
     else
         fail=true
     fi
@@ -1044,7 +1258,7 @@ check_packages() {
     done < "$REQUIREMENTS_FILE"
 
     if (( MISMATCH == 0 )); then
-        echo -e "${GREEN}✔ no version mismatches${RESET}"
+        echo -e "${GREEN}✓ no version mismatches${RESET}"
     fi
 
     #############################################
@@ -1063,7 +1277,7 @@ check_packages() {
     done <<< "$INSTALLED"
 
     if (( EXTRA == 0 )); then
-        echo -e "${GREEN}✔ no extra packages${RESET}"
+        echo -e "${GREEN}✓ no extra packages${RESET}"
     fi
 
     #############################################
@@ -1108,11 +1322,11 @@ check_static_analysis() {
         RUFF_STATUS=$?
 
         if [[ $RUFF_STATUS -ne 0 ]]; then
-            echo -e "${RED}✖ ruff reported issues${RESET}"
+            echo -e "${RED}❌ ruff reported issues${RESET}"
             echo "$RUFF_OUT"
             fail=true
         else
-            echo -e "${GREEN}✔ ruff found no issues${RESET}"
+            echo -e "${GREEN}✓ ruff found no issues${RESET}"
         fi
     fi
 
@@ -1131,11 +1345,11 @@ check_static_analysis() {
         FLAKE_STATUS=$?
 
         if [[ $FLAKE_STATUS -ne 0 ]]; then
-            echo -e "${RED}✖ flake8 reported issues${RESET}"
+            echo -e "${RED}❌ flake8 reported issues${RESET}"
             echo "$FLAKE_OUT"
             fail=true
         else
-            echo -e "${GREEN}✔ flake8 found no issues${RESET}"
+            echo -e "${GREEN}✓ flake8 found no issues${RESET}"
         fi
     fi
 
@@ -1173,14 +1387,14 @@ print_summary() {
 
         case "$status" in
             PASS)
-                echo -e "${GREEN}✔ $section${RESET}"
+                echo -e "${GREEN}✓ $section${RESET}"
                 ;;
             WARN)
                 echo -e "${YELLOW}⚠ $section${RESET}"
                 overall_warn=true
                 ;;
             FAIL)
-                echo -e "${RED}✖ $section${RESET}"
+                echo -e "${RED}❌ $section${RESET}"
                 overall_fail=true
                 ;;
         esac
@@ -1238,6 +1452,12 @@ main() {
 
     run_section "django" check_django
     record_summary "django" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+
+    run_section "route_audits" route_audits
+    record_summary "route_audits" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+
+    run_section "url_audit" url_audit
+    record_summary "url_audit" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
 
     run_section "ruff" check_ruff_only
     record_summary "ruff only" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)

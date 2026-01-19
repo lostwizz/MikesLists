@@ -2,13 +2,15 @@
 # -*- coding: utf-8 -*-
 ###############################################################################
 r"""
-dev.py
+core.py
+MikesLists.settings.core
+/srv/django/MikesLists_dev/MikesLists/settings/core.py
 
 
 """
 __version__ = "0.0.0.000095-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-18 14:11:53"
+__updated__ = "2026-01-18 20:47:28"
 ###############################################################################
 
 
@@ -99,6 +101,7 @@ INSTALLED_APPS = [
     'accounts',
     "ToDo",
     "widget_tweaks",
+    'django_extensions',
 ]
 
 # path('todo/', include('ToDo.urls'))

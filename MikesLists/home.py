@@ -3,12 +3,13 @@
 ###############################################################################
 r"""
 home.py
-
+MikesLists.home
+/srv/django/MikesLists_dev/MikesLists/home.py
 
 """
 __version__ = "0.0.0.000004-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-18 13:51:31"
+__updated__ = "2026-01-18 20:44:31"
 ###############################################################################
 
 from django.conf import settings

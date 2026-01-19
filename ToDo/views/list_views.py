@@ -3,6 +3,8 @@
 ###############################################################################
 r"""
 list_views.py
+ToDo.views.list_views
+/srv/django/MikesLists_dev/ToDo/views/list_views.py
 
 for the lists this is the view
 
@@ -10,7 +12,7 @@ for the lists this is the view
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-18 13:48:28"
+__updated__ = "2026-01-18 20:38:23"
 ###############################################################################
 
 

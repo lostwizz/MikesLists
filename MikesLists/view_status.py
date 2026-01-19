@@ -1,3 +1,18 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+###############################################################################
+r"""
+view_status.py
+MikesLists.view_status
+/srv/django/MikesLists_dev/MikesLists/view_status.py
+
+"""
+__version__ = "0.0.0.000004-dev"
+__author__ = "Mike Merrett"
+__updated__ = "2026-01-18 20:44:12"
+###############################################################################
+
+
 import os
 import subprocess
 import sys

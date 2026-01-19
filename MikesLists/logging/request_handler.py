@@ -1,3 +1,17 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+###############################################################################
+r"""
+request_handler.py
+MikesLists.logging.request_handler
+/srv/django/MikesLists_dev/MikesLists/logging/request_handler.py
+
+
+"""
+__version__ = "0.0.0.000070-dev"
+__author__ = "Mike Merrett"
+__updated__ = "2026-01-18 20:48:47"
+###############################################################################
 # from django.core.servers.basehttp import WSGIRequestHandler
 
 # # class RequestHandlerWithIPAndUser(WSGIRequestHandler):

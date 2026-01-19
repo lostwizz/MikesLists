@@ -1,3 +1,18 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+###############################################################################
+r"""
+logging_formatters.py
+MikesLists.logging.logging_formatters
+/srv/django/MikesLists_dev/MikesLists/logging/logging_formatters.py
+
+
+"""
+__version__ = "0.0.0.000070-dev"
+__author__ = "Mike Merrett"
+__updated__ = "2026-01-18 20:48:14"
+###############################################################################
+
 import logging
 import sqlparse
 import re
