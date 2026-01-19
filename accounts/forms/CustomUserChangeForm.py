@@ -9,12 +9,17 @@ accounts.forms.CustomUserChangeForm
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-18 20:56:05"
+__updated__ = "2026-01-18 20:57:54"
 ###############################################################################
 
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from django.contrib.auth.forms import UserChangeForm
 
 class CustomUserChangeForm(UserChangeForm):
-    pass
+    # If you want to password to be read-only or hidden
+    password = None
+
+    class Meta:
+        model = User
+        fields = ('first_name', 'last_name', 'email')
