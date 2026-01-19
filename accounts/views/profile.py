@@ -9,12 +9,13 @@ accounts.views.profile
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-18 20:54:29"
+__updated__ = "2026-01-18 20:59:07"
 ###############################################################################
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
-from accounts.forms.custom_form import CustomUserChangeForm
+from accounts.forms.CustomUserChangeForm import CustomUserChangeForm
+
 
 # views.py
 @login_required
