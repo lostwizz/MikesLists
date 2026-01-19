@@ -10,7 +10,7 @@ accounts.views.register
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-18 22:11:57"
+__updated__ = "2026-01-18 23:48:35"
 ###############################################################################
 
 
@@ -34,7 +34,7 @@ def register(request):
             user = form.save()
             login(request, user) # Auto-login after registration
             messages.success(request, f"Registration successful! Welcome, {user.username}.")
-            return redirect('home')
+            return redirect('/')
     else:
         form = UserCreationForm()
     return render(request, 'registration/register.html', {'form': form})

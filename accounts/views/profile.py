@@ -9,7 +9,7 @@ accounts.views.profile
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-18 23:11:39"
+__updated__ = "2026-01-19 00:06:19"
 ###############################################################################
 
 from django.contrib.auth.decorators import login_required
@@ -22,7 +22,7 @@ from django.contrib import messages  # For the "Success" alert
 @login_required
 def edit_profile(request):
     if request.method == 'POST':
-        form = CustomUserChangeForm(request.POST, instance=request.user)
+        form = CustomUserChangeForm(request.POST, instance=request.user, request=request)
         if form.is_valid():
             form.save()
             messages.success(request, "Your profile has been updated!")

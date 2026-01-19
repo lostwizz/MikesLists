@@ -10,7 +10,7 @@ MikesLists.settings.core
 """
 __version__ = "0.0.0.000095-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-18 21:26:00"
+__updated__ = "2026-01-18 23:56:53"
 ###############################################################################
 
 
@@ -32,6 +32,9 @@ from pathlib import Path
 from decouple import config
 
 
+ADMINS = [("Mike", "mmerrett@merrett.ca"),
+            ('pi', 'admin@merrett.ca'),
+            ]
 
 # move allowed hosts to the core
 #   - it will be the same for dev and test
