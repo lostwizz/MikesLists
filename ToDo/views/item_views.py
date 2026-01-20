@@ -12,11 +12,14 @@ the items views for the ToDo app
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-18 16:55:14"
+__updated__ = "2026-01-19 23:54:22"
 ###############################################################################
 
 
 from django.shortcuts import render, redirect, get_object_or_404
+from guardian.shortcuts import assign_perm
+
+
 from django.contrib.auth.decorators import login_required
 
 from ToDo.models.items import Items
@@ -57,6 +60,12 @@ def item_create(request):
             # Assign any extra logic here (like setting the user)
             item.created_user = request.user
             item.save()
+
+            # Assign object-level permissions to the creator
+            assign_perm("change_item", request.user, item)
+            assign_perm("delete_item", request.user, item)
+            assign_perm("view_item", request.user, item)
+
             return redirect("dashboard")
     else:
         form = ItemForm()

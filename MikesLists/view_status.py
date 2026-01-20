@@ -9,7 +9,7 @@ MikesLists.view_status
 """
 __version__ = "0.0.0.000004-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-18 20:44:12"
+__updated__ = "2026-01-19 23:44:42"
 ###############################################################################
 
 
@@ -22,6 +22,8 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
+from accounts.utils.roles import get_user_role
+
 
 
 from django.http import HttpResponseForbidden
@@ -179,3 +181,17 @@ def status_view(request: HttpRequest) -> HttpResponse:
         "restart_status": restart_status,
     }
     return render(request, "status/dashboard.html", context)
+
+
+def dashboard(request):
+    role = get_user_role(request.user)
+
+    if role == "admin":
+        template = "dashboard/admin.html"
+    elif role == "editor":
+        template = "dashboard/editor.html"
+    else:
+        template = "dashboard/readonly.html"
+
+    return render(request, template)
+

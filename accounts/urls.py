@@ -11,7 +11,7 @@ accounts.urls
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-19 23:34:24"
+__updated__ = "2026-01-20 00:03:34"
 ###############################################################################
 
 
@@ -26,6 +26,9 @@ from django.contrib.auth import views as auth_views
 
 from . import views
 from .views.group_manager import group_manager
+from .views.dashboard import dashboard
+
+
 
 
 # from . import views  # The dot means "from this current folder"
@@ -45,6 +48,8 @@ urlpatterns = [
     path('profile/edit/', views.edit_profile, name='edit_profile'),
     path('accounts/', include('django.contrib.auth.urls')),
     path("groups/", group_manager, name="group_manager"),
+    path("dashboard/", dashboard, name="dashboard"),
+
 
 
 

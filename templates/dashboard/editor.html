@@ -1,0 +1,11 @@
+<h1>Editor Dashboard</h1>
+
+<h2>Items</h2>
+<ul>
+    {% for item in items %}
+        <li>
+            {{ item.title }}
+           {# <a href="{% url 'item_edit' item.id %}">Edit</a> #}
+        </li>
+    {% endfor %}
+</ul>

@@ -10,7 +10,7 @@ MikesLists.urls
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-18 15:30:01"
+__updated__ = "2026-01-20 00:08:39"
 ###############################################################################
 
 """
@@ -38,6 +38,7 @@ from .view_status import status_view
 from .home import home
 from .health import health
 
+from accounts.views.dashboard import dashboard
 
 
 
@@ -47,6 +48,9 @@ urlpatterns = [
     # path('accounts/', include('accounts.urls', namespace='accounts')),
     path('accounts/', include('accounts.urls', namespace='accounts')),
     path('accounts/', include('django.contrib.auth.urls')),
+    path("dashboard/", dashboard, name="dashboard"),
+
+
     path("status/", status_view, name="status_dashboard"),
     path("health/", health),
     path("", include("ToDo.urls")),               # This makes ToDo the homepage

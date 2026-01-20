@@ -10,7 +10,7 @@ MikesLists.settings.core
 """
 __version__ = "0.0.0.000095-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-19 22:19:18"
+__updated__ = "2026-01-19 23:48:13"
 ###############################################################################
 
 
@@ -103,9 +103,15 @@ INSTALLED_APPS = [
     "ToDo",
     "widget_tweaks",
     "django_extensions",
+    "guardian",
 ]
 
-# path('todo/', include('ToDo.urls'))
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "guardian.backends.ObjectPermissionBackend",
+]
+
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
