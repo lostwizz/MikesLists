@@ -37,7 +37,7 @@ Since this is a structural change, you need to migrate:
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-18 20:42:11"
+__updated__ = "2026-01-19 23:37:31"
 ###############################################################################
 
 import re
@@ -82,6 +82,16 @@ class Items(models.Model):
         unique_together = ("title", "version")
         verbose_name = "Item"
         verbose_name_plural = "Items"
+
+        ## - these a are allready defined
+        # permissions = [
+        #     ("add_items", "Can add items"),
+        #     ("change_items", "Can change items"),
+        #     ("delete_items", "Can delete items"),
+        #     ("view_items", "Can view items"),
+        # ]
+
+
 
     # -----------------------------------------------------------------
     def get_next_version(self):

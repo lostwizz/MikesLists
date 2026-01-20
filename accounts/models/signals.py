@@ -7,12 +7,15 @@ accounts.models.signals
 /srv/django/MikesLists_dev/accounts/models/signals.py
 
 
-
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-19 17:06:17"
+__updated__ = "2026-01-19 22:30:24"
 ###############################################################################
+
+import logging
+
+
 
 
 from django.db.models.signals import post_save
@@ -51,6 +54,15 @@ def create_user_profile(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
+
+    logging.debug(f"instance: {instance}")
     # This ensures the profile is saved whenever the user is saved
     if hasattr(instance, "profile"):
+
+        logging.debug("save_user_profile signal triggered")
+        logging.debug(f"User ID: {instance.id}")
+        logging.debug(f"User Profile ID: {instance.profile.id}")
+
         instance.profile.save()
+    else:
+        logging.debug( "profile not saved")

@@ -10,7 +10,7 @@ MikesLists.settings.core
 """
 __version__ = "0.0.0.000095-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-19 17:04:21"
+__updated__ = "2026-01-19 22:19:18"
 ###############################################################################
 
 
@@ -30,22 +30,6 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 from decouple import config
-
-import accounts
-import ToDo
-
-
-def ready():
-    accounts.assign_permissions()
-
-    try:
-        accounts.assign_permissions()
-    except Exception as e:
-        print(f"Error during ready(): {e}")
-
-
-def accounts_post_configure_signal(sender, **kwargs):
-    ready()
 
 
 ADMINS = [

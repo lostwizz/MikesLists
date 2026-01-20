@@ -2,3 +2,8 @@
 #"Nginx Error"|"tail -f /var/log/nginx/error.log"
 #"Nginx Access"|"tail -f /var/log/nginx/access.log"
 "Syslog"|"tail -f /var/log/syslog"
+##"Syslog"|"tail -f /var/log/syslog"
+
+
+
+"Request Logs"|"tail -f /srv/django/logs/requests.log"

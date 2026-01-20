@@ -31,7 +31,7 @@ Since this is a structural change, you need to migrate:
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-18 20:41:11"
+__updated__ = "2026-01-19 23:37:53"
 ###############################################################################
 
 from django.db import models
@@ -59,6 +59,14 @@ class Lists(models.Model):
     class Meta:
         verbose_name = "List"
         verbose_name_plural = "Lists"
+
+        ## - these a are allready defined
+        # permissions = [
+        #     ("add_lists", "Can add lists"),
+        #     ("change_lists", "Can change lists"),
+        #     ("delete_lists", "Can delete lists"),
+        #     ("view_lists", "Can view lists"),
+        # ]
 
 
 def funcname(parameter_list):

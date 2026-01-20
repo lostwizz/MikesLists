@@ -1,0 +1,23 @@
+<h1>Group Manager</h1>
+
+<form method="post">
+    {% csrf_token %}
+
+    <label>Select Group:</label>
+    <select name="group_id">
+        {% for group in groups %}
+            <option value="{{ group.id }}">{{ group.name }}</option>
+        {% endfor %}
+    </select>
+
+    <label>Permissions:</label>
+    <select name="permissions" multiple size="20">
+        {% for perm in permissions %}
+            <option value="{{ perm.id }}">
+                {{ perm.content_type.app_label }} | {{ perm.codename }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <button type="submit">Save</button>
+</form>
