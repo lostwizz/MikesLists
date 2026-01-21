@@ -10,7 +10,7 @@ MikesLists.urls
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-20 00:08:39"
+__updated__ = "2026-01-20 18:29:58"
 ###############################################################################
 
 """
@@ -29,41 +29,36 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
+
 from django.contrib import admin
 from django.urls import path, include
-
-from django.contrib.auth import views as auth_views
+from django.shortcuts import redirect
 
 from .view_status import status_view
-from .home import home
 from .health import health
 
-from accounts.views.dashboard import dashboard
+from django.contrib.auth.decorators import login_required
 
 
+
+def redirect_root_to_dashboard(request):
+    return redirect('accounts:dashboard')
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    # path("accounts/", include("accounts.urls")),   # This handles login/logout
-    # path('accounts/', include('accounts.urls', namespace='accounts')),
+
+    # Accounts app (dashboard, profile, groups, ToDo page, auth)
     path('accounts/', include('accounts.urls', namespace='accounts')),
-    path('accounts/', include('django.contrib.auth.urls')),
-    path("dashboard/", dashboard, name="dashboard"),
 
+    # ToDo app  ← THIS IS THE MISSING PIECE
+    path('ToDo/', include('ToDo.urls', namespace='todo')),
 
+    # System pages
     path("status/", status_view, name="status_dashboard"),
     path("health/", health),
-    path("", include("ToDo.urls")),               # This makes ToDo the homepage
-]
 
-# urlpatterns = [
-#     # path('', home),
-#     path("", include("ToDo.urls")),
-#     path("admin/", admin.site.urls),
-#     path("status/", status_view, name="status_dashboard"),
-#     # path("accounts/", include("django.contrib.auth.urls")),
-#     path("accounts/", include("accounts.urls")),  # All auth URLs start with /accounts/
-#     path("health/", health),
-#     path("login/", auth_views.LoginView.as_view(), name="login"),
-#     path("todo/", include("ToDo.urls")),
-# ]
+    # Site root → dashboard
+    # path("", redirect_root_to_dashboard, name='root_redirect'),
+    path("", login_required(redirect_root_to_dashboard), name="root_redirect"),
+]

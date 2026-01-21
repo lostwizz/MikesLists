@@ -19,31 +19,18 @@ Since this is a structural change, you need to migrate:
         Apply Migration: python manage.py migrate ToDo --settings=MikesLists.settings.dev
 
 
-# TODO:
-# COMMENT:
-# NOTE:
-# USEFULL:
-# LEARN:
-# RECHECK:
-# INCOMPLETE:
-# SEE NOTES:
-# POST
-# HACK
-# FIXME
-# BUG
-# [ ] something to do
-# [x]  i did sometrhing
 
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-19 23:37:31"
+__updated__ = "2026-01-20 11:46:00"
 ###############################################################################
 
 import re
 from django.db import models
 
 # Create your models here.
+from django.contrib.auth.models import User
 
 from django.db import models
 
@@ -62,6 +49,8 @@ class Items(models.Model):
 
     completed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+
     payload = models.CharField(max_length=1000, blank=True, null=True)
     status = models.CharField(
         max_length=20, choices=ItemStatus.choices, default=ItemStatus.ACTIVE

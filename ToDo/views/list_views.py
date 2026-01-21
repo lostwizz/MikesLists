@@ -6,66 +6,111 @@ list_views.py
 ToDo.views.list_views
 /srv/django/MikesLists_dev/ToDo/views/list_views.py
 
-for the lists this is the view
+List dashboard + List CRUD views for the ToDo app.
+
+
 
 
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-18 20:38:23"
+__updated__ = "2026-01-20 11:21:52"
 ###############################################################################
 
-
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-
-from django.conf import settings
-from decouple import config
-
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 
+from accounts.utils.roles import require_group
+
 from ToDo.models.lists import Lists
+from ToDo.models.items import Items
+from ToDo.forms.item_forms import ItemForm   # used for inline item creation
 
 
-# -----------------------------------------------------------------
-
-
-
-
-# -----------------------------------------------------------------
-@login_required
+# ---------------------------------------------------------------------
+# LIST DASHBOARD (shows all items for the current user)
+# ---------------------------------------------------------------------
+@require_group("Admins", "Editors", "Read Only")
 def list_dashboard(request):
-    # 1. Get the data from the database
-    all_lists = Lists.objects.all()
-
-    messages.success(request, "Dashboard loaded in DEV mode!")
-
-    # 2. Define the context dictionary
-    context = {
-        "lists": all_lists,
-        "env_name": getattr(settings, "ENV_NAME", "Development"),
-    }
-
-    # 3. Pass the context to the template
-    # Make sure 'ToDo/lists.html' exists in ToDo/templates/ToDo/
-    return render(request, "ToDo/lists.html", context)
+    """
+    The main ToDo dashboard.
+    Shows all items created by the current user.
+    """
+    items = Items.objects.filter(created_user=request.user).order_by("-created_at")
+    return render(request, "ToDo/lists.html", {"items": items})
 
 
-# -----------------------------------------------------------------
-def todo_list(request):
-    lists = Lists.objects.all().order_by("-created_at")
+# ---------------------------------------------------------------------
+# LIST ALL LISTS (admin/editor only)
+# ---------------------------------------------------------------------
+@require_group("Admins", "Editors")
+def list_all(request):
+    """
+    Shows all lists (not items). Useful for managing list containers.
+    """
+    lists = Lists.objects.filter(created_user=request.user).order_by("-created_at")
     return render(request, "ToDo/lists.html", {"lists": lists})
 
 
-# -----------------------------------------------------------------
-def list_management(request):
-    lists = Lists.objects.all()
-    return render(request, "list_management.html", {"lists": lists})
+# ---------------------------------------------------------------------
+# LIST DETAIL VIEW (shows items inside a specific list)
+# ---------------------------------------------------------------------
+@require_group("Admins", "Editors", "Read Only")
+def list_detail(request, pk):
+    todo_list = get_object_or_404(Lists, pk=pk, created_user=request.user)
+    items = Items.objects.filter(list=todo_list).order_by("-created_at")
+
+    return render(
+        request,
+        "ToDo/lists.html",
+        {"list": todo_list, "items": items},
+    )
 
 
-# -----------------------------------------------------------------
+# ---------------------------------------------------------------------
+# CREATE NEW LIST
+# ---------------------------------------------------------------------
+@require_group("Admins", "Editors")
+def list_create(request):
+    if request.method == "POST":
+        name = request.POST.get("name")
+        if not name:
+            messages.error(request, "List name cannot be empty.")
+        else:
+            Lists.objects.create(name=name, created_user=request.user)
+            messages.success(request, "List created successfully.")
+            return redirect("todo:list_dashboard")
 
-# -----------------------------------------------------------------
-# -----------------------------------------------------------------
-# -----------------------------------------------------------------
-# -----------------------------------------------------------------
+    return render(request, "ToDo/list_form.html")
+
+
+# ---------------------------------------------------------------------
+# EDIT EXISTING LIST
+# ---------------------------------------------------------------------
+@require_group("Admins", "Editors")
+def list_edit(request, pk):
+    todo_list = get_object_or_404(Lists, pk=pk, created_user=request.user)
+
+    if request.method == "POST":
+        name = request.POST.get("name")
+        if not name:
+            messages.error(request, "List name cannot be empty.")
+        else:
+            todo_list.name = name
+            todo_list.save()
+            messages.success(request, "List updated successfully.")
+            return redirect("todo:list_dashboard")
+
+    return render(request, "ToDo/list_form.html", {"list": todo_list})
+
+
+# ---------------------------------------------------------------------
+# DELETE LIST
+# ---------------------------------------------------------------------
+@require_group("Admins")
+def list_delete(request, pk):
+    todo_list = get_object_or_404(Lists, pk=pk, created_user=request.user)
+    todo_list.delete()
+    messages.success(request, "List deleted successfully.")
+    return redirect("todo:list_dashboard")
+

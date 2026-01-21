@@ -10,9 +10,8 @@ accounts.apps
 """
 __version__ = "0.0.0.000070-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-19 22:43:21"
+__updated__ = "2026-01-20 17:58:13"
 ###############################################################################
-
 
 from django.apps import AppConfig
 
@@ -22,9 +21,11 @@ class AccountsConfig(AppConfig):
 
     def ready(self):
         from .models import signals
-        from .permissions import assign_permissions
+        from .permissions import ensure_groups_and_permissions
 
         try:
-            assign_permissions()
+            ensure_groups_and_permissions()
         except Exception as e:
             print(f"Error during AccountsConfig.ready(): {e}")
+
+

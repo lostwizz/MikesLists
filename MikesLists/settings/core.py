@@ -10,7 +10,7 @@ MikesLists.settings.core
 """
 __version__ = "0.0.0.000095-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-19 23:48:13"
+__updated__ = "2026-01-20 18:35:22"
 ###############################################################################
 
 
@@ -43,16 +43,29 @@ ADMINS = [
 ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
-    "localhost.local",
-    "pidj",
-    "pidj.local",
     "10.0.0.9",
-    "pi9.local",
-    "10.0.0.208",
-    "AlienMike.local",
-    "AlienMike",
-    "10.0.0.100",
+    ".local",          # wildcard for any *.local hostname
 ]
+
+
+    # "localhost.local",
+    # ".local",
+    # "pidj",
+    # "pidj.local",
+    # "pi9.local",
+    # "10.0.0.208",
+    # "AlienMike.local",
+    # "AlienMike",
+    # "10.0.0.100",
+
+# CSRF_TRUSTED_ORIGINS = [
+#     "http://*.local",
+# ]
+
+    # "http://pidj.local:8000",
+    # "http://pidj.local:9000",
+    # "http://pidj.local",
+
 
 # extra_host = os.getenv("EXTRA_ALLOWED_HOSTS")
 extra_host = config("EXTRA_ALLOWED_HOSTS", default="")
@@ -85,10 +98,11 @@ WSGI_APPLICATION = "MikesLists.wsgi.application"
 LOGIN_REDIRECT_URL = "/"  # Use the 'name' of your list index view
 
 # Where to go after logging out
-LOGOUT_REDIRECT_URL = "login"
+LOGOUT_REDIRECT_URL = "accounts:login"
 
 # The URL for the login page
-LOGIN_URL = "login"
+LOGIN_URL = "accounts:" \
+"login"
 
 
 INSTALLED_APPS = [
@@ -121,7 +135,13 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+
+    # Your login-required middleware MUST come after AuthenticationMiddleware
+    'MikesLists.debug.DebugViewMiddleware',
+    "accounts.middleware.login_required_middleware.LoginRequiredMiddleware",
 ]
+
+
 
 TEMPLATES = [
     {
@@ -136,6 +156,8 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "MikesLists.context_processors.export_env_vars",
                 # 'MikesLists.context_processors.env_name',
+                "django.template.context_processors.request",
+                "MikesLists.context_processors.user_info",
             ],
         },
     },

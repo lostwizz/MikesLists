@@ -6,77 +6,98 @@ item_views.py
 ToDo.views.item_views
 /srv/django/MikesLists_dev/ToDo/views/item_views.py
 
-the items views for the ToDo app
+
+Item CRUD views for the ToDo app.
+
+
 
 
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-19 23:54:22"
-###############################################################################
-
+__updated__ = "2026-01-20 11:21:13"
 
 from django.shortcuts import render, redirect, get_object_or_404
-from guardian.shortcuts import assign_perm
-
-
 from django.contrib.auth.decorators import login_required
+
+from accounts.utils.roles import require_group
 
 from ToDo.models.items import Items
 from ToDo.models.lists import Lists
 from ToDo.forms.item_forms import ItemForm
-from ToDo.models.itemstatus import ItemStatus  # Assuming your status Enum is here
+from ToDo.models.itemstatus import ItemStatus
 
 
-
-
-
-
-# -----------------------------------------------------------------
-def todo_item(request):
-    items = Items.objects.all().order_by("-created_at")
+# ---------------------------------------------------------------------
+# LIST ALL ITEMS FOR CURRENT USER
+# ---------------------------------------------------------------------
+@require_group("Admins", "Editors", "Read Only")
+def todo_item_list(request):
+    items = Items.objects.filter(created_user=request.user).order_by("-created_at")
     return render(request, "ToDo/items.html", {"items": items})
 
 
-# -----------------------------------------------------------------
-def item_management(request, list_id):
-    # list = Lists.objects.get(id=list_id)
-    # items = Items.objects.filter(list=list)
-    # return render(request, 'item_management.html', {'list': list, 'items': items})
-    todo_list = get_object_or_404(Lists, id=list_id)
-    items = Items.objects.filter(list=todo_list)
-    return render(
-        request, "ToDo/item_management.html", {"list": todo_list, "items": items}
-    )
+# ---------------------------------------------------------------------
+# ITEM DETAIL VIEW
+# ---------------------------------------------------------------------
+@require_group("Admins", "Editors", "Read Only")
+def todo_item_detail(request, pk):
+    item = get_object_or_404(Items, pk=pk, created_user=request.user)
+    return render(request, "ToDo/item_row.html", {"item": item})
 
 
-# -----------------------------------------------------------------
-@login_required
-def item_create(request):
+# ---------------------------------------------------------------------
+# CREATE NEW ITEM
+# ---------------------------------------------------------------------
+@require_group("Admins", "Editors")
+def todo_item_create(request):
     if request.method == "POST":
-        form = ItemForm(request.POST)
+        form = ItemForm(request.POST, request.FILES)
         if form.is_valid():
             item = form.save(commit=False)
-            # Assign any extra logic here (like setting the user)
             item.created_user = request.user
             item.save()
-
-            # Assign object-level permissions to the creator
-            assign_perm("change_item", request.user, item)
-            assign_perm("delete_item", request.user, item)
-            assign_perm("view_item", request.user, item)
-
-            return redirect("dashboard")
+            return redirect("todo:todo_items")
     else:
         form = ItemForm()
 
     return render(request, "ToDo/item_form.html", {"form": form})
 
 
-# -----------------------------------------------------------------
-@login_required
+# ---------------------------------------------------------------------
+# EDIT EXISTING ITEM
+# ---------------------------------------------------------------------
+@require_group("Admins", "Editors")
+def todo_item_edit(request, pk):
+    item = get_object_or_404(Items, pk=pk, created_user=request.user)
+
+    if request.method == "POST":
+        form = ItemForm(request.POST, request.FILES, instance=item)
+        if form.is_valid():
+            form.save()
+            return redirect("todo:todo_items")
+    else:
+        form = ItemForm(instance=item)
+
+    return render(request, "ToDo/item_form.html", {"form": form, "item": item})
+
+
+# ---------------------------------------------------------------------
+# DELETE ITEM
+# ---------------------------------------------------------------------
+@require_group("Admins")
+def todo_item_delete(request, pk):
+    item = get_object_or_404(Items, pk=pk, created_user=request.user)
+    item.delete()
+    return redirect("todo:todo_items")
+
+
+# ---------------------------------------------------------------------
+# TOGGLE STATUS (HTMX + fallback)
+# ---------------------------------------------------------------------
+@require_group("Admins", "Editors")
 def item_toggle_status(request, item_id):
-    item = get_object_or_404(Items, id=item_id)
+    item = get_object_or_404(Items, id=item_id, created_user=request.user)
 
     # Toggle logic
     item.status = (
@@ -86,14 +107,9 @@ def item_toggle_status(request, item_id):
     )
     item.save()
 
-    # If it's an HTMX request, return only the row snippet
+    # HTMX partial update
     if request.headers.get("HX-Request"):
         return render(request, "ToDo/partials/item_row.html", {"item": item})
 
-    # Fallback for standard form submissions
-    return redirect(request.META.get("HTTP_REFERER", "dashboard"))
-
-
-# -----------------------------------------------------------------
-# -----------------------------------------------------------------
-# -----------------------------------------------------------------
+    # Standard redirect
+    return redirect(request.META.get("HTTP_REFERER", "todo:todo_items"))

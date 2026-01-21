@@ -1,9 +1,36 @@
-{% extends "home.html" %}
+{% extends "base.html" %}
 {% block content %}
-    <h2>Dashboard</h2>
-    <ul>
-        {% for list in lists %}
-            <li>{{ list.name }}</li>
-        {% endfor %}
-    </ul>
+
+<h2 class="mb-3">Your ToDo Items</h2>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+
+        {% if items %}
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="item-table">
+                    {% for item in items %}
+                        {% include "ToDo/partials/item_row.html" %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="text-muted">No items yet.</p>
+        {% endif %}
+
+        <a href="{% url 'todo:todo_item_create' %}" class="btn btn-primary mt-3">
+            Add New Item
+        </a>
+
+    </div>
+</div>
+
 {% endblock %}

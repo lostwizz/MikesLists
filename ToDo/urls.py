@@ -12,21 +12,19 @@ ToDo.urls
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-18 20:37:55"
+__updated__ = "2026-01-20 11:05:01"
 ###############################################################################
 
 from django.urls import path
+from . import views
 
-from . import views   # This now works because __init__.py imported everything
+app_name = 'todo'
 
 urlpatterns = [
-    # Example: empty path for the main list view
-    # path('', views.todo_list, name='todo_list'),
-    # path('', views.todo_item, name='todo_item'),
-    path('', views.list_dashboard, name='dashboard'),
-    # path('items/', views.item_views.todo_item, name='todo_items'),
-    # path('item/<int:item_id>/toggle/', views.item_toggle_status, name='item_toggle_status'),
-    path('', views.list_dashboard, name='dashboard'),
-    path('items/', views.todo_item, name='todo_items'),
-    path('item/new/', views.item_create, name='item_create'),
+    path('', views.list_dashboard, name='list_dashboard'),
+    path('items/', views.todo_item_list, name='todo_items'),
+    path('item/<int:pk>/', views.todo_item_detail, name='todo_item_detail'),
+    path('item/new/', views.todo_item_create, name='todo_item_create'),
+    path('item/<int:pk>/edit/', views.todo_item_edit, name='todo_item_edit'),
+    path('item/<int:pk>/delete/', views.todo_item_delete, name='todo_item_delete'),
 ]

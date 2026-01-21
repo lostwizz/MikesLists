@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2 class="mb-4">Dashboard</h2>
+
+<div class="row">
+
+    <div class="col-md-4">
+        <div class="card text-bg-primary shadow-sm mb-3">
+            <div class="card-body">
+                <h4>{{ total_items }}</h4>
+                <p>Total Items</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card text-bg-success shadow-sm mb-3">
+            <div class="card-body">
+                <h4>{{ completed_items }}</h4>
+                <p>Completed Items</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card text-bg-info shadow-sm mb-3">
+            <div class="card-body">
+                <h4>{{ total_lists }}</h4>
+                <p>Your Lists</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

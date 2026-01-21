@@ -12,8 +12,12 @@ accounts.views
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-18 20:52:11"
+__updated__ = "2026-01-20 12:21:25"
 ###############################################################################
+
+from django.contrib.auth import logout
+
+
 from .login import *
 from .profile import *
 from .register import *

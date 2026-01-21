@@ -9,13 +9,15 @@ MikesLists.settings.dev
 """
 __version__ = "0.0.0.000006-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-19 20:51:47"
+__updated__ = "2026-01-20 16:36:05"
 ###############################################################################
 
 # WSGI_REQUEST_HANDLER = "MikesLists.logging.request_handler.RequestHandlerWithIPAndUser"
 
 # WSGI_SERVER_CLASS = "MikesLists.logging.custom_server.CustomWSGIServer"
 # WSGI_REQUEST_HANDLER = "MikesLists.logging.custom_server.RequestHandlerWithIPAndUser"
+
+import socket
 
 from .core import *  # noqa: F403
 
@@ -158,3 +160,26 @@ LOGGING = {
 
 # WSGI_SERVER_CLASS = "MikesLists.logging.custom_server.CustomWSGIServer"
 # WSGI_REQUEST_HANDLER = "MikesLists.logging.custom_server.RequestHandlerWithIPAndUser"
+
+def get_local_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "127.0.0.1"
+
+HOSTNAME = socket.gethostname()
+LOCAL_IP = get_local_ip()
+
+print( f"{HOSTNAME=}")
+print( f"{LOCAL_IP=}")
+
+CSRF_TRUSTED_ORIGINS = [
+    f"http://{HOSTNAME}",
+    f"http://{HOSTNAME}.local",
+    f"http://{LOCAL_IP}",
+    "http://*.local",
+]

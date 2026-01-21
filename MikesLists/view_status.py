@@ -9,7 +9,7 @@ MikesLists.view_status
 """
 __version__ = "0.0.0.000004-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-19 23:44:42"
+__updated__ = "2026-01-20 11:32:35"
 ###############################################################################
 
 
@@ -22,7 +22,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
-from accounts.utils.roles import get_user_role
+# from accounts.utils.roles import get_user_role
 
 
 
@@ -194,4 +194,3 @@ def dashboard(request):
         template = "dashboard/readonly.html"
 
     return render(request, template)
-

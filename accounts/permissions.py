@@ -47,7 +47,7 @@ Use groups in your signals (you already do this
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-19 23:31:44"
+__updated__ = "2026-01-20 17:54:06"
 ###############################################################################
 
 import logging
@@ -59,56 +59,52 @@ from django.contrib.auth.models import Group, Permission
 logger = logging.getLogger(__name__)
 
 
-def assign_permissions():
-    logger.info("Starting permission assignment")
+from django.contrib.auth.models import Group, Permission
+from django.apps import apps
+from django.db.models import Q
 
-    admins, _ = Group.objects.get_or_create(name="Admins")
-    editors, _ = Group.objects.get_or_create(name="Editors")
-    readonly, _ = Group.objects.get_or_create(name="Read Only")
+GROUPS = {
+    "Admins": {
+        "lists": ["add", "change", "delete", "view"],
+        "items": ["add", "change", "delete", "view"],
+        "accounts": ["view_my_profile", "edit_my_profile"],
+    },
+    "Editors": {
+        "lists": ["change", "view"],
+        "items": ["change", "view"],
+    },
+    "Read Only": {
+        "lists": ["view"],
+        "items": ["view"],
+        "accounts": ["view_my_profile"],
+    },
+}
 
-    logger.info("Groups ensured: Admins, Editors, Read Only")
-    # Permissions for Admins
-    admin_perms = [
-        "add_lists",
-        "change_lists",
-        "delete_lists",
-        "view_lists",
-        "add_items",
-        "change_items",
-        "delete_items",
-        "view_items",
-        "view_my_profile",
-        "edit_my_profile",
-    ]
+def ensure_groups_and_permissions():
+    print("[INFO] Starting permission assignment")
 
-    # Permissions for Editors
-    editor_perms = [
-        "view_lists",
-        "change_lists",
-        "view_items",
-        "change_items",
-    ]
+    # Clean up any typo groups
+    valid_names = set(GROUPS.keys())
+    Group.objects.exclude(name__in=valid_names).delete()
 
-    # Permissions for Read Only
-    readonly_perms = [
-        "view_lists",
-        "view_items",
-        "view_my_profile",
-    ]
+    for group_name, app_perms in GROUPS.items():
+        group, _ = Group.objects.get_or_create(name=group_name)
+        print(f"[INFO] Group ensured: {group_name}")
 
-    # Helper to assign permissions safely
-    def add_perms(group, perm_list):
-        for codename in perm_list:
-            try:
-                perm = Permission.objects.get(codename=codename)
-                group.permissions.add(perm)
-                logger.info(f"Assigned {codename} to {group.name}")
-            except Permission.DoesNotExist:
-                print(f"Permission '{codename}' not found.")
-                logger.warning(f"Permission '{codename}' not found")
+        perms_to_assign = []
 
-    add_perms(admins, admin_perms)
-    add_perms(editors, editor_perms)
-    add_perms(readonly, readonly_perms)
+        for app_label, codename_roots in app_perms.items():
+            for codename_root in codename_roots:
+                codename = f"{codename_root}_{app_label}" if "_" not in codename_root else codename_root
+                try:
+                    perm = Permission.objects.get(codename=codename)
+                    perms_to_assign.append(perm)
+                    print(f"[INFO] Assigned {codename} to {group_name}")
+                except Permission.DoesNotExist:
+                    print(f"[WARNING] Permission '{codename}' not found")
+
+        group.permissions.set(perms_to_assign)
+
+
 
     logger.info("Permission assignment complete")
