@@ -23,7 +23,7 @@ Since this is a structural change, you need to migrate:
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-20 11:46:00"
+__updated__ = "2026-01-21 20:33:14"
 ###############################################################################
 
 import re
@@ -31,11 +31,14 @@ from django.db import models
 
 # Create your models here.
 from django.contrib.auth.models import User
+from django.contrib.auth.models import Group
+
 
 from django.db import models
 
 from .typeflag import TypeFlags
 from .itemstatus import ItemStatus
+from .markstyle import MarkStyle
 
 
 # =================================================================
@@ -43,6 +46,7 @@ from .itemstatus import ItemStatus
 class Items(models.Model):
     # id = bigint??????
     title = models.CharField(max_length=200)
+    shorttitle = models.CharField( max_length=25)
     description = models.TextField(blank=True, null=True)
     version = models.CharField(max_length=30, default="v1.0")
     attachment = models.BinaryField(blank=True, null=True)  # upload_to='attachments/',
@@ -55,11 +59,21 @@ class Items(models.Model):
     status = models.CharField(
         max_length=20, choices=ItemStatus.choices, default=ItemStatus.ACTIVE
     )
-    created_user = models.CharField(max_length=100, blank=True, null=True)
+    created_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
 
     typeflag = models.CharField(
         max_length=20, choices=TypeFlags.choices, default=TypeFlags.CHECKMARK
     )
+
+    markstyle = models.CharField(
+        max_length=10, choices=MarkStyle.choices, default=MarkStyle.ITEMSCOPE
+    )
+
+    sublist = models.BigIntegerField(null=True, blank=True, default=None)
+    visibility_allowed_groups = models.ManyToManyField(Group, blank=True)
+    expiryInterval = models.CharField(50, null=True, blank=True, default=None)
+    exipryAsolute = models.DateTimeField(null=True, blank=True, default=None)
+
 
     # -----------------------------------------------------------------
     def __str__(self):
@@ -68,7 +82,8 @@ class Items(models.Model):
 
     # =================================================================
     class Meta:
-        unique_together = ("title", "version")
+        created_at = models.DateTimeField(auto_now_add=True)
+        unique_together = ("title", "version", "created_user", "created_at" )
         verbose_name = "Item"
         verbose_name_plural = "Items"
 
