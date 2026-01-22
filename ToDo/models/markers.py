@@ -9,7 +9,7 @@ ToDo.models.markers
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-21 20:37:34"
+__updated__ = "2026-01-21 21:42:19"
 ###############################################################################
 
 
@@ -39,10 +39,10 @@ class Markers(models.Model):
 
     user_obj = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="user_markers")
 
-    markervalue = models.CharField(500, blank=True, null=True, default=None )
-    markerDateTime = models.DateTimeField(auto_now=True)
+    markervalue = models.CharField(max_length=500, blank=True, null=True, default=None )
+    markerDateTime = models.DateTimeField(null=True, blank=True, default=None)
 
-    markerStartTime = models.DateTimeField(auto_now=True)
+    markerStartTime = models.DateTimeField(null=True, blank=True, default=None)
 
     class Meta:
         verbose_name = "Marker"
