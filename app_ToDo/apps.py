@@ -37,6 +37,12 @@ class AppTodoConfig(AppConfig):
     # ---------------------------------------------------------------------
     def ready(self):
         # Connect the logic to the post_migrate signal
+        # MOVE THE IMPORT HERE
+        from app_accounts.views.permissions import CustomPermissions
+
+        # Now you can use CustomPermissions safely
+        # (e.g., connecting a signal or running setup logic)
+        print("Django is ready, permissions imported!")
         post_migrate.connect(run_setup_logic, sender=self)
 
 
