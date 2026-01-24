@@ -20,8 +20,8 @@ __updated__ = "2026-01-23 20:38:35"
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
-from app_ToDo.models.items import Items
-from app_ToDo.models.lists import Lists
+# from app_ToDo.models.items import Items
+# from app_ToDo.models.lists import Lists
 
 
 @login_required
@@ -33,15 +33,15 @@ def dashboard(request):
     - Total lists
     """
 
-    total_items = Items.objects.count()
-    completed_items = Items.objects.filter(completed=True).count()
-    total_lists = Lists.objects.count()
+    # total_items = Items.objects.count()
+    # completed_items = Items.objects.filter(completed=True).count()
+    # total_lists = Lists.objects.count()
 
 
-    context = {
-        "total_items": total_items,
-        "completed_items": completed_items,
-        "total_lists": total_lists,
-    }
+    # context = {
+    #     "total_items": total_items,
+    #     "completed_items": completed_items,
+    #     "total_lists": total_lists,
+    # }
 
     return render(request, "app_accounts/dashboard_stats.html", context)
