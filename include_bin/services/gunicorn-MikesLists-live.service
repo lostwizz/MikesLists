@@ -14,7 +14,7 @@ StandardError=journal
 # FIX: Point this to the actual bin folder of your live venv
 Environment="PYTHONPATH=/srv/django/MikesLists_live"
 Environment="PATH=/srv/django/venv-live/bin"
-Environment="DJANGO_SETTINGS_MODULE=MikesLists.settings.live"
+Environment="DJANGO_SETTINGS_MODULE=app_core.settings.live"
 EnvironmentFile=/srv/django/MikesLists_live/.env
 
 ExecStart=/srv/django/venv-live/bin/gunicorn \

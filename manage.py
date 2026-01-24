@@ -38,11 +38,11 @@ def main():
         # Look at the physical path of this file, not the current working directory
         file_path = os.path.abspath(__file__)
         if "MikesLists_live" in file_path:
-            os.environ["DJANGO_SETTINGS_MODULE"] = "MikesLists.settings.live"
+            os.environ["DJANGO_SETTINGS_MODULE"] = "app_core.settings.live"
         elif "MikesLists_test" in file_path:
-            os.environ["DJANGO_SETTINGS_MODULE"] = "MikesLists.settings.test"
+            os.environ["DJANGO_SETTINGS_MODULE"] = "app_core.settings.test"
         else:
-            os.environ["DJANGO_SETTINGS_MODULE"] = "MikesLists.settings.dev"
+            os.environ["DJANGO_SETTINGS_MODULE"] = "app_core.settings.dev"
 
     try:
         from django.core.management import execute_from_command_line

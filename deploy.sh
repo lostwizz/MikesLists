@@ -1,11 +1,17 @@
 #!/bin/bash
 # ==========================================
 # Django Multi-Env Deploy Script (V9 - Sparse-Aware)
+
+# /srv/django/MikesLists_dev/tests/test_health.py
+# /srv/django/deploy/deploy.sh
+
 # ==========================================
 set -euo pipefail
 
 BASE_PATH="/srv/django"
-ENV_NAME=$(basename "$(pwd)" | sed 's/MikesLists_//')
+# ENV_NAME=$(basename "$(pwd)" | sed 's/app_core_//')
+ENV_NAME=$(basename "$(pwd)" | sed 's/.*_//')
+
 ENV_NAME_UPPER=$(echo "$ENV_NAME" | tr '[:lower:]' '[:upper:]')
 
 echo "------------------------------------------"
@@ -13,7 +19,7 @@ echo "🚀 TARGET ENV: $ENV_NAME_UPPER"
 echo "------------------------------------------"
 
 case "$ENV_NAME" in
-    dev)
+    dev|MikesLists_dev)
 
         # --- 4. Sync Local Binaries & Django Tasks ---
         PROJECT_DIR="/srv/django/MikesLists_$ENV_NAME"

@@ -13,7 +13,7 @@ StandardError=journal
 
 Environment="PYTHONPATH=/srv/django/MikesLists_test"
 Environment="PATH=/srv/django/venv-test/bin"
-Environment="DJANGO_SETTINGS_MODULE=MikesLists.settings.test"
+Environment="DJANGO_SETTINGS_MODULE=app_core.settings.test"
 EnvironmentFile=/srv/django/MikesLists_test/.env
 
 ExecStart=/srv/django/venv-test/bin/gunicorn \

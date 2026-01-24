@@ -3,6 +3,8 @@
 ###############################################################################
 r"""
 test_example.py
+tests.test_example
+/srv/django/MikesLists_dev/tests/test_example.py
 
 
 """

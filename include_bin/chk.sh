@@ -171,6 +171,10 @@ done
 
 # ---------------------------------------------------------
 # [4] HTTP Endpoint Checks
+#   curl -s -L http://pidj.local:8000/health/
+# or
+#   curl -i http://localhost:8000/health/
+#
 # ---------------------------------------------------------
 echo -e "\n${MAGENTA}[4] HTTP Endpoint Checks${RESET}"
 
@@ -179,11 +183,28 @@ for ENV in "${ENVS[@]}"; do
     PORT=${PORTS[$ENV]}
 
     RESPONSE_DATA=$(curl -s -L -w "\n%{http_code}" "$URL")
+    # echo -e "RESPONSE_DATA:$RESPONSE_DATA}"clear
     HTTP_BODY=$(echo "$RESPONSE_DATA" | sed '$d')
     HTTP_CODE=$(echo "$RESPONSE_DATA" | tail -n 1)
 
-    EFFECTIVE_URL=$(curl -s -L -w "%{url_effective}" -o /dev/null "$URL")
+    # # DEBUG SECTION START
+    #     echo -e "${CYAN}DEBUG for $ENV:${RESET}"
+    #     echo -e "  URL=${URL}"
+    #     echo -e "  HTTP Code: $HTTP_CODE"
+    #     echo -e "  Body Length: ${#HTTP_BODY}"
+    #     # echo -e "  First 100 chars of Body: ${HTTP_BODY:0:100}"
+    #     echo -e "  First 100 chars of Body: ${HTTP_BODY}"
 
+    #     # Check if the string exists using grep to see if it's a case-sensitivity issue
+    #     if echo "$HTTP_BODY" | grep -q '"details"'; then
+    #         echo -e "  ${GREEN}String 'details' found via grep${RESET}"
+    #     else
+    #         echo -e "  ${RED}String 'details' NOT found via grep${RESET}"
+    #     fi
+    # # DEBUG SECTION END
+
+    EFFECTIVE_URL=$(curl -s -L -w "%{url_effective}" -o /dev/null "$URL")
+    # echo -e "EFFECTIVE_URL=${EFFECTIVE_URL}"
     if [[ "$EFFECTIVE_URL" =~ ^https?://[^:/]+:([0-9]+) ]]; then
         REPORTED_PORT="${BASH_REMATCH[1]}"
     else
@@ -197,12 +218,21 @@ for ENV in "${ENVS[@]}"; do
         ((FAIL++))
     fi
 
+
+    # echo "HTTP_BODY=${HTTP_BODY}"
+
     if [ "$HTTP_CODE" == "200" ]; then
+
+        # DEBUG: Print exactly what Bash sees (with visible line endings)
+        # echo -e "${CYAN}      [DEBUG] Raw Body: ${HTTP_BODY}${RESET}" | cat -e
+
         if [[ "$HTTP_BODY" == *'"details":'* ]]; then
             echo -e "     ${GREEN}✔ 200 OK + New Code Active${RESET}"
-            echo -e "        $(echo "$HTTP_BODY" | grep -oP '"details":\s*\{.*?\}' || echo 'Details key found but empty')"
+            # echo -e "        $(echo "$HTTP_BODY" | grep -oP '"details":\s*\{.*?\}' || echo 'Details key found but empty')"
+            # echo -e "        ${DETAILS:-"Details found but couldn't parse JSON snippet"}"
         else
             echo -e "     ${YELLOW}⚠ 200 OK but OLD CODE detected${RESET}"
+            # echo -e "      ${RED}Search for '\"details\":' failed in body of length ${#HTTP_BODY}${RESET}"
             ((WARN++))
         fi
     else

@@ -3,6 +3,8 @@
 ###############################################################################
 r"""
 test_health.py
+tests.test_health
+/srv/django/MikesLists_dev/tests/test_health.py
 
 
 # TODO:
@@ -30,7 +32,7 @@ __updated__ = "2026-01-02 22:07:22"
 from django.test import TestCase, RequestFactory, SimpleTestCase, TransactionTestCase, override_settings
 from django.http import JsonResponse
 from unittest.mock import patch, MagicMock
-from MikesLists.health import health
+from app_core.health import health
 import json
 from django.conf import settings
 
@@ -42,9 +44,9 @@ class HealthTestCase(TestCase):
         request = factory.get('/health/')
         request.META['HTTP_HOST'] = 'example.com'
 
-        with patch('MikesLists.health.connections') as mock_connections, \
-             patch('MikesLists.health.settings') as mock_settings, \
-             patch('MikesLists.health.shutil.disk_usage') as mock_disk_usage:
+        with patch('app_corehealth.connections') as mock_connections, \
+             patch('app_core.health.settings') as mock_settings, \
+             patch('app_core.health.shutil.disk_usage') as mock_disk_usage:
 
             # Mock database connection
             mock_connection = MagicMock()
@@ -76,9 +78,9 @@ class HealthTestCase(TestCase):
         factory = RequestFactory()
         request = factory.get('/health/')
 
-        with patch('MikesLists.health.connections') as mock_connections, \
-             patch('MikesLists.health.settings') as mock_settings, \
-             patch('MikesLists.health.shutil.disk_usage') as mock_disk_usage:
+        with patch('app_core.health.connections') as mock_connections, \
+             patch('app_core.health.settings') as mock_settings, \
+             patch('app_core.health.shutil.disk_usage') as mock_disk_usage:
 
             # Mock database connection
             mock_connection = MagicMock()
@@ -108,9 +110,9 @@ class HealthTestCase(TestCase):
         factory = RequestFactory()
         request = factory.get('/health/')
 
-        with patch('MikesLists.health.connections') as mock_connections, \
-             patch('MikesLists.health.settings') as mock_settings, \
-             patch('MikesLists.health.shutil.disk_usage') as mock_disk_usage:
+        with patch('app_core.health.connections') as mock_connections, \
+             patch('app_core.health.settings') as mock_settings, \
+             patch('app_core.health.shutil.disk_usage') as mock_disk_usage:
 
             # Mock database connection to raise error
             mock_connection = MagicMock()
@@ -137,9 +139,9 @@ class HealthTestCase(TestCase):
         factory = RequestFactory()
         request = factory.get('/health/')
 
-        with patch('MikesLists.health.connections') as mock_connections, \
-             patch('MikesLists.health.settings') as mock_settings, \
-             patch('MikesLists.health.shutil.disk_usage') as mock_disk_usage:
+        with patch('app_core.health.connections') as mock_connections, \
+             patch('app_core.health.settings') as mock_settings, \
+             patch('app_core.health.shutil.disk_usage') as mock_disk_usage:
 
             # Mock database connection
             mock_connection = MagicMock()
