@@ -22,3 +22,6 @@ from django.contrib.auth import logout
 from .login import *
 from .profile import *
 from .register import *
+# from .permissions import *
+# from .group_manager import *
+# from .dashboard import *

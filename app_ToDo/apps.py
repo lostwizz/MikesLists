@@ -17,6 +17,8 @@ __updated__ = "2026-01-23 22:09:01"
 # /srv/django/MikesLists_dev/app_ToDo/apps.py
 from django.apps import AppConfig
 from django.db.models.signals import post_migrate
+# from app_accounts.views.permissions import CustomPermissions
+from ..app_accounts.views.permissions import CustomPermissions
 
 # ---------------------------------------------------------------------
 def run_setup_logic(sender, **kwargs):
