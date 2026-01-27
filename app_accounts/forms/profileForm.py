@@ -20,7 +20,7 @@ __updated__ = "2026-01-27 14:27:43"
 
 from django import forms
 from django.contrib.auth.models import User
-from .models import Profile
+# from .models import Profile
 
 class UserUpdateForm(forms.ModelForm):
     """Form to update basic User data (Username/Email)"""

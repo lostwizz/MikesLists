@@ -17,7 +17,9 @@ __updated__ = "2026-01-27 12:51:09"
 
 from django.contrib.auth import views as auth_views
 from django.urls import path, include
-from .views import register, profile_view, edit_profile
+
+from . import views
+from .views import register, profile, profile_view, edit_profile, dashboard
 from .views.group_manager import group_manager_view
 from .views.dashboard import dashboard
 
