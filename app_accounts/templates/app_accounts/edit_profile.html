@@ -1,78 +1,69 @@
 {% extends "base.html" %}
-
-{% block title %}Edit Profile | MikesLists{% endblock %}
+{% load static %}
 
 {% block content %}
-<div class="row justify-content-center mt-5">
-    <div class="col-md-6">
-        <div class="card bg-secondary text-white shadow-lg">
-            <div class="card-header border-bottom border-dark">
-                <h3 class="mb-0">Edit Profile</h3>
-            </div>
-            <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Edit Profile Settings</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
 
-                    {% for field in form %}
-                        {% if field.name != 'groups' %}
-                            <div class="mb-3">
-                                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                                <input type="{{ field.field.widget.input_type|default:'text' }}"
-                                        name="{{ field.html_name }}"
-                                        value="{{ field.value|default_if_none:'' }}"
-                                        class="form-control bg-dark text-white border-dark"
-                                        id="{{ field.id_for_label }}">
-                                {% if field.errors %}
-                                    <div class="text-danger small">{{ field.errors }}</div>
+                        <div class="row mb-4">
+                            <div class="col-md-4 text-center">
+                                <h6>Current Avatar</h6>
+                                {% if user.profile.avatar %}
+                                    <img src="{{ user.profile.avatar.url }}" class="rounded-circle img-thumbnail mb-2" style="width: 150px; height: 150px; object-fit: cover;">
+                                {% else %}
+                                    <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 150px; height: 150px; color: white; font-size: 3rem;">
+                                        {{ user.username|first|upper }}
+                                    </div>
                                 {% endif %}
                             </div>
-                        {% endif %}
-                    {% endfor %}
 
-                    <div class="mb-3">
-                        <label class="form-label text-warning">My Assigned Groups</label>
-                        <div class="p-3 bg-dark rounded border border-dark">
-                            {% if not user.is_superuser %}
-                                {# DIRECT CHECK: Ask the user object for its groups #}
-                                {% for group in user.groups.all %}
-                                    <div class="form-check mb-2">
-                                        <input type="checkbox" class="form-check-input bg-dark border-secondary opacity-75" checked disabled style="pointer-events: none;">
-                                        <label class="form-check-label ms-2 text-white">
-                                            {{ group.name }}
-                                        </label>
-                                    </div>
-                                {% empty %}
-                                    <small class="text-white opacity-50 italic">No groups currently assigned.</small>
-                                {% endfor %}
-                            {% else %}
-                                {# ADMIN VIEW: Show the full editable form #}
-                                {% for checkbox in form.groups %}
-                                    <div class="form-check mb-2">
-                                        {{ checkbox.tag }}
-                                        <label class="form-check-label ms-2 text-white" for="{{ checkbox.id_for_label }}">
-                                            {{ checkbox.choice_label }}
-                                        </label>
-                                    </div>
-                                {% endfor %}
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Preferences</label>
-                        <div class="p-3 bg-dark rounded border border-dark">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="emailNotif" checked>
-                                <label class="form-check-label" for="emailNotif">Email Notifications</label>
+                            <div class="col-md-8">
+                                <h5>Account Information</h5>
+                                {{ u_form.as_p }}
                             </div>
                         </div>
-                    </div>
 
-                    <div class="d-grid gap-2 mt-4">
-                        <button type="submit" class="btn btn-primary">Save Changes</button>
-                        <a href="{% url 'accounts:profile_view' %}" class="btn btn-outline-light">Cancel</a>
-                    </div>
-                </form>
+                        <hr>
+
+                        <h5>Profile Details & Preferences</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ p_form.bio.label_tag }} {{ p_form.bio }}
+                                <small class="text-muted">A little about yourself.</small>
+                            </div>
+                            <div class="col-md-6">
+                                {{ p_form.location.label_tag }} {{ p_form.location }}
+                                <br>
+                                {{ p_form.avatar.label_tag }} {{ p_form.avatar }}
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                {{ p_form.theme_preference.label_tag }} {{ p_form.theme_preference }}
+                            </div>
+                            <div class="col-md-6 d-flex align-items-center mt-4">
+                                <div class="form-check">
+                                    {{ p_form.email_notifications }}
+                                    {{ p_form.email_notifications.label_tag }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 border-top pt-3">
+                            <button class="btn btn-success" type="submit">Update Profile</button>
+                            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

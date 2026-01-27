@@ -19,4 +19,7 @@ from .models.profile import Profile
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'theme_preference', 'email_notifications')
+    # Add 'last_seen' so you can monitor activity in the Admin UI
+    list_display = ('user', 'email', 'theme_preference', 'email_notifications', 'last_seen')
+    list_filter = ('theme_preference', 'email_notifications')
+    search_fields = ('user__username', 'user__email')

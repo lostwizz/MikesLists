@@ -1,0 +1,15 @@
+<nav>
+    <ul>
+        <li><a href="{% url 'accounts:dashboard' %}">Dashboard</a></li>
+        <li><a href="{% url 'accounts:profile_view' %}">My Profile</a></li>
+
+        {# Professional logic: Only show management links to Admins #}
+        {% if request.user.is_superuser or "Admins" in request.user.groups.all.values_list_name %}
+            <li class="admin-link">
+                <a href="{% url 'accounts:group_manager' %}" style="color: #d9534f; font-weight: bold;">
+                    ⚙️ Group Manager
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>

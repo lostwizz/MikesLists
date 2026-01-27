@@ -9,9 +9,9 @@ app_ToDo.apps
 
 
 """
-__version__ = "0.0.1.000002-dev"
+__version__ = "0.0.1.000003-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-23 22:09:01"
+__updated__ = "2026-01-26 21:48:40"
 ###############################################################################
 
 # /srv/django/MikesLists_dev/app_ToDo/apps.py
@@ -54,11 +54,11 @@ class AppTodoConfig(AppConfig):
         # post_migrate.connect(run_setup_logic, sender=self)
 
 
-# ---------------------------------------------------------------------
-# login_required_middleware.py
-def process_view(self, request, view_func, view_args, view_kwargs):
-    view_name = request.resolver_match.view_name
-    print(f"[DEBUG] Processing View: {view_name}") # Check your systemd logs for this!
+# # ---------------------------------------------------------------------
+# # login_required_middleware.py
+# def process_view(self, request, view_func, view_args, view_kwargs):
+#     view_name = request.resolver_match.view_name
+#     print(f"[DEBUG] Processing View: {view_name}") # Check your systemd logs for this!
 
-    if view_name in EXEMPT_NAMES:
-        return None
+#     if view_name in EXEMPT_NAMES:
+#         return None

@@ -1,8 +1,8 @@
 #!/bin/bash
 # ==========================================
 # Django Health Check - Unified Edition
-# ==========================================
 # __version__="0.2.0.00005-dev"
+# ==========================================
 
 ENVS=("dev" "test" "live")
 
@@ -69,6 +69,15 @@ for ENV in "${ENVS[@]}"; do
         GUNV=$(/srv/django/venv-${ENV}/bin/gunicorn --version 2>/dev/null)
         echo -e "    Gunicorn:        ${CYAN}${GUNV:-NOT FOUND}${RESET}"
     fi
+    #echo -e "\n${YELLOW}[3] Verifying Image Library (Pillow)...${RESET}"
+    if $VENV -c "from PIL import Image" &> /dev/null; then
+        PILL_V=$($VENV -c "from PIL import Image; print(Image.__version__)")
+        echo -e "    Pillow:          ${GREEN}✅ Installed (v$PILL_V)${RESET}"
+    else
+        echo -e "    Pillow:          ${RED}❌ Not found in ${ENV}${RESET}"
+        fail=true
+    fi
+
 done
 
 # ---------------------------------------------------------
@@ -388,6 +397,45 @@ free -h | awk '/^Mem:/ {
 ZOMBIES=$(ps aux | awk '{ if ($8=="Z") print $0 }' | wc -l)
 echo -e "  Zombies: ${CYAN}${ZOMBIES}${RESET}"
 echo -e "    Hint: 0 is ideal; non-zero and growing means investigate."
+
+
+check_disk_space() {
+    # ... inside of function ..
+    echo -e "\nChecking Disk space"
+
+    local usage=$(df --output=pcent / | tail -1 | tr -dc '0-9')
+
+    if [[ -z "$usage" ]]; then
+        echo -e "${RED}❌ Error reading disk space${RESET}"
+        return
+    fi
+
+    local threshold=90
+
+    if [ "$usage" -gt "$threshold" ]; then
+        echo -e "${RED}❌ CRITICAL: Disk usage at ${usage}%!${RESET}"
+        fail=true
+    elif [ "$usage" -gt 75 ]; then
+        echo -e "${YELLOW}⚠️  WARNING: Disk usage at ${usage}%.${RESET}"
+    else
+        echo -e "${GREEN}✅ disk space is Healthy (${usage}% used)${RESET}"
+    fi
+
+    echo -e "\n"
+
+    df -a -h /
+}
+
+# Call the function
+check_disk_space
+
+# Ensure there is a newline here before the next section
+echo -e "\n${MAGENTA}[8] Permissions${RESET}"
+
+
+
+
+
 
 # ---------------------------------------------------------
 # [8] Permissions

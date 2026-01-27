@@ -2,10 +2,10 @@
 # ==========================================
 # version_watcher.sh
 #
-# __version__ = "0.1.0.000006-dev"
+# __version__ = "0.1.0.000010-dev"
 #
 # __author__ = "Mike Merrett"
-# __updated__ = "2026-01-02 19:49:31"
+# __updated__ = "2026-01-26 21:23:51"
 # __created__ = "2026-01-02 19:49:31"
 # __description__ = "Auto version bump watcher"
 # ==========================================
@@ -14,37 +14,32 @@ set -euo pipefail
 
 
 
-
 # Reload the system: sudo systemctl daemon-reload
-# Enable it to start at boot: sudo systemctl enable version-bumper.service
-# sudo systemctl start version-bumper.service
-# Start it now: sudo systemctl start version-bumper.service
+# Enable it to start at boot: sudo systemctl enable watcher.service
+# sudo systemctl start watcher.service
+# Start it now: sudo systemctl start watcher.service
 
-# Check status: sudo systemctl status version-bumper.service
-# View logs: If it’s not working, check the output with journalctl -u version-bumper.service -f
-#    to see the complete log use   --- journalctl -u version-bumper.service
+# Check status: sudo systemctl status watcher.service
+# View logs: If it’s not working, check the output with journalctl -u watcher.service -f
+#    to see the complete log use   --- journalctl -u watcher.service
 
-# Stop it: sudo systemctl stop version-bumper.service
+# Stop it: sudo systemctl stop watcher.service
 
 
 # sudo systemctl daemon-reload
-# sudo systemctl restart version-watcher.service
-
+# sudo systemctl restart  watcher.service
+# tail 500 -f /var/log/version_watcher.log
 
 
 ########################################
 # Configuration
 ########################################
 
-# WATCH_DIRS=(
-#     "/srv/django"
-#     "/home/pi"
-#)
 
 WATCH_DIRS=(
-    "/srv/django/MikesLists_dev"
-    "/srv/django/MikesLists_test"
-    "/srv/django/MikesLists_live"
+    "/srv/django/MikesLists_dev/"
+    "/srv/django/MikesLists_test/"
+    "/srv/django/MikesLists_live/"
     "/home/pi/bin"
 )
 
@@ -151,102 +146,108 @@ has_allowed_extension() {
     return 1
 }
 
+
 extract_version() {
     local file="$1"
-
-    # First line containing __version__, tolerant to spacing
+    # Find the line, even if it's commented out
     local line
-    if ! line=$(grep -m1 "$VERSION_KEY" "$file" 2>/dev/null); then
-        return 1
-    fi
+    line=$(grep "$VERSION_KEY" "$file" | head -n 1)
 
-    # Extract the string inside the first pair of double quotes
-    local version
-    version=$(echo "$line" | sed -E 's/.*__version__[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/')
-
-    if [[ -z "$version" || "$version" == "$line" ]]; then
-        return 1
-    fi
-
-    echo "$version"
-    return 0
+    # Extract just the version string between the quotes
+    echo "$line" | sed -E 's/.*__version__[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/'
 }
+
 
 bump_version() {
     local version="$1"
 
-    # Expect something like 1.2.3.000011-dev
-    # Split into 4 segments by '.', then split 4th by '-'
+    # Input format example: 0.1.0.000006-dev
+    # This AWK handles:
+    # 1. Splitting by '.'
+    # 2. Taking the last segment and splitting by '-'
+    # 3. Incrementing and padding with leading zeros
     echo "$version" | awk -F. '
         BEGIN {OFS="."}
         {
-            if (NF < 4) {
-                print $0;
-                exit;
-            }
-            split($4, s, "-");
-            build = s[1] + 1;
-            suffix = s[2];
-            $4 = sprintf("%06d-%s", build, suffix);
-            print $0;
+            # Store the prefix (e.g., 0.1.0)
+            prefix = $1 "." $2 "." $3;
+
+            # Grab the 4th segment (e.g., 000006-dev)
+            split($4, suffix_parts, "-");
+
+            # Increment the numeric part
+            build_num = suffix_parts[1] + 1;
+
+            # Preserve the text suffix (dev) if it exists
+            label = (suffix_parts[2] != "") ? "-" suffix_parts[2] : "";
+
+            # Reconstruct with 6-digit padding
+            printf "%s.%06d%s\n", prefix, build_num, label;
         }
     '
 }
-
 update_version_in_file() {
     local file="$1"
-    local from="$2"
-    local to="$3"
+    local from_v="$2"
+    local to_v="$3"
+    local current_ts
+    current_ts=$(date '+%Y-%m-%d %H:%M:%S')
 
     if $DRY_RUN; then
-        log "INFO" "[DRY-RUN] Would update $file: $from → $to"
+        log "INFO" "[DRY-RUN] $file: Version $from_v -> $to_v"
         return 0
     fi
 
-    # Replace the value only, preserving spacing and key
-    # Match: __version__ [spaces] = [spaces] "old"
-    # Replace: same prefix + "new"
-    sed -i -E "s|(__version__[[:space:]]*=[[:space:]]*\")$from\"|\1$to\"|" "$file"
+    # 1. Update Version
+    # Removed the ^ anchor and added support for optional leading # and spaces
+    # This matches both: __version__ = "..." AND # __version__ = "..."
+    sed -i -E "s|([#[:space:]]*${VERSION_KEY}[[:space:]]*=[[:space:]]*\")$from_v\"|\1$to_v\"|" "$file"
 
-    log "INFO" "Version bump: $file → $to"
+    # 2. Update Timestamp
+    sed -i -E "s|([#[:space:]]*__updated__[[:space:]]*=[[:space:]]*\")[^\"]*\"|\1$current_ts\"|" "$file"
+
+    log "INFO" "File Updated: $file"
+    log "INFO" "   Version:   [$from_v] -> [$to_v]"
+    log "INFO" "------------------------------------------------"
 }
+
+
 
 process_file() {
     local file="$1"
+    local lock_file="/tmp/bump_$(echo "$file" | md5sum | awk '{print $1}').lock"
 
-    debug "Processing candidate: $file"
+    # 1. Basic Filters
+    [[ ! -f "$file" || ! -r "$file" ]] && return 0
+    has_allowed_extension "$file" || return 0
 
-    # Ensure it's a regular readable file
-    if [[ ! -f "$file" || ! -r "$file" ]]; then
-        debug "Skipping non-regular or unreadable file: $file"
+    # 2. Check for Lock (The Loop Killer)
+    if [[ -f "$lock_file" ]]; then
+        debug "Lock exists for $file. Skipping to prevent loop."
         return 0
     fi
 
-    if ! has_allowed_extension "$file"; then
-        debug "Skipping due to extension filter: $file"
-        return 0
-    fi
-
+    # 3. Check for Version Key
     if ! grep -q "$VERSION_KEY" "$file" 2>/dev/null; then
-        debug "No __version__ key in: $file"
         return 0
     fi
 
-    local from to
-    from=$(extract_version "$file") || {
-        debug "Could not extract version from: $file"
-        return 0
-    }
+    # 4. Extract and Bump
+    local from_v to_v
+    from_v=$(extract_version "$file") || return 0
+    to_v=$(bump_version "$from_v")
 
-    to=$(bump_version "$from")
+    [[ "$from_v" == "$to_v" ]] && return 0
 
-    if [[ "$from" == "$to" ]]; then
-        debug "Version unchanged for $file ($from)"
-        return 0
-    fi
+    # 5. Create Lock, Update File, then remove Lock after a delay
+    touch "$lock_file"
 
-    update_version_in_file "$file" "$from" "$to"
+    update_version_in_file "$file" "$from_v" "$to_v"
+
+    # Remove lock after 1 second to allow future legitimate saves
+    (sleep 1 && rm -f "$lock_file") &
 }
+
 
 ########################################
 # Test mode (one-shot on a single file)
@@ -271,22 +272,40 @@ touch "$LOG_FILE" 2>/dev/null || {
 log "INFO" "Starting version watcher (DRY_RUN=$DRY_RUN, DEBUG=$DEBUG)"
 
 # Build inotifywait arguments
+# We add -e attrib to catch metadata changes (like touch)
+# We add -e close_write and -e moved_to to catch all editor types
 INOTIFY_ARGS=(
-    -m          # monitor
-    -r          # recursive
-    -e close_write
-    --format '%w%f'
-    --exclude '(\.tmp$|~$|\.swp$|\.swx$)'
+    -m -r
+    -e close_write -e moved_to -e attrib
+    --format '%w %f'
+    --exclude '(\.tmp$|~$|\.swp$|\.swx$|\.git/)'
 )
 
-log "INFO" "Watching directories:"
-for d in "${WATCH_DIRS[@]}"; do
-    log "INFO" "  - $d"
-done
+log "INFO" "Watching directories..."
 
 # Main watch loop
+# We use two variables (dir and file) to ensure the path is joined correctly
 stdbuf -oL inotifywait "${INOTIFY_ARGS[@]}" "${WATCH_DIRS[@]}" 2>>"$LOG_FILE" \
-| while read -r FILE_PATH; do
-    debug "Event: close_write on $FILE_PATH"
-    process_file "$FILE_PATH"
+| while read -r W_DIR W_FILE; do
+    FULL_PATH="${W_DIR}${W_FILE}"
+
+    # Safety: Ignore the log file
+    [[ "$FULL_PATH" == "$LOG_FILE" ]] && continue
+
+# Check if we recently processed this file (simple 1-second gate)
+    # This prevents the "sed" write from re-triggering the script
+    if [[ -f "/tmp/last_bump" ]]; then
+        last_time=$(cat /tmp/last_bump)
+        now=$(date +%s)
+        if [[ $((now - last_time)) -lt 1 ]]; then
+             continue
+        fi
+    fi
+    date +%s > /tmp/last_bump
+    # ----------------------
+    # Debug: log EVERY event to see if inotify is even firing
+    # Uncomment the next line if you still see nothing
+    # log "DEBUG" "Event detected on: $FULL_PATH"
+
+    process_file "$FULL_PATH"
 done

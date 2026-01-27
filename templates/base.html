@@ -49,17 +49,7 @@
 
     <hr class="border-secondary">
 
-<a href="{% url 'accounts:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-        Dashboard
-    </a>
 
-    <a href="{% url 'todo:list_dashboard' %}" class="{% if request.resolver_match.url_name == 'list_dashboard' %}active{% endif %}">
-        Lists
-    </a>
-
-    <a href="{% url 'todo:todo_items' %}" class="{% if request.resolver_match.url_name == 'todo_items' %}active{% endif %}">
-        Items
-    </a>
 
     <a href="{% url 'accounts:profile_view' %}" class="{% if request.resolver_match.url_name == 'profile_view' %}active{% endif %}">
         Profile

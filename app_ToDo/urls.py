@@ -10,16 +10,20 @@ app_ToDo.urls
     ToDo app's urls.py
 
 
+
+
+
 """
-__version__ = "0.0.0.000011-dev"
+__version__ = "0.0.0.000015-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-23 20:21:39"
+__updated__ = "2026-01-26 21:17:43"
 ###############################################################################
 
 from django.urls import path
 from . import views
 
 app_name = 'todo'
+
 
 urlpatterns = [
     # path('', views.list_dashboard, name='list_dashboard'),

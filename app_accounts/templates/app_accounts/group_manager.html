@@ -1,23 +1,45 @@
-<h1>Group Manager</h1>
+<table>
+    <thead>
+        <tr>
+            <th>User</th>
+            <th>Current Roles</th>
+            <th>Quick Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td>{{ user.username }}</td>
+            <td>
+                {% for group in user.groups.all %}
+                    <span class="badge">{{ group.name }}</span>
+                {% empty %}
+                    <em>No roles assigned</em>
+                {% endfor %}
+            </td>
+            <td>
+                <form method="POST" style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                    <input type="hidden" name="action" value="assign">
 
-<form method="post">
-    {% csrf_token %}
+                    <select name="role_name">
+                        {% for group in all_groups %}
+                        <option value="{{ group.name }}">{{ group.name }}</option>
+                        {% endfor %}
+                    </select>
 
-    <label>Select Group:</label>
-    <select name="group_id">
-        {% for group in groups %}
-            <option value="{{ group.id }}">{{ group.name }}</option>
+                    <button type="submit">Add Role</button>
+                </form>
+
+                <form method="POST" style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                    <input type="hidden" name="action" value="clear_all">
+                    <button type="submit" class="btn-danger">Clear All</button>
+                </form>
+            </td>
+        </tr>
         {% endfor %}
-    </select>
-
-    <label>Permissions:</label>
-    <select name="permissions" multiple size="20">
-        {% for perm in permissions %}
-            <option value="{{ perm.id }}">
-                {{ perm.content_type.app_label }} | {{ perm.codename }}
-            </option>
-        {% endfor %}
-    </select>
-
-    <button type="submit">Save</button>
-</form>
+    </tbody>
+</table>

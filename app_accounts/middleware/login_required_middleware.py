@@ -9,12 +9,15 @@ login_required_middleware
 
 
 """
-__version__ = "0.0.0.000011-dev"
+__version__ = "0.0.0.000013-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-23 22:07:12"
+__updated__ = "2026-01-27 13:30:06"
 ###############################################################################
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.utils import timezone
+from .models import Profile
+
 
 EXEMPT_NAMES = {
     "accounts:login",
@@ -74,3 +77,29 @@ class LoginRequiredMiddleware:
             return redirect(reverse("accounts:login"))
 
         return None
+
+
+class UpdateLastActivityMiddleware:
+    """Updates the 'last_seen' timestamp on every request."""
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.user.is_authenticated:
+            # Update profile timestamp without triggering signals
+            Profile.objects.filter(user=request.user).update(last_seen=timezone.now())
+
+        return self.get_response(request)
+
+
+class ActiveUserMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.user.is_authenticated:
+            # We use .update() because it's faster and doesn't trigger signals
+            Profile.objects.filter(user=request.user).update(last_seen=timezone.now())
+
+        response = self.get_response(request)
+        return response

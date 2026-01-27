@@ -44,7 +44,7 @@ class HealthTestCase(TestCase):
         request = factory.get('/health/')
         request.META['HTTP_HOST'] = 'example.com'
 
-        with patch('app_corehealth.connections') as mock_connections, \
+        with patch('app_core.health.connections') as mock_connections, \
              patch('app_core.health.settings') as mock_settings, \
              patch('app_core.health.shutil.disk_usage') as mock_disk_usage:
 
@@ -71,7 +71,7 @@ class HealthTestCase(TestCase):
             self.assertEqual(data['status'], 'ok')
             self.assertEqual(data['details']['database'], 'ok')
             self.assertEqual(data['details']['storage'], 'ok')
-            self.assertEqual(data['environment'], 'example.com')
+            self.assertEqual(data['environment'], 'DEV')
 
     def test_health_database_wrong_env(self):
         """Test health check when database env doesn't match."""

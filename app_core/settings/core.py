@@ -9,9 +9,9 @@ app_core.settings.core
 
 
 """
-__version__ = "0.0.0.000095-dev"
+__version__ = "0.0.0.000097-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-23 20:57:00"
+__updated__ = "2026-01-26 22:07:03"
 ###############################################################################
 
 
@@ -48,24 +48,13 @@ ALLOWED_HOSTS = [
     ".local",          # wildcard for any *.local hostname
 ]
 
-
-    # "localhost.local",
-    # ".local",
-    # "pidj",
-    # "pidj.local",
-    # "pi9.local",
-    # "10.0.0.208",
-    # "AlienMike.local",
-    # "AlienMike",
-    # "10.0.0.100",
-
 # CSRF_TRUSTED_ORIGINS = [
 #     "http://*.local",
 # ]
 
-    # "http://pidj.local:8000",
-    # "http://pidj.local:9000",
-    # "http://pidj.local",
+# "http://pidj.local:8000",
+# "http://pidj.local:9000",
+# "http://pidj.local",
 
 
 # extra_host = os.getenv("EXTRA_ALLOWED_HOSTS")
@@ -140,6 +129,7 @@ MIDDLEWARE = [
     # Your login-required middleware MUST come after AuthenticationMiddleware
     'app_core.debug.DebugViewMiddleware',
     "app_accounts.middleware.login_required_middleware.LoginRequiredMiddleware",
+    'app_accounts.middleware.ActiveUserMiddleware',
 ]
 
 

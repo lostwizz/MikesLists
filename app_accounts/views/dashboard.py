@@ -11,9 +11,9 @@ Dashboard view showing user statistics.
 
 
 """
-__version__ = "0.0.0.000011-dev"
+__version__ = "0.0.0.000013-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-23 20:38:35"
+__updated__ = "2026-01-26 22:04:15"
 ###############################################################################
 
 
@@ -38,10 +38,10 @@ def dashboard(request):
     # total_lists = Lists.objects.count()
 
 
-    # context = {
-    #     "total_items": total_items,
-    #     "completed_items": completed_items,
-    #     "total_lists": total_lists,
-    # }
+    context = {
+        # "total_items": total_items,
+        # "completed_items": completed_items,
+        # "total_lists": total_lists,
+    }
 
     return render(request, "app_accounts/dashboard_stats.html", context)

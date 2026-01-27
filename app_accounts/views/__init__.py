@@ -6,8 +6,19 @@ __init__.py
 app_accounts.views
 /srv/django/MikesLists_dev/app_accounts/views/__init__.py
 
+-- views--
+from .services import UserLifecycleService
+# ...
+UserLifecycleService.promote_user(target_user, "Manager")
 
+-- template--
+{% load auth_extras %}
 
+<p>Your Role: {% get_user_role user %}</p>
+
+{% if user|has_group:"Admins" %}
+   <button>Admin Control Panel</button>
+{% endif %}
 
 
 """

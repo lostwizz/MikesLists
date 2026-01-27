@@ -8,9 +8,9 @@ app_core.settings.dev
 
 
 """
-__version__ = "0.0.0.000006-dev"
+__version__ = "0.0.0.000007-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-23 01:09:34"
+__updated__ = "2026-01-26 22:08:06"
 ###############################################################################
 
 # WSGI_REQUEST_HANDLER = "app_core.logging.request_handler.RequestHandlerWithIPAndUser"
@@ -21,6 +21,7 @@ __updated__ = "2026-01-23 01:09:34"
 import socket
 
 from .core import *  # noqa: F403
+
 
 EXTRA_ALLOWED_HOSTS = []
 
@@ -172,11 +173,12 @@ def get_local_ip():
     except Exception:
         return "127.0.0.1"
 
+
 HOSTNAME = socket.gethostname()
 LOCAL_IP = get_local_ip()
 
-print( f"{HOSTNAME=}")
-print( f"{LOCAL_IP=}")
+print(f"{HOSTNAME=}")
+print(f"{LOCAL_IP=}")
 
 CSRF_TRUSTED_ORIGINS = [
     f"http://{HOSTNAME}",

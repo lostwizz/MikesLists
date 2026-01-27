@@ -8,21 +8,19 @@ accounts.models.signals
 
 
 """
-__version__ = "0.0.0.000011-dev"
+__version__ = "0.0.0.000013-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-19 22:30:24"
+__updated__ = "2026-01-26 22:36:56"
 ###############################################################################
 
 import logging
 
 
-
-
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User, Group
-from .profile import Profile
 from django.core.mail import send_mail
+from .profile import Profile
 
 
 @receiver(post_save, sender=User)
@@ -65,4 +63,4 @@ def save_user_profile(sender, instance, **kwargs):
 
         instance.profile.save()
     else:
-        logging.debug( "profile not saved")
+        logging.debug("profile not saved")

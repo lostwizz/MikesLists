@@ -9,9 +9,9 @@ accounts.tests.test_signals
 
 
 """
-__version__ = "0.0.0.000011-dev"
+__version__ = "0.0.0.000017-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-23 00:59:36"
+__updated__ = "2026-01-26 23:03:19"
 ###############################################################################
 # /srv/django/venv-dev/bin/python /srv/django/MikesLists_dev/manage.py test app_accounts.tests --settings=MikesLists.settings.dev --noinput -v 3 --debug-mode --traceback --force-color --shuffle
 # python manage.py test app_accounts.tests --settings=MikesLists.settings.dev --noinput -v 3 --debug-mode --traceback --force-color --shuffle
@@ -22,8 +22,11 @@ __updated__ = "2026-01-23 00:59:36"
 from django.test import TestCase
 from django.contrib.auth.models import User
 from django.contrib.auth.models import Group
-from accounts.models import Profile,   create_user_profile, save_user_profile
-#from accounts.signals import create_user_profile, save_user_profile
+# from app_accounts.permissions import Profile, assign_permissions
+# , create_user_profile, save_user_profile
+# from accounts.signals import create_user_profile, save_user_profile
+from app_accounts.models import Profile
+from app_accounts.permissions import assign_permissions
 
 from django.core import mail
 
@@ -43,7 +46,8 @@ class TestSignals(TestCase):
 
 
     def test_assign_read_only_group(self):
-        group = Group.objects.create(name='Read Only')
+        # group = Group.objects.create(name='Read Only')
+        group, _ = Group.objects.get_or_create(name='Read Only')
         user = User.objects.create_user(username='testuser', password='testpassword')
         self.assertIn(group, user.groups.all())
 

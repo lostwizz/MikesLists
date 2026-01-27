@@ -9,9 +9,9 @@ app_core.urls
 
 
 """
-__version__ = "0.0.0.000011-dev"
+__version__ = "0.0.0.000012-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-23 19:50:15"
+__updated__ = "2026-01-26 22:08:26"
 ###############################################################################
 
 """
@@ -45,6 +45,7 @@ from django.contrib.auth.decorators import login_required
 
 def redirect_root_to_dashboard(request):
     return redirect('accounts:dashboard')
+
 
 urlpatterns = [
     path("admin/", admin.site.urls),

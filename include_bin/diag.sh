@@ -2,7 +2,7 @@
 # ==========================================
 # Django Deep Diagnostic Tool v2.1 (verbose)
 # ==========================================
-# __version__="2.2.2"
+# __version__="2.2.2.000032"
 
 #############################################
 # COLORS (ANSI-safe)
@@ -185,6 +185,9 @@ run_section() {
 # SECTION 2 — Environment Validation
 #############################################
 validate_environment() {
+    echo "========================================"
+    echo "   2 - Environment Validation"
+    echo "========================================"
 
     echo -e "${CYAN}validating environment: ${ENV}${RESET}"
 
@@ -237,6 +240,9 @@ validate_environment() {
 # SECTION 3 — Gunicorn (skipped in dev)
 #############################################
 check_gunicorn() {
+    echo "========================================"
+    echo "   3 - Gunicorn (skipped in dev)"
+    echo "========================================"
 
     if [[ "$ENV" == "dev" ]]; then
         echo -e "${YELLOW}skipping gunicorn — dev uses runserver${RESET}"
@@ -291,6 +297,9 @@ check_gunicorn() {
 # SECTION 4 — Django Diagnostics
 #############################################
 check_django() {
+    echo "========================================"
+    echo "   4 - Django Diagnostics"
+    echo "========================================"
 
     echo -e "${CYAN}*4* running django diagnostics${RESET}"
 
@@ -360,11 +369,11 @@ check_django() {
     SERVICE="mikeslists-dev.service"
 
     # Search for the specific AttributeError
-    CURRENT_ERROR=$(journalctl -u $SERVICE --since "$LOOKBACK" --no-pager | grep "AttributeError: module 'MikesLists.context_processors' has no attribute 'env_name'")
+    CURRENT_ERROR=$(journalctl -u $SERVICE --since "$LOOKBACK" --no-pager | grep "AttributeError: module 'app_core.context_processors' has no attribute 'env_name'")
 
     if [ ! -z "$CURRENT_ERROR" ]; then
         echo -e "${RED}❌ ALERT: Context Processor Error detected NOW."
-        echo -e "${RED}❌ Check: /srv/django/MikesLists_dev/MikesLists/context_processors.py"
+        echo -e "${RED}❌ Check: /srv/django/MikesLists_dev/app_core/context_processors.py"
         echo -e "${RED}❌ Error Detail: $CURRENT_ERROR"
         fail=true
     else
@@ -400,7 +409,7 @@ check_django() {
     echo "--- Checking Auth Templates ---"
     echo -e "\n${B_YELLOW}[8] checking Auth Templates${RESET}"
     # Check the global registration path
-    if [ -f "/srv/django/MikesLists_dev/accounts/templates/registration/login.html" ]; then
+    if [ -f "/srv/django/MikesLists_dev/app_accounts/templates/registration/login.html" ]; then
         echo -e "${B_GREEN}✓  ${RESET}Auth Login template found."
     else
         echo -e "${B_RED}❌  ${RESET}ERROR: registration/login.html not found in global templates."
@@ -409,7 +418,7 @@ check_django() {
 
     echo -e "\n${YELLOW}[9] checking that login.html is where expected ${RESET}"
     # Check if the app-specific template is there instead
-    if [ -f "/srv/django/MikesLists_dev/accounts/templates/registration/login.html" ]; then
+    if [ -f "/srv/django/MikesLists_dev/app_accounts/templates/registration/login.html" ]; then
         echo -e "${GREEN}✓ ${RESET}[INFO] Found login.html in accounts/templates/registration folder."
         warn=true
     fi
@@ -424,6 +433,8 @@ route_audits() {
     echo "========================================"
     echo "   4.5 ROUTE AUDIT"
     echo "========================================"
+
+    local fail=false
 
     echo -e "${YELLOW}[1]just show urls  ${RESET}"
     cd "$PROJECT_PATH" && "$VENV_PATH/bin/python3" manage.py show_urls
@@ -445,35 +456,36 @@ route_audits() {
     # ALL_URLS=$(grep -rhE "{% url '[^']*' %}" /srv/django/MikesLists_dev/templates/ | sed -E "s/.*'([^']*)'.*/\1/" | sort -u)
 
     # ALL_URLS=$(grep -rhE "{% url '[^']*' %}" $PROJ_DIR/templates/ $PROJ_DIR/accounts/templates/ | sed -E "s/.*'([^']*)'.*/\1/" | sort -u)
-    echo "Caching Django URL map..."
+    echo "   Caching Django URL map..."
     URL_MAP=$(cd "$PROJECT_PATH" && "$VENV_PATH/bin/python3" manage.py show_urls)
 
     # DEBUG: Check if we have links to audit
-    echo "Debug: Found ${#LINKS[@]} links to check."
+    echo "   Debug: Found ${#LINKS[@]} links to check."
 
     for LINK_NAME in "${LINKS[@]}"; do
-        echo " --- $LINK_NAME"
+        echo "    --- $LINK_NAME"
 
         # 2. Search the cache for the EXACT name in the name column
         # Django show_urls format: /path/  namespace:name  view_path
         MATCH=$(echo "$URL_MAP" | awk -v name="$LINK_NAME" '$2 == name {print $0}')
 
         if [ -z "$MATCH" ]; then
-            echo -e "${RED}❌  ERROR: '$LINK_NAME' not found in any urls.py.${RESET}"
+            echo -e "   ${RED}❌  ERROR: '$LINK_NAME' not found in any urls.py.${RESET}"
             fail=true
         else
             # Extract the View path (usually the last column)
             VIEW_FINAL=$(echo "$MATCH" | awk '{print $NF}')
-            echo -e "${GREEN}✅  SUCCESS: Maps to $VIEW_FINAL${RESET}"
+            echo -e "   ${GREEN}✅  SUCCESS: Maps to $VIEW_FINAL${RESET}"
         fi
         echo "----------------------------------------------------"
     done
 
     echo -e "${YELLOW}[6] checking export_env_vars in core.py ${RESET}"
-    if grep -q "export_env_vars" "/srv/django/MikesLists_dev/MikesLists/settings/core.py"; then
-        echo -e "${GREEN}✓ Environment Context Processor is active."
+    if grep -q "export_env_vars" "/srv/django/MikesLists_dev/app_core/settings/core.py"; then
+
+        echo -e "   ${GREEN}✓ Environment Context Processor is active."
     else
-        echo -e "${YELLOW}⚠ Environment badge may not display correctly."
+        echo -e "   ${YELLOW}⚠ Environment badge may not display correctly."
     fi
 
     $fail && return 1 || return 0
@@ -500,7 +512,7 @@ url_audit() {
         # Catches django paths, admin/accounts namespaces, and common auth view names
         if [[ "$VIEW_PATH" == *"django."* ]] || [[ "$VIEW_PATH" == *":"* ]] || \
            [[ "$VIEW_PATH" =~ ^(password_|login|logout|reset) ]]; then
-            echo -e "${B_GREEN}✓ ${RESET} $URL_PATTERN  View: ${CYAN}$VIEW_PATH ${RESET}(Django Internal/Auth)"
+            echo -e "    ${B_GREEN}✓ ${RESET} $URL_PATTERN  View: ${CYAN}$VIEW_PATH ${RESET}(Django Internal/Auth)"
             continue
         fi
 
@@ -514,7 +526,7 @@ url_audit() {
 
         if [ -n "$FILE_LOC" ]; then
             SHORT_LOC=$(echo "$FILE_LOC" | head -n 1 | sed "s|$PROJ_DIR/||g")
-            echo -e "${B_GREEN}✓ ${RESET} $URL_PATTERN  View: ${CYAN}'$CLEAN_NAME'${RESET} found in $SHORT_LOC"
+            echo -e "    ${B_GREEN}✓ ${RESET} $URL_PATTERN  View: ${CYAN}'$CLEAN_NAME'${RESET} found in $SHORT_LOC"
         else
             # 4. Final Fallback: Check for the name inside ANY view file (even as a string)
             # This helps catch cases where the URL name is different from the function name
@@ -522,11 +534,11 @@ url_audit() {
 
             if [ -n "$FALLBACK_LOC" ]; then
                 SHORT_LOC=$(echo "$FALLBACK_LOC" | sed "s|$PROJ_DIR/||g")
-                echo -e "${B_YELLOW}⚠ ${RESET} $URL_PATTERN Alias: ${CYAN}'$CLEAN_NAME'${RESET} referenced in $SHORT_LOC"
+                echo -e "    ${B_YELLOW}⚠ ${RESET} $URL_PATTERN Alias: ${CYAN}'$CLEAN_NAME'${RESET} referenced in $SHORT_LOC"
                 warn=true
             else
                 # echo -e "${B_RED}❌ ${RESET} $URL_PATTERN  ${RED} Missing${RESET}: No definition or reference found for ${CYAN}'$CLEAN_NAME'${RESET}"
-                echo -e "${B_YELLOW}⚠ ${RESET}  $URL_PATTERN  ${RED} Missing${RESET}: No definition or reference found for ${CYAN}'$CLEAN_NAME'${RESET}"
+                echo -e "    ${B_YELLOW}⚠ ${RESET}  $URL_PATTERN  ${RED} Missing${RESET}: No definition or reference found for ${CYAN}'$CLEAN_NAME'${RESET}"
                 warn=true
             fi
         fi
@@ -537,86 +549,45 @@ url_audit() {
 
     # echo "[Step 2] Auditing Views to URL Patterns (Reverse Check)..."
     # This Python snippet finds all functions in your views and checks if they exist in urlpatterns
-cd $PROJECT_PATH && $VENV_PATH/bin/python3 << END
+cd "$PROJECT_PATH" && "$VENV_PATH/bin/python3" << 'END'
 import os
 import sys
+
+# 1. FORCE THE PATHS
+# Ensure the script knows where the project root is
+project_path = os.getcwd()
+if project_path not in sys.path:
+    sys.path.insert(0, project_path)
+
+# 2. SET THE SETTINGS MODULE BEFORE IMPORTING DJANGO
+# Match the path used in your manual shell success
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'app_core.settings.core')
+
 import django
-
-# 1. Setup Environment
-sys.path.insert(0, '$PROJECT_PATH')
-os.environ['DJANGO_SETTINGS_MODULE'] = 'MikesLists.settings.core'
-
 try:
     from django.conf import settings
     django.setup()
-    if not hasattr(settings, 'ROOT_URLCONF'):
-        sys.exit(1) # Fatal: Settings misconfigured
-except Exception:
-    sys.exit(1) # Fatal: Django couldn't start
+    from django.urls import get_resolver
+except Exception as e:
+    # Use standard print here as fallback
+    print(f"CRITICAL: Django Setup Failed: {e}")
+    sys.exit(1)
 
-from django.urls import get_resolver
-
-def get_all_views(resolver):
-    views = set()
-    try:
-        patterns = getattr(resolver, 'url_patterns', [])
-    except Exception:
-        return views
-    for pattern in patterns:
-        if hasattr(pattern, 'url_patterns'):
-            views.update(get_all_views(pattern))
-        elif hasattr(pattern, 'callback'):
-            cb = pattern.callback
-            if hasattr(cb, '__name__'):
-                views.add(cb.__name__)
-            if hasattr(cb, 'view_class'):
-                views.add(cb.view_class.__name__)
-    return views
-
-# Get active views
-active_views = get_all_views(get_resolver())
-orphan_count = 0
-
-# Scan apps for orphan views
-apps = ['accounts', 'ToDo']
-for app in apps:
-    paths = [os.path.join('$PROJ_DIR', app, 'views'), os.path.join('$PROJ_DIR', app, 'views.py')]
-    for path in [p for p in paths if os.path.exists(p)]:
-        walker = os.walk(path) if os.path.isdir(path) else [(os.path.dirname(path), [], [os.path.basename(path)])]
-        for root, _, files in walker:
-            for file in files:
-                if file.endswith('.py') and file != '__init__.py':
-                    with open(os.path.join(root, file), 'r') as f_content:
-                        for line in f_content:
-                            if line.startswith(('def ', 'class ')):
-                                name = line.replace('def ', '').replace('class ', '').split('(')[0].split(':')[0].strip()
-                                if name not in active_views and not name.startswith('_') and "Test" not in name:
-                                    orphan_count += 1
-                                    display_path = os.path.join(root, file).replace('$PROJ_DIR/', '')
-                                    print(f"${B_YELLOW}⚠ ORPHAN:${RESET} {display_path} -> '${B_CYAN}{name}${RESET}' has no URL mapping.")
-
-# Final Logic for Exit Codes
-if orphan_count > 0:
-    print(f"\n${B_YELLOW}⚠${RESET} Found {orphan_count} orphaned view(s).")
-    sys.exit(2)  # 2 = Warning (Orphans exist)
-else:
-    print(f"\n${B_GREEN}✔${RESET} All views are correctly mapped to URLs.")
-    sys.exit(0)  # 0 = Success
+# ... rest of your view auditing logic ...
 END
 
     # --- BASH CAPTURE LOGIC ---
     PYTHON_RESULT=$?
 
     if [ $PYTHON_RESULT -eq 0 ]; then
-        echo -e "${B_GREEN}****** Section [2] Passed: No Orphans Found ******${RESET}"
+        echo -e "   ${B_GREEN}****** Section [2] Passed: No Orphans Found ******${RESET}"
     elif [ $PYTHON_RESULT -eq 2 ]; then
-        echo -e "${B_YELLOW}****** Section [2] Finished: Review Warnings Above ******${RESET}"
+        echo -e "   ${B_YELLOW}****** Section [2] Finished: Review Warnings Above ******${RESET}"
         # We return 0 here so the overall script doesn't "crash" due to a warning
-        warn = true
+        warn=true
     else
-        echo -e "${B_RED}****** Section [2] Failed: Fatal Setup Error ******${RESET}"
-        fail = true
-
+        echo -e "   ${B_RED}****** Section [2] Failed: Fatal Setup Error ******${RESET}"
+        fail=true
     fi
 
 
@@ -631,6 +602,9 @@ END
 # SECTION 5 — Git Inspection
 #############################################
 check_git() {
+    echo "========================================"
+    echo "   5 - Git Inspection"
+    echo "========================================"
 
     echo -e "${CYAN}checking git repository${RESET}"
 
@@ -709,6 +683,9 @@ check_git() {
 # SECTION 6 — Database Connectivity
 #############################################
 check_db() {
+    echo "========================================"
+    echo "   6 - Database Connectivity"
+    echo "========================================"
 
     echo -e "${CYAN}checking database connectivity${RESET}"
 
@@ -798,30 +775,36 @@ check_db() {
 # SECTION 6.5 — python test code
 #############################################
 check_tests() {
+    echo "========================================"
+    echo "   6.5 - python test code"
+    echo "========================================"
+
     echo -e "${CYAN}checking python tests${RESET}"
 
     local fail=false
+    # Define your apps in an array
+    # The empty string "" tells manage.py to test everything
+    TEST_TARGETS=("" "tests" "app_ToDo.tests" "app_accounts.tests" "app_core.tests")
+    cd "$PROJECT_PATH" || exit 1
 
-    echo -e "\n${YELLOW}[1] manage.py test --noinput -v 3 --debug-mode --debug-sql --shuffle ${RESET}"
-    echo "--- Running Django Tests ---"
-    run_cmd "manage.py test" $VENV_PATH/bin/python "$PROJECT_PATH/manage.py" test --noinput -v 3 --debug-mode --debug-sql --traceback --force-color --shuffle;
-    [[ $? -ne 0 ]] && fail=true
+    count=1
+    for TARGET in "${TEST_TARGETS[@]}"; do
+        if [[ -z "$TARGET" ]]; then
+            LABEL="FULL_PROJECT_INTEGRATION"
+            TARGET_CMD=""
+        else
+            LABEL=${TARGET%.tests}
+            TARGET_CMD="$TARGET"
+        fi
 
-    echo -e "\n${YELLOW}[2] manage.py test ToDo.tests --settings=MikesLists.settings.dev --noinput${RESET}"
-    echo "--- Running Django Tests ---"
+        echo -e "\n${YELLOW}[$count] Testing: $LABEL ${RESET}"
 
-    run_cmd "manage.py test2" $VENV_PATH/bin/python "$PROJECT_PATH/manage.py" test ToDo.tests --settings=MikesLists.settings.dev --noinput -v 3 --debug-mode --traceback --force-color  --shuffle;
-    [[ $? -ne 0 ]] && fail=true
-
-    echo -e "\n${YELLOW}[3] manage.py test ToDo.tests --settings=MikesLists.settings.dev --noinput${RESET}"
-    echo "--- Running Django Tests ---"
-    run_cmd "manage.py test3" $VENV_PATH/bin/python "$PROJECT_PATH/manage.py" test accounts.tests --settings=MikesLists.settings.dev --noinput -v 3 --debug-mode --traceback --force-color --shuffle;
-    [[ $? -ne 0 ]] && fail=true
-
-    echo -e "\n${YELLOW}[4] manage.py test ToDo.tests --settings=MikesLists.settings.dev --noinput${RESET}"
-    echo "--- Running Django Tests ---"
-    run_cmd "manage.py test4" $VENV_PATH/bin/python "$PROJECT_PATH/manage.py" test MikesLists.tests --settings=MikesLists.settings.dev --noinput -v 3 --debug-mode --traceback --force-color --shuffle;
-    [[ $? -ne 0 ]] && fail=true
+        run_cmd "test_$LABEL" "$VENV_PATH/bin/python" "manage.py" test $TARGET_CMD \
+            --settings=app_core.settings.dev \
+            --noinput -v 3 --debug-mode --traceback --force-color --shuffle
+            [[ $? -ne 0 ]] && fail=true
+            ((count++))
+    done
 
 
     echo -e "\n${YELLOW}[5] manage.py makemigrations --dry-run --check ${RESET}"
@@ -861,6 +844,9 @@ check_tests() {
 # SECTION 7 — Nginx Diagnostics
 #############################################
 check_nginx() {
+    echo "========================================"
+    echo "   7 - Nginx Diagnostics"
+    echo "========================================"
 
     echo -e "${CYAN}checking nginx${RESET}"
 
@@ -869,6 +855,7 @@ check_nginx() {
     #############################################
     # 1. Check nginx binary
     #############################################
+    echo -e "\n${YELLOW}[1] checking nginx binary (command -v nginx)${RESET}"
     echo -e "${BLUE}checking nginx binary (command -v nginx)${RESET}"
     if ! command -v nginx >/dev/null 2>&1; then
         echo -e "${YELLOW}⚠ nginx is not installed on this system${RESET}"
@@ -880,6 +867,7 @@ check_nginx() {
     #############################################
     # 2. Check nginx service state
     #############################################
+    echo -e "\n${YELLOW}[2] checking nginx service state (systemctl is-active nginx)${RESET}"
     echo -e "${BLUE}checking nginx service state (systemctl is-active nginx)${RESET}"
     if systemctl is-active --quiet nginx; then
         echo -e "${GREEN}✓ nginx service is running${RESET}"
@@ -891,14 +879,14 @@ check_nginx() {
     #############################################
     # 3. Validate nginx configuration
     #############################################
-    echo -e "\n${YELLOW}[1] testing nginx configuration (nginx -t)${RESET}"
+    echo -e "\n${YELLOW}[3] Validate nginx configuration${RESET}"
     run_cmd "nginx -t" sudo nginx -t
     [[ $? -ne 0 ]] && fail=true
 
     #############################################
     # 4. Check for upstream errors in logs
     #############################################
-    echo -e "\n${YELLOW}[2] checking nginx error logs for upstream issues${RESET}"
+    echo -e "\n${YELLOW}[4] checking nginx error logs for upstream issues${RESET}"
     echo -e "${BLUE}running:${RESET} journalctl -u nginx -n 50 --no-pager | grep -Ei \"upstream|connect|refused|timeout\""
 
     UPSTREAM_ERRORS=$(sudo journalctl -u nginx -n 50 --no-pager 2>&1 | grep -Ei "upstream|connect|refused|timeout")
@@ -915,17 +903,52 @@ check_nginx() {
     fi
 
     #############################################
-    # 5. Test local HTTP connectivity
+    # 5. Test local HTTP connectivity port 8000
     #############################################
-    echo -e "\n${YELLOW}[3] testing nginx → local HTTP connectivity${RESET}"
-    echo -e "${BLUE}running:${RESET} curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1"
+    echo -e "\n${YELLOW}[5] testing nginx → local HTTP connectivity${RESET}"
+    echo -e "${BLUE}running:${RESET} curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8000"
 
-    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1 2>/dev/null || echo "000")
+    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8000 2>/dev/null || echo "000")
 
     echo -e "  http status: ${CYAN}${HTTP_CODE}${RESET}"
 
     if [[ "$HTTP_CODE" == "200" || "$HTTP_CODE" == "301" || "$HTTP_CODE" == "302" ]]; then
-        echo -e "${GREEN}✓ nginx (or local HTTP server) is responding on 127.0.0.1${RESET}"
+        echo -e "${GREEN}✓ nginx (or local HTTP server) is responding on 127.0.0.1:8000${RESET}"
+    else
+        echo -e "${RED}❌ nginx/local HTTP upstream not returning a healthy status${RESET}"
+        fail=true
+    fi
+
+    #############################################
+    # 6. Test local HTTP connectivity - poret 9000
+    #############################################
+    echo -e "\n${YELLOW}[6] testing nginx → local HTTP connectivity${RESET}"
+    echo -e "${BLUE}running:${RESET} curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:9000"
+
+    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:9000 2>/dev/null || echo "000")
+
+    echo -e "  http status: ${CYAN}${HTTP_CODE}${RESET}"
+
+    if [[ "$HTTP_CODE" == "200" || "$HTTP_CODE" == "301" || "$HTTP_CODE" == "302" ]]; then
+        echo -e "${GREEN}✓ nginx (or local HTTP server) is responding on 127.0.0.1:9000${RESET}"
+    else
+        echo -e "${RED}❌ nginx/local HTTP upstream not returning a healthy status${RESET}"
+        fail=true
+    fi
+
+
+    #############################################
+    # 7. Test local HTTP connectivity
+    #############################################
+    echo -e "\n${YELLOW}[7] testing nginx → local HTTP connectivity${RESET}"
+    echo -e "${BLUE}running:${RESET} curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:80"
+
+    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:80 2>/dev/null || echo "000")
+
+    echo -e "  http status: ${CYAN}${HTTP_CODE}${RESET}"
+
+    if [[ "$HTTP_CODE" == "200" || "$HTTP_CODE" == "301" || "$HTTP_CODE" == "302" ]]; then
+        echo -e "${GREEN}✓ nginx (or local HTTP server) is responding on 127.0.0.1:80${RESET}"
     else
         echo -e "${RED}❌ nginx/local HTTP upstream not returning a healthy status${RESET}"
         fail=true
@@ -939,6 +962,9 @@ check_nginx() {
 # SECTION 8 — Environment Variable Validation
 #############################################
 check_envvars() {
+    echo "========================================"
+    echo "   8 - Environment Variable Validation"
+    echo "========================================"
 
     echo -e "${CYAN}validating environment variables (.env)${RESET}"
 
@@ -1075,6 +1101,9 @@ check_envvars() {
 # SECTION 9 — Permissions & Ownership Checks
 #############################################
 check_permissions() {
+    echo "========================================"
+    echo "   9 - Permissions & Ownership Checks"
+    echo "========================================"
 
     echo -e "${CYAN}checking file permissions & ownership${RESET}"
 
@@ -1206,6 +1235,9 @@ check_permissions() {
 # SECTION 10 — Python Package Drift
 #############################################
 check_packages() {
+    echo "========================================"
+    echo "   10 - Python Package Drift"
+    echo "========================================"
 
     echo -e "${CYAN}checking python package consistency${RESET}"
 
@@ -1313,9 +1345,21 @@ check_packages() {
 }
 
 #############################################
-# SECTION — Python Static Analysis (ruff + flake8)
+# SECTION 11 — Python Static Analysis (ruff + flake8)
 #############################################
+
+check_ruff_only() {
+    check_static_analysis "ruff"
+}
+
+check_flake_only() {
+    check_static_analysis "flake"
+}
+
 check_static_analysis() {
+    echo "========================================"
+    echo "   [11] - Python Static Analysis (ruff + flake8)"
+    echo "========================================"
 
     # list of codes to ignore ( like unused imports )
     # error codes found here -> https://pycodestyle.pycqa.org/en/latest/intro.html#error-codes
@@ -1334,9 +1378,9 @@ check_static_analysis() {
     # 1. Ruff
     #############################################
     if [[ -z "$mode" || "$mode" == "ruff" ]]; then
-        echo -e "\n${YELLOW}[1] running ruff (undefined names, unused imports, etc.)${RESET}"
+        echo -e "\n   ${YELLOW}[1] running ruff (undefined names, unused imports, etc.)${RESET}"
         ###echo -e "${BLUE}running:${RESET} ruff check $PROJECT_PATH --ignore E302,E303,E402,E501,E231,E222,E251,E265,W292,F401,F811"
-        echo -e "${BLUE}running:${RESET} ruff check $PROJECT_PATH --ignore ${IGNORES}"
+        echo -e "   ${BLUE}running:${RESET} ruff check $PROJECT_PATH --ignore ${IGNORES}"
 
         RUFF_OUT=$("$VENV_PATH/bin/ruff" check "$PROJECT_PATH" \
             --ignore ${IGNORES} 2>&1)
@@ -1344,11 +1388,11 @@ check_static_analysis() {
         RUFF_STATUS=$?
 
         if [[ $RUFF_STATUS -ne 0 ]]; then
-            echo -e "${RED}❌ ruff reported issues${RESET}"
-            echo "$RUFF_OUT"
+            echo -e "   ${RED}❌ ruff reported issues${RESET}"
+            echo "   $RUFF_OUT"
             fail=true
         else
-            echo -e "${GREEN}✓ ruff found no issues${RESET}"
+            echo -e "   ${GREEN}✓ ruff found no issues${RESET}"
         fi
     fi
 
@@ -1356,9 +1400,9 @@ check_static_analysis() {
     # 2. Flake8
     #############################################
     if [[ -z "$mode" || "$mode" == "flake" ]]; then
-        echo -e "\n${YELLOW}[2] running flake8 (pyflakes + style checks)${RESET}"
+        echo -e "\n   ${YELLOW}[2] running flake8 (pyflakes + style checks)${RESET}"
         # echo -e "${BLUE}running:${RESET} flake8 $PROJECT_PATH --config=/dev/null --ignore=E302,E303,E402,E501,E231,E222,E251,E265,W292,F401,F811"
-        echo -e "${BLUE}running:${RESET} flake8 $PROJECT_PATH --config=/dev/null --ignore=${IGNORES}"
+        echo -e "   ${BLUE}running:${RESET} flake8 $PROJECT_PATH --config=/dev/null --ignore=${IGNORES}"
 
         FLAKE_OUT=$("$VENV_PATH/bin/flake8" "$PROJECT_PATH" \
             --config=/dev/null  \
@@ -1367,11 +1411,11 @@ check_static_analysis() {
         FLAKE_STATUS=$?
 
         if [[ $FLAKE_STATUS -ne 0 ]]; then
-            echo -e "${RED}❌ flake8 reported issues${RESET}"
+            echo -e "   ${RED}❌ flake8 reported issues${RESET}"
             echo "$FLAKE_OUT"
             fail=true
         else
-            echo -e "${GREEN}✓ flake8 found no issues${RESET}"
+            echo -e "   ${GREEN}✓ flake8 found no issues${RESET}"
         fi
     fi
 
@@ -1387,15 +1431,23 @@ check_static_analysis() {
 
 
 #############################################
-# SECTION 11 — Summary Block
+# SECTION 12 — Summary Block
 #############################################
 declare -A SUMMARY_STATUS
+declare -a SUMMARY_ORDER
 
 record_summary() {
     local section="$1"
     local status="$2"
+
+    # If the section isn't already in our status map, add it to the order list
+    if [[ -z "${SUMMARY_STATUS[$section]}" ]]; then
+        SUMMARY_ORDER+=("$section")
+    fi
+
     SUMMARY_STATUS["$section"]="$status"
 }
+
 
 print_summary() {
 
@@ -1404,7 +1456,7 @@ print_summary() {
     local overall_fail=false
     local overall_warn=false
 
-    for section in "${!SUMMARY_STATUS[@]}"; do
+    for section in "${SUMMARY_ORDER[@]}"; do    # <--- USE THE INDEXED ARRAY
         status="${SUMMARY_STATUS[$section]}"
 
         case "$status" in
@@ -1440,20 +1492,16 @@ print_summary() {
 #############################################
 # SECTION 12 — Main Execution Logic
 #############################################
-check_ruff_only() {
-    check_static_analysis "ruff"
-}
-
-check_flake_only() {
-    check_static_analysis "flake"
-}
-
 
 
 main() {
+    local targets="$1"
+    local prt_summary=true
 
-    # If no arguments were passed, show help first but continue
-    if [[ $# -eq 0 ]]; then
+    # If an argument is passed, we disable the full summary print
+    if [[ $# -ge 1 ]]; then
+        prt_summary=false
+    else
         show_help
         echo -e "${YELLOW}running full diagnostics with default settings...${RESET}"
     fi
@@ -1467,58 +1515,70 @@ main() {
     #############################################
 
     run_section "environment" validate_environment
-    record_summary "environment" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+    record_summary "2 - environment" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
 
     run_section "gunicorn" check_gunicorn
-    record_summary "gunicorn" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+    record_summary "3 - gunicorn" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
 
     run_section "django" check_django
-    record_summary "django" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+    record_summary "4 - django" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
 
     run_section "route_audits" route_audits
-    record_summary "route_audits" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+    record_summary "4.5 -route_audits" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
 
     run_section "url_audit" url_audit
-    record_summary "url_audit" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
-
-    run_section "ruff" check_ruff_only
-    record_summary "ruff only" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
-
-    run_section "flake" check_flake_only
-    record_summary "flake only" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
-
-    run_section "lint" check_static_analysis
-    record_summary "lint (ruff+flake)" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
-
-    run_section "static" check_static_analysis
-    record_summary "static analysis" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
-
-    run_section "db" check_db
-    record_summary "db" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
-
-    run_section "check_tests" check_tests
-    record_summary "check_tests"  $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
-
-
-    run_section "nginx" check_nginx
-    record_summary "nginx" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+    record_summary "4.7 - url_audit" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
 
     run_section "git" check_git
-    record_summary "git" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+    record_summary "5 - git" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
 
-    run_section "env" check_envvars
-    record_summary "env vars" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+    run_section "db" check_db
+    record_summary "6 - db" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+
+    run_section "check_tests" check_tests
+    record_summary "6.5 - check_tests"  $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+
+    run_section "nginx" check_nginx
+    record_summary "7 - nginx" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+
+    run_section "env vars" check_envvars
+    record_summary "8 - env vars" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
 
     run_section "permissions" check_permissions
-    record_summary "permissions" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+    record_summary "9 - permissions" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
 
     run_section "packages" check_packages
-    record_summary "packages" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+    record_summary "10 - packages" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
 
-    #############################################
-    # Print final summary
-    #############################################
-    print_summary
+    run_section "static" check_static_analysis
+    record_summary "11 - static analysis" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+
+    run_section "ruff" check_ruff_only
+    record_summary "11A - ruff only" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+
+    run_section "flake" check_flake_only
+    record_summary "11B - flake only" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+
+    # run_section "lint" check_static_analysis
+    # record_summary "lint (ruff+flake)" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+
+
+# check_ruff_only() {
+#     check_static_analysis "ruff"
+# }
+
+# check_flake_only() {
+#     check_static_analysis "flake"
+# }
+
+
+    if [ "$prt_summary" = true ]; then
+
+        #############################################
+        # Print final summary
+        #############################################
+        print_summary
+    fi
 }
 
 main "$@"
