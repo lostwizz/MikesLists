@@ -11,10 +11,10 @@ app_ToDo.views
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-23 01:19:45"
+__updated__ = "2026-01-26 19:22:42"
 ###############################################################################
-from .list_views import *
-from .item_views import *
+# from .list_views import *
+# from .item_views import *
 
-from . import item_views
-from . import list_views
+# from . import item_views
+# from . import list_views

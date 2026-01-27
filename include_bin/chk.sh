@@ -241,6 +241,60 @@ for ENV in "${ENVS[@]}"; do
     fi
 done
 
+
+# ---------------------------------------------------------
+# [4.5] checking paths for 200
+# ---------------------------------------------------------
+echo -e "\n${MAGENTA}[4.5] Server Header Identification${RESET}"
+# --- Path Health Check Section ---
+
+# ---------------------------------------------------------
+# [4.5] checking paths for 200
+# ---------------------------------------------------------
+echo -e "\n${MAGENTA}[4.5] Application Endpoint Health Check${RESET}"
+
+echo "Checking Application Endpoints..."
+for ENV in "${ENVS[@]}"; do
+    echo -e "  ${ENV}:"
+    PORT=${PORTS[$ENV]}
+    BASE_URL="http://localhost:${PORT}"
+
+    VENV="/srv/django/venv-${ENV}/bin/python"
+    MANAGE="/srv/django/MikesLists_${ENV}/manage.py"
+
+    # The pipe below fetches URLs and feeds them line-by-line into the while loop
+    ${VENV} ${MANAGE} show_urls --format aligned 2>/dev/null | \
+        awk '{print $1}' | \
+        grep -v '^/admin' | \
+        grep -v '^/static' | \
+        grep -v '\.' | \
+        grep -v 'HOSTNAME' | \
+        grep -v 'LOCAL_IP' | \
+        sed 's/<[^>]*>/1/g' | \
+        sort -u | \
+    while read -r path; do
+        # Skip if path is empty
+        [[ -z "$path" ]] && continue
+
+        # Get only the HTTP status code
+        STATUS=$(curl -o /dev/null -s -L -w "%{http_code}" "${BASE_URL}${path}")
+
+        # Treat 200 and 302 (Redirect) as success
+        if [[ "$STATUS" -eq 200 ]]; then
+            echo -e "     ${GREEN}✔ OK ${RESET}- HTTP:$STATUS - $path"
+        else
+            echo -e "     ${RED}✖ ERROR ${RESET} HTTP:$STATUS - $path"
+            ((FAIL++))
+        fi
+    done
+    echo ""
+done
+
+
+
+
+
+
 # ---------------------------------------------------------
 # [5] Server Header Identification
 # ---------------------------------------------------------

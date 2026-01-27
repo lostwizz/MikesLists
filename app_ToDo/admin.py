@@ -33,8 +33,8 @@ from .models.node import Node  # Adjust this based on where you put the Node cla
 
 # =================================================================
 # =================================================================
-class NodeAdmin(admin.ModelAdmin):
-    list_display = ('name', 'parent', 'created_at')
+# class NodeAdmin(admin.ModelAdmin):
+#     list_display = ('name', 'parent', 'created_at')
 
 
 # =================================================================
