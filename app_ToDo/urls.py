@@ -19,13 +19,17 @@ __author__ = "Mike Merrett"
 __updated__ = "2026-01-26 21:17:43"
 ###############################################################################
 
-from django.urls import path
+from django.urls import path, include
 from . import views
 
 app_name = 'todo'
 
 
 urlpatterns = [
+    # path('', views.todo_list, name='list'), # This handles /app_ToDo/
+    path('', views.todo_list, name='list'),
+
+    # path('todo/', include('app_ToDo.urls')),
     # path('', views.list_dashboard, name='list_dashboard'),
 
     # # Change 'app_todo_items' to 'todo_items'

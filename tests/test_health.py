@@ -32,7 +32,7 @@ __updated__ = "2026-01-02 22:07:22"
 from django.test import TestCase, RequestFactory, SimpleTestCase, TransactionTestCase, override_settings
 from django.http import JsonResponse
 from unittest.mock import patch, MagicMock
-from app_core.health import health
+from app_core.views.health import health
 import json
 from django.conf import settings
 

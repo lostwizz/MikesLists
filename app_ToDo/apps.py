@@ -11,7 +11,7 @@ app_ToDo.apps
 """
 __version__ = "0.0.1.000003-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-26 21:48:40"
+__updated__ = "2026-01-27 17:33:23"
 ###############################################################################
 
 # /srv/django/MikesLists_dev/app_ToDo/apps.py
@@ -50,9 +50,9 @@ class AppTodoConfig(AppConfig):
 
         # Now you can use CustomPermissions safely
         # (e.g., connecting a signal or running setup logic)
-        print("Django is ready, permissions imported!")
+        # print("Django is ready, permissions imported!")
         # post_migrate.connect(run_setup_logic, sender=self)
-
+        pass
 
 # # ---------------------------------------------------------------------
 # # login_required_middleware.py

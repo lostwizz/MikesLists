@@ -15,6 +15,10 @@ __updated__ = "2026-01-23 01:10:02"
 
 from .core import *  # noqa: F403
 
+MIDDLEWARE += [
+    "app_core.views.debug.DebugViewMiddleware",
+]
+
 # EXTRA_ALLOWED_HOSTS += []
 
 # TEMPLATES[0]["OPTIONS"]["context_processors"].append(

@@ -3,14 +3,15 @@
 ###############################################################################
 r"""
 view_status.py
-app_core.view_status
-/srv/django/MikesLists_dev/app_core/view_status.py
+app_core.views.status
+/srv/django/MikesLists_dev/app_core/views/status.py
+
 
 
 """
 __version__ = "0.0.0.000005-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-26 21:57:32"
+__updated__ = "2026-01-28 20:44:44"
 ###############################################################################
 
 
@@ -182,17 +183,17 @@ def status_view(request: HttpRequest) -> HttpResponse:
         "restart_allowed": restart_allowed,
         "restart_status": restart_status,
     }
-    return render(request, "status/dashboard.html", context)
+    return render(request, "app_core/status/dashboard.html", context)
 
 
 def dashboard(request):
     role = get_user_role(request.user)
 
     if role == "admin":
-        template = "dashboard/admin.html"
+        template = "app_core/dashboard/admin.html"
     elif role == "editor":
-        template = "dashboard/editor.html"
+        template = "app_core/dashboard/editor.html"
     else:
-        template = "dashboard/readonly.html"
+        template = "app_core/dashboard/readonly.html"
 
     return render(request, template)

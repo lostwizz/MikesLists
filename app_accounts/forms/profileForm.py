@@ -17,18 +17,16 @@ __author__ = "Mike Merrett"
 __updated__ = "2026-01-27 14:27:43"
 ###############################################################################
 
-
 from django import forms
 from django.contrib.auth.models import User
-# from .models import Profile
+from ..models.profile import Profile
 
 class UserUpdateForm(forms.ModelForm):
     """Form to update basic User data (Username/Email)"""
     email = forms.EmailField()
 
-    class __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Add Bootstrap classes to make it look professional
         for field in self.fields:
             self.fields[field].widget.attrs.update({'class': 'form-control'})
 
@@ -38,18 +36,29 @@ class UserUpdateForm(forms.ModelForm):
 
 class ProfileUpdateForm(forms.ModelForm):
     """Form to update Profile-specific data (Bio, Avatar, Preferences)"""
+    # Standalone field for MariaDB BLOB handling in the view
+    avatar = forms.ImageField(
+        required=False,
+        widget=forms.FileInput(attrs={'class': 'form-control'})
+    )
 
     class Meta:
         model = Profile
-        fields = ['avatar', 'bio', 'location', 'theme_preference', 'email_notifications']
+        fields = ['bio', 'location', 'theme_preference', 'email_notifications']
         widgets = {
-            'bio': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
-            'location': forms.TextInput(attrs={'class': 'form-control'}),
-            'theme_preference': forms.Select(attrs={'class': 'form-select'}),
-            'email_notifications': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'bio': forms.Textarea(attrs={'rows': 3}),
+            'location': forms.TextInput(),
+            'theme_preference': forms.Select(),
+            'email_notifications': forms.CheckboxInput(),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Ensure the avatar field has the bootstrap file input class
-        self.fields['avatar'].widget.attrs.update({'class': 'form-control'})
+        # Apply Bootstrap classes dynamically
+        for field_name, field in self.fields.items():
+            if isinstance(field.widget, forms.CheckboxInput):
+                field.widget.attrs.update({'class': 'form-check-input'})
+            elif isinstance(field.widget, forms.Select):
+                field.widget.attrs.update({'class': 'form-select'})
+            else:
+                field.widget.attrs.update({'class': 'form-control'})

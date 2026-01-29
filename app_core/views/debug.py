@@ -3,15 +3,16 @@
 ###############################################################################
 r"""
 debug.py
-app_core.debug
-/srv/django/MikesLists_dev/app_core/debug.py
+debug
+/srv/django/MikesLists_dev/app_core/views/debug.py
+
 
 
 
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-23 01:10:54"
+__updated__ = "2026-01-28 20:31:54"
 ###############################################################################
 
 # /srv/django/MikesLists_dev/MikesLists/debug.py

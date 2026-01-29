@@ -37,7 +37,9 @@ def user_info(request):
     else:
         ip = request.META.get("REMOTE_ADDR", "")
 
+    env = getattr(settings, "ENV_NAME", "dev")
     return {
         "sidebar_username": username,
         "sidebar_ip": ip,
+        "sidebar_env": env,
     }

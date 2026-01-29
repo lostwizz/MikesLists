@@ -16,8 +16,8 @@ __updated__ = "2026-01-27 13:28:46"
 
 from django.db import transaction
 from django.contrib.auth.models import User, Group
-from .models import Profile
-from .utils.roles import assign_role_to_user
+from app_accounts.models.profile import Profile
+from app_accounts.utils.roles import assign_role_to_user
 
 class UserRegistrationService:
     @staticmethod

@@ -34,9 +34,17 @@ class AssignPermissionsTestCase(TestCase):
         assign_perms_command.Command().handle()
 
         self.assertTrue(
+            self.admins_group.permissions.filter(codename="view_my_profile").exists()
+        )
+
+        self.assertTrue(
             self.admins_group.permissions.filter(
-                codename="view_my_profile", name="Can view my profile"
+                codename="view_my_profile", name="Can view own profile"
             ).exists()
+        )
+
+        self.assertFalse(
+            self.users_group.permissions.filter(codename="view_my_profile").exists()
         )
 
         self.assertFalse(

@@ -1,11 +1,10 @@
-{% extends "base.html" %}
+{% extends "app_core/base.html" %}
 {% load static %}
 
 {% block content %}
 <div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow">
+        <div class="col-md-10"> <div class="card shadow">
                 <div class="card-header bg-primary text-white">
                     <h4 class="mb-0">Edit Profile Settings</h4>
                 </div>
@@ -14,19 +13,25 @@
                         {% csrf_token %}
 
                         <div class="row mb-4">
-                            <div class="col-md-4 text-center">
+                            <div class="col-md-4 text-center border-end">
                                 <h6>Current Avatar</h6>
-                                {% if user.profile.avatar %}
-                                    <img src="{{ user.profile.avatar.url }}" class="rounded-circle img-thumbnail mb-2" style="width: 150px; height: 150px; object-fit: cover;">
+                                {% if user.profile.avatar_blob %}
+                                    <img src="{{ user.profile.get_avatar_base64 }}"
+                                         class="rounded-circle img-thumbnail mb-2 shadow-sm"
+                                         style="width: 150px; height: 150px; object-fit: cover;">
                                 {% else %}
-                                    <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 150px; height: 150px; color: white; font-size: 3rem;">
+                                    <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto mb-2 shadow-sm"
+                                         style="width: 150px; height: 150px; color: white; font-size: 3rem;">
                                         {{ user.username|first|upper }}
                                     </div>
                                 {% endif %}
+                                <div class="mt-2">
+                                    <small class="text-muted">Stored in MariaDB Cluster</small>
+                                </div>
                             </div>
 
                             <div class="col-md-8">
-                                <h5>Account Information</h5>
+                                <h5 class="border-bottom pb-2">Account Information</h5>
                                 {{ u_form.as_p }}
                             </div>
                         </div>
@@ -37,12 +42,16 @@
                         <div class="row">
                             <div class="col-md-6">
                                 {{ p_form.bio.label_tag }} {{ p_form.bio }}
-                                <small class="text-muted">A little about yourself.</small>
+                                <small class="text-muted d-block mb-3">A little about yourself.</small>
+
+                                {{ p_form.location.label_tag }} {{ p_form.location }}
                             </div>
                             <div class="col-md-6">
-                                {{ p_form.location.label_tag }} {{ p_form.location }}
-                                <br>
-                                {{ p_form.avatar.label_tag }} {{ p_form.avatar }}
+                                {{ p_form.avatar.label_tag }}
+                                <div class="input-group">
+                                    {{ p_form.avatar }}
+                                </div>
+                                <small class="text-info d-block mt-1">Images are auto-resized to 300x300.</small>
                             </div>
                         </div>
 
@@ -51,16 +60,15 @@
                                 {{ p_form.theme_preference.label_tag }} {{ p_form.theme_preference }}
                             </div>
                             <div class="col-md-6 d-flex align-items-center mt-4">
-                                <div class="form-check">
-                                    {{ p_form.email_notifications }}
+                                <div class="form-check form-switch"> {{ p_form.email_notifications }}
                                     {{ p_form.email_notifications.label_tag }}
                                 </div>
                             </div>
                         </div>
 
-                        <div class="mt-4 border-top pt-3">
-                            <button class="btn btn-success" type="submit">Update Profile</button>
-                            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+                        <div class="mt-4 border-top pt-3 text-end">
+                            <a href="{% url 'accounts:profile_detail' %}" class="btn btn-outline-secondary me-2">Cancel</a>
+                            <button class="btn btn-success px-4" type="submit">Save Changes</button>
                         </div>
                     </form>
                 </div>

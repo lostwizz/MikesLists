@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "app_core/base.html" %}
 
 {% block title %}My Profile | MikesLists{% endblock %}
 
@@ -11,6 +11,19 @@
                 <a href="{% url 'accounts:edit_profile' %}" class="btn btn-sm btn-primary">Edit Profile</a>
             </div>
             <div class="card-body">
+                <div class="text-center mb-4">
+                    {% if user.profile.avatar_blob %}
+                        <img src="{{ user.profile.get_avatar_base64 }}"
+                            class="rounded-circle img-thumbnail shadow-sm"
+                            style="width: 60px; height: 60px; object-fit: cover; border: 2px solid #ffc107;"
+                            alt="{{ user.username }}'s Avatar">
+                    {% else %}
+                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center mx-auto shadow-sm"
+                            style="width: 60px; height: 60px; color: white; font-size: 1.8rem; border: 2px solid #ffc107;">
+                            {{ user.username|first|upper }}
+                        </div>
+                    {% endif %}
+                </div>
                 <div class="mb-4">
                     <h5 class="text-warning border-bottom border-dark pb-2">Account Information</h5>
                     <p><strong>Username:</strong> {{ user.username }}</p>
@@ -18,7 +31,6 @@
                     <p><strong>Full Name:</strong> {{ user.first_name }} {{ user.last_name|default:"" }}</p>
                     <p><strong>Member Since:</strong> {{ user.date_joined|date:"F j, Y" }}</p>
                 </div>
-
                 <div class="mb-4">
                     <h5 class="text-warning border-bottom border-dark pb-2">Groups & Permissions</h5>
                     <div class="d-flex flex-wrap gap-2 mt-2">
@@ -46,6 +58,9 @@
 
             </div>
             <div class="card-footer text-center border-top border-dark">
+                <a href="{% url 'accounts:password_change' %}" class="btn btn-warning">
+                    Change Password
+                </a>
                 <a href="/" class="btn btn-link text-white-50 text-decoration-none">Return to Dashboard</a>
             </div>
         </div>

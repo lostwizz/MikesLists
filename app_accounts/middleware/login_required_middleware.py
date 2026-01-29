@@ -16,7 +16,7 @@ __updated__ = "2026-01-27 13:30:06"
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
-from .models import Profile
+from app_accounts.models.profile import Profile
 
 
 EXEMPT_NAMES = {
@@ -40,8 +40,6 @@ EXEMPT_PATH_PREFIXES = (
 )
 
 class LoginRequiredMiddleware:
-
-
     # ---------------------------------------------------------------------
     def __init__(self, get_response):
         self.get_response = get_response
@@ -61,6 +59,11 @@ class LoginRequiredMiddleware:
 
     # ---------------------------------------------------------------------
     def process_view(self, request, view_func, view_args, view_kwargs):
+
+        # 0. Skip all account-related URLs
+        if request.path.startswith("/accounts/"):
+            return None
+
         # 1. Skip based on path prefixes
         if request.path.startswith(EXEMPT_PATH_PREFIXES):
             return None
@@ -77,6 +80,8 @@ class LoginRequiredMiddleware:
             return redirect(reverse("accounts:login"))
 
         return None
+
+
 
 
 class UpdateLastActivityMiddleware:

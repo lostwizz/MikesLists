@@ -1,0 +1,15 @@
+<div
+  id="sidebar"
+  class="d-flex flex-column p-3 bg-dark text-light"
+  style="width: 240px; min-height: 100vh"
+>
+  <h4 class="mb-4">MikesLists</h4>
+
+  <a href="{% url 'accounts:dashboard' %}" class="text-light mb-2 d-block">Dashboard</a>
+  <a href="{% url 'accounts:profile_detail' %}" class="text-light mb-2 d-block">Profile</a>
+
+  <hr class="border-secondary my-3" />
+
+  <a href="#" id="dark-mode-toggle" class="text-info mb-2 d-block">Toggle Dark Mode</a>
+  <a href="{% url 'accounts:logout' %}" class="text-warning d-block">Logout</a>
+</div>

@@ -11,7 +11,7 @@ app_core.urls
 """
 __version__ = "0.0.0.000012-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-26 22:08:26"
+__updated__ = "2026-01-28 20:38:19"
 ###############################################################################
 
 """
@@ -33,34 +33,77 @@ Including another URLconf
 
 
 from django.contrib import admin
+from django.contrib.auth import views as auth_views
 from django.urls import path, include
+
 from django.shortcuts import redirect
 
-from .view_status import status_view
-from .health import health
+from app_core.views.health import health
+from app_core.views.status import status_view
 
-from django.contrib.auth.decorators import login_required
-
-
-
-def redirect_root_to_dashboard(request):
-    return redirect('accounts:dashboard')
+from app_core.views.home import (
+    redirect_root_to_dashboard,
+    redirect_home_to_dashboard,
+    redirect_accounts_to_dashboard,
+    redirect_dashboard_to_dashboard,
+    catchall_redirect,
+)
 
 
 urlpatterns = [
+    # Admin
+    path("admin", admin.site.urls),
     path("admin/", admin.site.urls),
 
-    # Accounts app (dashboard, profile, groups, ToDo page, auth)
-    path('app_accounts/', include('app_accounts.urls', namespace='accounts')),
+    # Redirect /home → dashboard
+    path("home", redirect_home_to_dashboard),
+    path("home/", redirect_home_to_dashboard),
 
-    # ToDo app  ← THIS IS THE MISSING PIECE
-    path('app_ToDo/', include('app_ToDo.urls', namespace='todo')),
+    # Redirect /dashboard → dashboard
+    path("dashboard", redirect_dashboard_to_dashboard),
+    path("dashboard/", redirect_dashboard_to_dashboard),
 
-    # System pages
+    # Redirect ONLY /accounts and /accounts/ → dashboard
+    path("accounts", redirect_accounts_to_dashboard),
+    path("accounts/", redirect_accounts_to_dashboard),
+
+    # Real accounts URLs
+    path("accounts/", include("app_accounts.urls")),
+
+    # ToDo
+    path("todo/", include("app_ToDo.urls")),
+
+    # System / Core
+    path("status", status_view, name="status_dashboard"),
     path("status/", status_view, name="status_dashboard"),
-    path("health/", health),
+
+    path("health", health, name="health_check"),
+    path("health/", health, name="health_check"),
 
     # Site root → dashboard
-    # path("", redirect_root_to_dashboard, name='root_redirect'),
-    path("", login_required(redirect_root_to_dashboard), name="root_redirect"),
+    path("", redirect_root_to_dashboard, name="root_redirect"),
+
+    # Global password reset URLs required by Django's built-in auth system
+    path(
+        "accounts/password_reset/done/",
+        auth_views.PasswordResetDoneView.as_view(),
+        name="password_reset_done",
+    ),
+    path(
+        "accounts/reset/<uidb64>/<token>/",
+        auth_views.PasswordResetConfirmView.as_view(),
+        name="password_reset_confirm",
+    ),
+    path(
+        "accounts/reset/done/",
+        auth_views.PasswordResetCompleteView.as_view(),
+        name="password_reset_complete",
+    ),
 ]
+
+
+# Catch‑all only in LIVE environment
+if True:   # not settings.DEBUG:
+    urlpatterns += [
+        path("<path:path>", catchall_redirect, name="catchall"),
+    ]

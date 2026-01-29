@@ -382,7 +382,7 @@ check_django() {
 
     # Check for template partials
     echo -e "\n${B_YELLOW}[6] checking template partials${RESET}"
-    TEMPLATE_DIR="/srv/django/MikesLists_dev/templates"
+    TEMPLATE_DIR="/srv/django/MikesLists_dev/app_core/templates/app_core"
     PARTIALS=("head.html" "navbar.html" "footer.html" "messages.html" "base.html")
 
     for file in "${PARTIALS[@]}"; do
@@ -508,6 +508,10 @@ url_audit() {
         URL_PATTERN=$(echo "$line" | awk '{print $1}')
         VIEW_PATH=$(echo "$line" | awk '{print $NF}')
 
+        # echo " URL_PATTERN -->$URL_PATTERN"
+        # echo " VIEW_PATH -->$VIEW_PATH"
+
+
         # 1. Broaden Internal Filter
         # Catches django paths, admin/accounts namespaces, and common auth view names
         if [[ "$VIEW_PATH" == *"django."* ]] || [[ "$VIEW_PATH" == *":"* ]] || \
@@ -542,6 +546,18 @@ url_audit() {
                 warn=true
             fi
         fi
+
+        # --- NEW: Connectivity Check ---
+        URL="http://localhost:8000/${CLEAN_NAME}"
+        if ! curl -s -L --head --request GET ${URL} | grep "200 OK" > /dev/null; then
+            echo -e "      ${B_YELLOW}⚠ Server not responding at '${URL}'. Skipping HTTP live tests.${RESET}\n"
+            # LIVE_TEST=false
+            fail=true
+        else
+            echo -e "      ${B_GREEN}✓   Server is ALIVE. Running HTTP response tests...${RESET} '${URL}'\n"
+            # LIVE_TEST=true
+        fi
+
     done
     echo ""
 

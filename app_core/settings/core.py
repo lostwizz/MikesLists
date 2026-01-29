@@ -44,7 +44,10 @@ ADMINS = [
 ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
+    "10.0.0.8",
     "10.0.0.9",
+    "pidj",
+    "pidj.local",
     ".local",          # wildcard for any *.local hostname
 ]
 
@@ -88,7 +91,7 @@ WSGI_APPLICATION = "app_core.wsgi.application"
 LOGIN_REDIRECT_URL = "accounts:dashboard"  # Use the 'name' of your list index view
 
 # Where to go after logging out
-LOGOUT_REDIRECT_URL = "accounts:login"
+LOGOUT_REDIRECT_URL = "accounts:logged_out"
 
 # The URL for the login page
 LOGIN_URL = "accounts:login"
@@ -102,6 +105,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "reversion",
+    "app_core",
     # "app_accounts",
     'app_accounts.apps.AppAccountsConfig',
     "app_ToDo",
@@ -123,17 +127,17 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+
+    "app_accounts.middleware.login_required_middleware.LoginRequiredMiddleware",
+    "app_accounts.middleware.login_required_middleware.ActiveUserMiddleware",
+
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-
-    # Your login-required middleware MUST come after AuthenticationMiddleware
-    'app_core.debug.DebugViewMiddleware',
-    "app_accounts.middleware.login_required_middleware.LoginRequiredMiddleware",
-    'app_accounts.middleware.ActiveUserMiddleware',
+    # "app_accounts.middleware.admin_logout.ForceAdminLogoutMiddleware"
 ]
 
 
-
+# #    "DIRS": [BASE_DIR / "templates"],
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -146,7 +150,6 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "app_core.context_processors.export_env_vars",
-                # 'app_core.context_processors.env_name',
                 "django.template.context_processors.request",
                 "app_core.context_processors.user_info",
             ],

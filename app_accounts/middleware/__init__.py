@@ -3,19 +3,17 @@
 ###############################################################################
 r"""
 __init__.py
-app_ToDo.views
-/srv/django/MikesLists_dev/app_ToDo/views/__init__.py
+app_accounts.middleware
+/srv/django/MikesLists_dev/app_accounts/middleware/__init__.py
+
 
 
 
 """
 __version__ = "0.0.0.000011-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-26 19:22:42"
+__updated__ = "2026-01-23 01:01:21"
 ###############################################################################
-# from .list_views import *
-# from .item_views import *
 
-# from . import item_views
-# from . import list_views
-from .todo_views import *
+
+from .login_required_middleware import ActiveUserMiddleware, UpdateLastActivityMiddleware, LoginRequiredMiddleware
