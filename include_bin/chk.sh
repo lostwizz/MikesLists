@@ -185,33 +185,38 @@ done
 #   curl -i http://localhost:8000/health/
 #
 # ---------------------------------------------------------
+
 echo -e "\n${MAGENTA}[4] HTTP Endpoint Checks${RESET}"
 
 for ENV in "${ENVS[@]}"; do
     URL="${URLS[$ENV]}"
     PORT=${PORTS[$ENV]}
+    echo ' ---------------------------------------------------------'
 
+    echo -e "\n${YELLOW}[1]($ENV) curl ${RESET}"
     RESPONSE_DATA=$(curl -s -L -w "\n%{http_code}" "$URL")
     # echo -e "RESPONSE_DATA:$RESPONSE_DATA}"clear
     HTTP_BODY=$(echo "$RESPONSE_DATA" | sed '$d')
     HTTP_CODE=$(echo "$RESPONSE_DATA" | tail -n 1)
 
     # # DEBUG SECTION START
-    #     echo -e "${CYAN}DEBUG for $ENV:${RESET}"
-    #     echo -e "  URL=${URL}"
-    #     echo -e "  HTTP Code: $HTTP_CODE"
-    #     echo -e "  Body Length: ${#HTTP_BODY}"
-    #     # echo -e "  First 100 chars of Body: ${HTTP_BODY:0:100}"
-    #     echo -e "  First 100 chars of Body: ${HTTP_BODY}"
+        # echo -e "${CYAN}DEBUG for $ENV:${RESET}"
+        # echo -e "  URL=${URL}"
+        # echo -e "  HTTP Code: $HTTP_CODE"
+        # echo -e "  Body Length: ${#HTTP_BODY}"
+        # # echo -e "  First 100 chars of Body: ${HTTP_BODY:0:100}"
+        # echo -e "  First 100 chars of Body: ${HTTP_BODY}"
 
-    #     # Check if the string exists using grep to see if it's a case-sensitivity issue
-    #     if echo "$HTTP_BODY" | grep -q '"details"'; then
-    #         echo -e "  ${GREEN}String 'details' found via grep${RESET}"
-    #     else
-    #         echo -e "  ${RED}String 'details' NOT found via grep${RESET}"
-    #     fi
+        # # Check if the string exists using grep to see if it's a case-sensitivity issue
+        # if echo "$HTTP_BODY" | grep -q '"details"'; then
+        #     echo -e "  ${GREEN}String 'details' found via grep${RESET}"
+        # else
+        #     echo -e "  ${RED}String 'details' NOT found via grep${RESET}"
+        # fi
     # # DEBUG SECTION END
 
+
+    echo -e "\n${YELLOW}[2]($ENV) another curl nd url?? ${RESET}"
     EFFECTIVE_URL=$(curl -s -L -w "%{url_effective}" -o /dev/null "$URL")
     # echo -e "EFFECTIVE_URL=${EFFECTIVE_URL}"
     if [[ "$EFFECTIVE_URL" =~ ^https?://[^:/]+:([0-9]+) ]]; then
@@ -220,6 +225,7 @@ for ENV in "${ENVS[@]}"; do
         REPORTED_PORT="80"
     fi
 
+    echo -e "\n${YELLOW}[3]($ENV) another curl and looking for port number ${RESET}"
     if [[ "$REPORTED_PORT" == "$PORT" ]]; then
         echo -e "  ${ENV}: ${GREEN}✔ Port matches expected (${PORT})${RESET}"
     else
@@ -228,34 +234,31 @@ for ENV in "${ENVS[@]}"; do
     fi
 
 
+    echo -e "\n${YELLOW}[4]($ENV) check_health.py ${RESET}"
     # echo "HTTP_BODY=${HTTP_BODY}"
 
-    if [ "$HTTP_CODE" == "200" ]; then
 
         # DEBUG: Print exactly what Bash sees (with visible line endings)
         # echo -e "${CYAN}      [DEBUG] Raw Body: ${HTTP_BODY}${RESET}" | cat -e
 
         if [[ "$HTTP_BODY" == *'"details":'* ]]; then
-            echo -e "     ${GREEN}✔ 200 OK + New Code Active${RESET}"
+            echo -e "     ${GREEN}✔ 200 OK + New Code Active${RESET} - $ENV"
             # echo -e "        $(echo "$HTTP_BODY" | grep -oP '"details":\s*\{.*?\}' || echo 'Details key found but empty')"
             # echo -e "        ${DETAILS:-"Details found but couldn't parse JSON snippet"}"
         else
-            echo -e "     ${YELLOW}⚠ 200 OK but OLD CODE detected${RESET}"
+            echo -e "     ${YELLOW}⚠ 200 OK but OLD CODE detected (couldnt find json and/or grep 'details:'${RESET} - ($ENV)"
             # echo -e "      ${RED}Search for '\"details\":' failed in body of length ${#HTTP_BODY}${RESET}"
             ((WARN++))
         fi
+    if [ "$HTTP_CODE" == "200" ]; then
+        echo -e '-- got a 200 code???? do i care???'
     else
-        echo -e "     ${RED}✖ HTTP $HTTP_CODE${RESET}"
+        echo -e "     ${RED}✖ HTTP $HTTP_CODE${RESET} - ($ENV) -  reported not getting a 200 code from the first curl???"
         ((FAIL++))
     fi
 done
 
 
-# ---------------------------------------------------------
-# [4.5] checking paths for 200
-# ---------------------------------------------------------
-echo -e "\n${MAGENTA}[4.5] Server Header Identification${RESET}"
-# --- Path Health Check Section ---
 
 # ---------------------------------------------------------
 # [4.5] checking paths for 200

@@ -22,6 +22,15 @@ import socket
 
 from .core import *  # noqa: F403
 
+# INSTALLED_APPS.append('rest_framework')
+# INSTALLED_APPS.append('rest_framework.authtoken')
+
+# REST_FRAMEWORK = {
+#     'DEFAULT_AUTHENTICATION_CLASSES': [
+#         'rest_framework.authentication.TokenAuthentication',
+#         'rest_framework.authentication.SessionAuthentication',
+#     ],
+# }
 
 
 MIDDLEWARE += [

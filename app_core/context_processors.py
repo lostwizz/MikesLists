@@ -20,26 +20,28 @@ from django.conf import settings
 
 
 def export_env_vars(request):
-
     X = getattr(settings, "ENV_NAME", "dev")
     # print(f"@@@{ X=}@@@")
     return {"env": X}
 
 
 def user_info(request):
-    # Username
-    username = request.user.username if request.user.is_authenticated else "Guest"
+    if request.user.is_authenticated:
+        # Username
+        username = request.user.username if request.user.is_authenticated else "Guest"
 
-    # Remote IP (handles proxies later if you add nginx)
-    ip = request.META.get("HTTP_X_FORWARDED_FOR")
-    if ip:
-        ip = ip.split(",")[0].strip()
-    else:
-        ip = request.META.get("REMOTE_ADDR", "")
+        # Remote IP (handles proxies later if you add nginx)
+        ip = request.META.get("HTTP_X_FORWARDED_FOR")
+        if ip:
+            ip = ip.split(",")[0].strip()
+        else:
+            ip = request.META.get("REMOTE_ADDR", "")
 
-    env = getattr(settings, "ENV_NAME", "dev")
-    return {
-        "sidebar_username": username,
-        "sidebar_ip": ip,
-        "sidebar_env": env,
-    }
+        env = getattr(settings, "ENV_NAME", "dev")
+        return {
+            "sidebar_username": username,
+            "sidebar_ip": ip,
+            "sidebar_env": env,
+            'user_profile': getattr(request.user, 'profile', None),
+        }
+    return {}

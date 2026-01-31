@@ -6,12 +6,18 @@ urls.py
 app_core.urls
 /srv/django/MikesLists_dev/app_core/urls.py
 
-
+Adding decorators to the path function:
+            from django.contrib.auth.decorators import login_required, permission_required
+            path(
+                    'settings/',
+                    login_required(permission_required('is_staff')(views.settings_view)),
+                    name='settings'
+                ),
 
 """
 __version__ = "0.0.0.000012-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-28 20:38:19"
+__updated__ = "2026-01-30 17:53:01"
 ###############################################################################
 
 """
@@ -37,6 +43,7 @@ from django.contrib.auth import views as auth_views
 from django.urls import path, include
 
 from django.shortcuts import redirect
+from django.contrib.auth.decorators import login_required
 
 from app_core.views.health import health
 from app_core.views.status import status_view
@@ -52,7 +59,7 @@ from app_core.views.home import (
 
 urlpatterns = [
     # Admin
-    path("admin", admin.site.urls),
+    # path("admin", admin.site.urls),
     path("admin/", admin.site.urls),
 
     # Redirect /home → dashboard

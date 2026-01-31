@@ -296,6 +296,56 @@ check_gunicorn() {
 #############################################
 # SECTION 4 — Django Diagnostics
 #############################################
+check_usage() {
+    local file_path=$1
+    # Get just the filename (e.g., "navbar.html") or the relative path Django uses
+    # local filename=$(basename "$file_path")
+    local filename=$file_path     ## only passing the base name not the dir
+
+    echo -e "          ${B_CYAN}Searching for references to: $filename...${RESET}"
+
+    # Search in .py and .html files, excluding venv, git, and staticfiles
+    # We use -r (recursive), -l (list filenames only), and --include to limit file types
+    local results=$(grep -rl "$filename" /srv/django/MikesLists_dev/ \
+        --exclude-dir={venv,.git,staticfiles_collected,__pycache__} \
+        --include=\*.{py,html})
+
+    if [ -z "$results" ]; then
+        echo -e "            ${B_YELLOW}  ⚠️  WARNING: No references found! This file might be unused.${RESET}"
+    else
+        echo -e "            ${B_GREEN}  ✓  Used in:${RESET}"
+        # Indent the results for readability
+        echo "$results" | sed 's/^/                 /'
+    fi
+}
+
+check_templates() {
+    local label=$1
+    local dir=$2
+    shift 2
+    local files=("$@")
+
+    echo -e "\n${B_YELLOW}[$label] checking: $dir${RESET}"
+
+    if [ ! -d "$dir" ]; then
+        echo -e "      ${B_RED}❌  ERROR: Directory does not exist: $dir${RESET}"
+        fail=true
+        return
+    fi
+
+    for file in "${files[@]}"; do
+        if [ -f "$dir/$file" ]; then
+            echo -e "       ${B_GREEN}✓  ${RESET}Found $file"
+        else
+            echo -e "      ${B_RED}❌  ${RESET}ERROR: $file is missing"
+            fail=true
+        fi
+        check_usage "$file"
+
+    done
+}
+
+
 check_django() {
     echo "========================================"
     echo "   4 - Django Diagnostics"
@@ -305,13 +355,13 @@ check_django() {
 
     local fail=false
 
-    echo -e "\n${YELLOW}[1] manage.py check${RESET}"
+    echo -e "\n${YELLOW}[4.0.1] manage.py check${RESET}"
     run_cmd "manage.py check" \
         $VENV_PATH/bin/python "$PROJECT_PATH/manage.py" check
     [[ $? -ne 0 ]] && fail=true
 
 
-    echo -e "\n${YELLOW}[1.5] manage.py check --deploy${RESET}"
+    echo -e "\n${YELLOW}[4.0.2] manage.py check --deploy${RESET}"
     run_cmd "manage.py check" \
         $VENV_PATH/bin/python "$PROJECT_PATH/manage.py" check --deploy
     [[ $? -ne 0 ]] && fail=true
@@ -319,7 +369,7 @@ check_django() {
 
 
 
-    echo -e "\n${YELLOW}[2] python syntax scan${RESET}"
+    echo -e "\n${YELLOW}[4.0.2] python syntax scan${RESET}"
     SYNTAX_ERRORS=0
     while IFS= read -r -d '' file; do
         echo -e "${BLUE}compiling:${RESET} $file"
@@ -336,7 +386,7 @@ check_django() {
         fail=true
     fi
 
-    echo -e "\n${YELLOW}[3] migration status${RESET}"
+    echo -e "\n${YELLOW}[4.0.3] migration status${RESET}"
     MIG=$($MANAGE showmigrations 2>&1)
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}❌ showmigrations failed${RESET}"
@@ -353,7 +403,7 @@ check_django() {
         fi
     fi
 
-    echo -e "\n${YELLOW}[4] checking staticfiles_collected${RESET}"
+    echo -e "\n${YELLOW}[4.0.4] checking staticfiles_collected${RESET}"
     STATIC_DIR="$PROJECT_PATH/staticfiles_collected"
     if [[ -d "$STATIC_DIR" ]]; then
         echo -e "${GREEN}✓ staticfiles_collected exists${RESET}"
@@ -365,7 +415,7 @@ check_django() {
 
     # Look back only 30 seconds to avoid old "ghost" errors
     LOOKBACK="30 seconds ago"
-    echo -e "\n${YELLOW}[5] checking for attribute errors (Last $LOOKBACK) ${RESET}"
+    echo -e "\n${YELLOW}[4.0.5] checking for attribute errors (Last $LOOKBACK) ${RESET}"
     SERVICE="mikeslists-dev.service"
 
     # Search for the specific AttributeError
@@ -380,21 +430,42 @@ check_django() {
         echo -e "${GREEN}✓ No active context processor errors found."
     fi
 
-    # Check for template partials
-    echo -e "\n${B_YELLOW}[6] checking template partials${RESET}"
-    TEMPLATE_DIR="/srv/django/MikesLists_dev/app_core/templates/app_core"
-    PARTIALS=("head.html" "navbar.html" "footer.html" "messages.html" "base.html")
 
-    for file in "${PARTIALS[@]}"; do
-        if [ -f "$TEMPLATE_DIR/$file" ]; then
-            echo -e "${B_GREEN}✓  ${RESET}Found $file"
-        else
-            echo -e "${B_RED}❌  ${RESET}ERROR: $file is missing from $TEMPLATE_DIR"
-            fail=true
-        fi
-    done
+    # 4.6A. Core Base
+    check_templates "4.0.6A" "/srv/django/MikesLists_dev/app_core/templates/app_core" \
+        "base.html" "home.html"
+        # "environment.html"
 
-    echo -e "\n${YELLOW}[7] checking for NoReverseMatch errors ${RESET}"
+    # 4.6B. Core Partials
+    check_templates "4.0.6B" "/srv/django/MikesLists_dev/app_core/templates/app_core/partials" \
+        "head.html" "navbar.html" "footer.html" "messages.html" "sidebar.html"
+
+    # 4.6C. core dashboard
+    check_templates "4.0.6C" "/srv/django/MikesLists_dev/app_core/templates/app_core/dashboard" \
+        "admin.html" "editor.html" "readonly.html"
+
+    # 4.6D. core status
+    check_templates "4.0.6D" "/srv/django/MikesLists_dev/app_core/templates/app_core/status" \
+        "dashboard.html"
+
+
+    # 4.6E. Accounts Templates app_accounts
+    check_templates "4.0.6E" "/srv/django/MikesLists_dev/app_accounts/templates/app_accounts" \
+        "dashboard_stats.html" "dashboard.html" "edit_profile.html" "group_manager.html" "profile_detail.html"
+
+    # 4.6F. Accounts Templates registration
+    check_templates "4.0.6F" "/srv/django/MikesLists_dev/app_accounts/templates/registration" \
+        "logged_out.html" "login.html" "password_change_done.html" "password_change_form.html" \
+        "password_reset_complete.html" "password_reset_confirm.html" "password_reset_done.html" "password_reset_form.html" \
+        "register.html"
+
+    # 4.6G. ToDo Templates (Assuming standard Django namespacing)
+    # check_templates "6G" "/srv/django/MikesLists_dev/app_ToDo/templates/app_ToDo" \
+        # "todo_list.html" "todo_form.html"
+
+
+
+    echo -e "\n${YELLOW}[4.0.7] checking for NoReverseMatch errors ${RESET}"
     URL_ERROR=$(journalctl -u mikeslists-dev.service -n 50 --no-pager | grep "NoReverseMatch")
 
     if [ ! -z "$URL_ERROR" ]; then
@@ -407,7 +478,7 @@ check_django() {
 
 
     echo "--- Checking Auth Templates ---"
-    echo -e "\n${B_YELLOW}[8] checking Auth Templates${RESET}"
+    echo -e "\n${YELLOW}[4.0.8] checking Auth Templates${RESET}"
     # Check the global registration path
     if [ -f "/srv/django/MikesLists_dev/app_accounts/templates/registration/login.html" ]; then
         echo -e "${B_GREEN}✓  ${RESET}Auth Login template found."
@@ -416,7 +487,7 @@ check_django() {
         fail=true
     fi
 
-    echo -e "\n${YELLOW}[9] checking that login.html is where expected ${RESET}"
+    echo -e "\n${YELLOW}[4.0.9] checking that login.html is where expected ${RESET}"
     # Check if the app-specific template is there instead
     if [ -f "/srv/django/MikesLists_dev/app_accounts/templates/registration/login.html" ]; then
         echo -e "${GREEN}✓ ${RESET}[INFO] Found login.html in accounts/templates/registration folder."
@@ -436,21 +507,29 @@ route_audits() {
 
     local fail=false
 
-    echo -e "${YELLOW}[1]just show urls  ${RESET}"
-    cd "$PROJECT_PATH" && "$VENV_PATH/bin/python3" manage.py show_urls
+    echo -e "\n${YELLOW}[1] check_health.py ${RESET}"
+    echo -e "$VENV_PATH/bin/python3 manage.py check_health"
+    cd "$PROJECT_PATH" && "$VENV_PATH/bin/python3" manage.py check_health
 
-    echo -e "${YELLOW}[2]just show urls  ${RESET}"
+    echo -e "\n${YELLOW}[2]just show urls  ${RESET}"
+    echo -e "$VENV_PATH/bin/python3 manage.py show_urls --format verbose"
+    cd "$PROJECT_PATH" && "$VENV_PATH/bin/python3" manage.py show_urls --format verbose
+
+    echo -e "\n${YELLOW}[3]just show list_model_info ${RESET}"
+    echo -e "$VENV_PATH/bin/python3 manage.py list_model_info"
     cd "$PROJECT_PATH" && "$VENV_PATH/bin/python3" manage.py list_model_info
 
-    echo -e "${YELLOW}[3]validate templates  ${RESET}"
+    echo -e "\n${YELLOW}[4]validate templates  ${RESET}"
+    echo -e "$VENV_PATH/bin/python3 manage.py validate_templates"
     cd "$PROJECT_PATH" && "$VENV_PATH/bin/python3" manage.py validate_templates
 
-    echo -e "${YELLOW}[4] show permissions  ${RESET}"
+    echo -e "\n${YELLOW}[5] show permissions  ${RESET}"
+    echo -e "$VENV_PATH/bin/python3 manage.py show_permissions --all"
     cd "$PROJECT_PATH" && "$VENV_PATH/bin/python3" manage.py show_permissions --all
 
 
 
-    echo -e "${YELLOW}[5]running route audits ${RESET}"
+    echo -e "\n${YELLOW}[6]running route audits ${RESET}"
     # 1. Extract ALL unique URL names from all templates
     # Matches patterns like {% url 'name' %} or {% url 'namespace:name' %}
     # ALL_URLS=$(grep -rhE "{% url '[^']*' %}" /srv/django/MikesLists_dev/templates/ | sed -E "s/.*'([^']*)'.*/\1/" | sort -u)
@@ -480,7 +559,7 @@ route_audits() {
         echo "----------------------------------------------------"
     done
 
-    echo -e "${YELLOW}[6] checking export_env_vars in core.py ${RESET}"
+    echo -e "\n${YELLOW}[7] checking export_env_vars in core.py ${RESET}"
     if grep -q "export_env_vars" "/srv/django/MikesLists_dev/app_core/settings/core.py"; then
 
         echo -e "   ${GREEN}✓ Environment Context Processor is active."

@@ -1,15 +1,37 @@
 <div
   id="sidebar"
-  class="d-flex flex-column p-3 bg-dark text-light"
-  style="width: 240px; min-height: 100vh"
+  class="d-flex flex-column p-3 text-light"
+  style="width: 240px; min-height: 100vh; background-color: #343a40;"
 >
-  <h4 class="mb-4">MikesLists</h4>
+  {% comment %} <a
+    href="{% url 'accounts:dashboard' %}"
+    class="text-light mb-2 d-block {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
+  >
+    Dashboard
+  </a>
+  {% endcomment %}
 
-  <a href="{% url 'accounts:dashboard' %}" class="text-light mb-2 d-block">Dashboard</a>
-  <a href="{% url 'accounts:profile_detail' %}" class="text-light mb-2 d-block">Profile</a>
+  <div class="px-3 py-2 text-light small">
+    <div><strong>ENV:</strong> {{ sidebar_env }}</div>
+    <div><strong>User:</strong> {{ sidebar_username }}</div>
+    <div><strong>IP:</strong> {{ sidebar_ip }}</div>
+  </div>
+
+  <hr class="border-secondary my-3" />
+
+  <a
+    href="{% url 'accounts:profile_detail' %}"
+    class="text-light mb-2 d-block {% if request.resolver_match.url_name == 'profile_detail' %}active{% endif %}"
+  >
+    Profile
+  </a>
 
   <hr class="border-secondary my-3" />
 
   <a href="#" id="dark-mode-toggle" class="text-info mb-2 d-block">Toggle Dark Mode</a>
-  <a href="{% url 'accounts:logout' %}" class="text-warning d-block">Logout</a>
+
+  <form action="{% url 'accounts:logout' %}" method="post" class="mt-2">
+    {% csrf_token %}
+    <button class="btn btn-link text-warning p-0">Logout</button>
+  </form>
 </div>
