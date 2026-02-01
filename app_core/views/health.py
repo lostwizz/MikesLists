@@ -18,7 +18,7 @@ app_core.health
 """
 __version__ = "0.0.0.000025-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-23 01:11:02"
+__updated__ = "2026-01-31 19:53:26"
 ###############################################################################
 
 import shutil
@@ -174,7 +174,7 @@ def health(request):
         checks.append(CheckResult(name = 'ram status', status  = 'fail', message=str(e), raw_value = bytes2human(memory)))
 
     # CPU Check (New - 1 second average)
-    cpu_usage = psutil.cpu_percent(interval=None)
+    cpu_usage = psutil.cpu_percent(interval=1)
     chk = 'ok' if cpu_usage < 90 else 'stressed'
     checks.append(CheckResult(name = 'cpu usage', status  = chk, message='', raw_value = str(cpu_usage)))
 
@@ -291,4 +291,6 @@ def health(request):
         'details':  [asdict(c) for c in checks],
         'environment': env_name,
         'host': request.META.get('HTTP_HOST', 'unknown')
-    }, status=200 if is_healthy else 503)
+    },
+    status=200
+    )

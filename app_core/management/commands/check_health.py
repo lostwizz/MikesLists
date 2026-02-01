@@ -6,11 +6,16 @@ check_health.py
 check_health
 /srv/django/MikesLists_dev/app_core/management/commands/check_health.py
 
+use:
+    python3 manage.py check_health
+
+
+
 
 """
 __version__ = "0.0.0.000012-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-30 18:45:57"
+__updated__ = "2026-01-31 18:16:57"
 ###############################################################################
 
 

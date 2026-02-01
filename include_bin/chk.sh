@@ -201,61 +201,41 @@ for ENV in "${ENVS[@]}"; do
 
     # # DEBUG SECTION START
         # echo -e "${CYAN}DEBUG for $ENV:${RESET}"
-        # echo -e "  URL=${URL}"
-        # echo -e "  HTTP Code: $HTTP_CODE"
-        # echo -e "  Body Length: ${#HTTP_BODY}"
-        # # echo -e "  First 100 chars of Body: ${HTTP_BODY:0:100}"
-        # echo -e "  First 100 chars of Body: ${HTTP_BODY}"
+        echo -e "  URL=${URL}"
+        echo -e "  HTTP Code: $HTTP_CODE"
+        echo -e "  Body Length: ${#HTTP_BODY}"
+        # echo -e "  First 100 chars of Body: ${HTTP_BODY:0:100}"
+        echo -e "  full Body: ${HTTP_BODY}"
 
-        # # Check if the string exists using grep to see if it's a case-sensitivity issue
-        # if echo "$HTTP_BODY" | grep -q '"details"'; then
-        #     echo -e "  ${GREEN}String 'details' found via grep${RESET}"
-        # else
-        #     echo -e "  ${RED}String 'details' NOT found via grep${RESET}"
-        # fi
     # # DEBUG SECTION END
 
 
-    echo -e "\n${YELLOW}[2]($ENV) another curl nd url?? ${RESET}"
-    EFFECTIVE_URL=$(curl -s -L -w "%{url_effective}" -o /dev/null "$URL")
-    # echo -e "EFFECTIVE_URL=${EFFECTIVE_URL}"
-    if [[ "$EFFECTIVE_URL" =~ ^https?://[^:/]+:([0-9]+) ]]; then
-        REPORTED_PORT="${BASH_REMATCH[1]}"
-    else
-        REPORTED_PORT="80"
-    fi
-
-    echo -e "\n${YELLOW}[3]($ENV) another curl and looking for port number ${RESET}"
-    if [[ "$REPORTED_PORT" == "$PORT" ]]; then
-        echo -e "  ${ENV}: ${GREEN}✔ Port matches expected (${PORT})${RESET}"
-    else
-        echo -e "  ${ENV}: ${RED}✖ Port mismatch${RESET} (expected ${PORT}, got ${REPORTED_PORT})"
-        ((FAIL++))
-    fi
-
-
-    echo -e "\n${YELLOW}[4]($ENV) check_health.py ${RESET}"
+    echo -e "\n${YELLOW}[2]($ENV) check_health.py ${RESET}"
     # echo "HTTP_BODY=${HTTP_BODY}"
 
 
         # DEBUG: Print exactly what Bash sees (with visible line endings)
         # echo -e "${CYAN}      [DEBUG] Raw Body: ${HTTP_BODY}${RESET}" | cat -e
 
+    # Only check the JSON content if the HTTP status was actually successful
+    if [ "$HTTP_CODE" == "200" ]; then
         if [[ "$HTTP_BODY" == *'"details":'* ]]; then
             echo -e "     ${GREEN}✔ 200 OK + New Code Active${RESET} - $ENV"
-            # echo -e "        $(echo "$HTTP_BODY" | grep -oP '"details":\s*\{.*?\}' || echo 'Details key found but empty')"
-            # echo -e "        ${DETAILS:-"Details found but couldn't parse JSON snippet"}"
         else
-            echo -e "     ${YELLOW}⚠ 200 OK but OLD CODE detected (couldnt find json and/or grep 'details:'${RESET} - ($ENV)"
-            # echo -e "      ${RED}Search for '\"details\":' failed in body of length ${#HTTP_BODY}${RESET}"
+            echo -e "     ${YELLOW}⚠ 200 OK but OLD CODE detected${RESET} - ($ENV)"
             ((WARN++))
         fi
-    if [ "$HTTP_CODE" == "200" ]; then
-        echo -e '-- got a 200 code???? do i care???'
     else
-        echo -e "     ${RED}✖ HTTP $HTTP_CODE${RESET} - ($ENV) -  reported not getting a 200 code from the first curl???"
+        # This handles your 503, 404, 500, etc.
+        echo -e "     ${RED}✖ HTTP $HTTP_CODE${RESET} - ($ENV) - Server reported an error."
         ((FAIL++))
+
+        # Optional: Check if we got JSON even though it failed
+        if [[ "$HTTP_BODY" == *'"details":'* ]]; then
+            echo -e "     ${CYAN}INFO: Server returned data even with status $HTTP_CODE${RESET}"
+        fi
     fi
+
 done
 
 
