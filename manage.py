@@ -5,27 +5,11 @@ r"""
 manage.py
 
 
-# TODO:
-# COMMENT:
-# NOTE:
-# USEFULL:
-# LEARN:
-# RECHECK
-# INCOMPLETE
-# SEE NOTES
-# POST
-# HACK
-# FIXME
-# BUG
-# [ ] something to do
-# [x]  i did sometrhing
-
-
 
 """
 __version__ = "0.0.1.000002-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-14 22:08:32"
+__updated__ = "2026-01-31 23:42:20"
 ###############################################################################
 
 import os  # <--- THIS WAS MISSING

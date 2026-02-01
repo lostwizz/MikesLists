@@ -15,7 +15,7 @@ use:
 """
 __version__ = "0.0.0.000012-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-31 18:16:57"
+__updated__ = "2026-02-01 00:49:33"
 ###############################################################################
 
 
@@ -25,9 +25,15 @@ from django.test import RequestFactory
 from django.contrib.auth.models import User
 from app_core.views import health
 
+
+from app_core.logging.logging import logger
+
+# =================================================================
+# =================================================================
 class Command(BaseCommand):
     help = 'Runs internal health checks'
 
+    # -----------------------------------------------------------------
     def handle(self, *args, **options):
         # Use a local variable for style to make it cleaner
         # success_style = self.style.SUCCESS
@@ -42,7 +48,7 @@ class Command(BaseCommand):
         # Simulate auth
         user = User.objects.filter(is_superuser=True).first()
         if not user:
-            self.stdout.write(error_style("Critical Failure: No superuser found to authenticate request."))
+            self.stdout.write(self.style.ERROR("Critical Failure: No superuser found to authenticate request."))
             return
 
         request.user = user
@@ -56,17 +62,23 @@ class Command(BaseCommand):
             latency = data.get('latency_ms', 0.00)
             overall = data.get('status', 'unhealthy').upper()
 
+            logger.tracex( f" just after getting the {checks=}")
+
             self.stdout.write("Running individual component audits...")
-
+            # logger.traceu( " snow is falling")
             for c in checks:
+                # Use dictionary access [key] or .get(key)
 
-                raw = str(c['raw_value']).replace("\n", " ").strip()
-                msg = str(c['message']).replace("\n", " ").strip()
+                # logger.tracev("before status")
+                status = c.get('status', 'unknown').upper()
+                # logger.tracew(f" after status {status=}")
 
+                name = c.get('name', 'unknown').upper()
+                msg = str(c.get('message', '')).replace("\n", " ").strip()
+                raw = str(c.get('raw_value', '')).replace("\n", " ").strip()
 
-                label = f"Checking {c['name'].upper()}..."
-                self.stdout.write(f"{c['name'].upper()[:20]:<30}", ending="")
-                match c['status'].upper():
+                self.stdout.write(f"{name[:20]:<30}", ending="")
+                match status:
                     case 'OK':
                         color = self.style.SUCCESS
                     case "WARN":
@@ -76,11 +88,9 @@ class Command(BaseCommand):
                     case _:
                         color = self.style.NOTICE
 
-                # self.stdout.write(f"([{c['status'].upper():<7}])", ending="")
-                self.stdout.write(color( f"[{c['status'].upper():<7}] "), ending="")
+                self.stdout.write(color(f"[{status:<7}] "), ending="")
                 self.stdout.write(f"{msg[:25]:<25}", ending="")
                 self.stdout.write(f"{raw[:100]:<100}")
-
 
             self.stdout.write("-" * 45)
             final_color = self.style.SUCCESS if overall == 'HEALTHY' else self.style.ERROR

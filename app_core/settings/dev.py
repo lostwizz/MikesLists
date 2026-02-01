@@ -10,7 +10,7 @@ app_core.settings.dev
 """
 __version__ = "0.0.0.000007-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-27 17:31:39"
+__updated__ = "2026-02-01 00:04:23"
 ###############################################################################
 
 # WSGI_REQUEST_HANDLER = "app_core.logging.request_handler.RequestHandlerWithIPAndUser"
@@ -97,6 +97,10 @@ LOGGING = {
             "callback": lambda record: "You're accessing the development server over HTTPS"
             not in record.getMessage(),
         },
+        "exclude_debug_and_success": {
+            "()": "app_core.logging.filters.ExcludeLevelFilter",
+            # "levels_to_exclude": ["DEBUG", "SUCCESS"], # Add any level name here
+        },
     },
     # -------------------------
     # HANDLERS
@@ -105,13 +109,17 @@ LOGGING = {
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "color",
+            "filters": ["exclude_debug_and_success"], # Apply the filter here
+            "level": "DEBUG",
         },
         "app_file": {
             "class": "logging.handlers.RotatingFileHandler",
             "filename": "/srv/django/logs/app.log",
             "maxBytes": 5 * 1024 * 1024,  # 5 MB
             "backupCount": 5,
-            "formatter": "simple",
+            "formatter": "color",   # "simple",
+            # No filter here means the file gets EVERYTHING
+            "level": "DEBUG",
         },
 
         # Optional SQL log file
@@ -121,6 +129,7 @@ LOGGING = {
             "maxBytes": 10 * 1024 * 1024,
             "backupCount": 3,
             "formatter": "pretty_sql",
+            "level": "DEBUG",
         },
 
         "request_file": {
@@ -133,6 +142,7 @@ LOGGING = {
                 "ignore_bad_request_version",
                 "ignore_https_warning",
             ],
+            "level": "DEBUG",
         },
     },
     # -------------------------
