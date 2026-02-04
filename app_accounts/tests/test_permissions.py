@@ -12,7 +12,7 @@ app_accounts.tests.test_permissions
 """
 __version__ = "0.0.0.000026-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-02 14:15:53"
+__updated__ = "2026-02-03 23:32:32"
 ###############################################################################
 
 
@@ -88,7 +88,7 @@ class TestGroupManagerAccess:
 
         # Standard redirect check
         assert response.status_code == 302
-        assert reverse('login') in response.url
+        assert reverse('accounts:login') in response.url
 
     def test_regular_user_denied(self, client, regular_user):
         """Users NOT in the Admins group should get a 403 Forbidden error."""

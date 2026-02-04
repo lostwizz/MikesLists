@@ -13,7 +13,7 @@ decorators
 """
 __version__ = "0.0.0.000020-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-27 13:24:24"
+__updated__ = "2026-02-03 23:34:54"
 ###############################################################################
 
 from django.shortcuts import redirect
@@ -30,7 +30,7 @@ def group_required(group_name):
         def _wrapped_view(request, *args, **kwargs):
             # 1. Check if authenticated
             if not request.user.is_authenticated:
-                return redirect('login')
+                return redirect('accounts:login')
 
             # 2. Check if user is a superuser (bypass) or in the group
             if request.user.is_superuser or request.user.groups.filter(name=group_name).exists():
