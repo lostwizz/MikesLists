@@ -16,9 +16,9 @@ app_core.views.health
 
 
 """
-__version__ = "0.0.0.000028-dev"
+__version__ = "0.0.0.000029-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-03 21:43:51"
+__updated__ = "2026-02-03 21:57:46"
 ###############################################################################
 
 import time
@@ -65,18 +65,22 @@ def health(request):
     # logger.traces((f"{overall_status=}"))
 
     # Calculate Latency
-    duration_ms = (time.perf_counter() - start_time) * 1000
+    if settings.ENV_NAME !="dev":
+        duration_ms =0
+        hostinfo =None
+    else:
+        duration_ms = (time.perf_counter() - start_time) * 1000
+        hostinfo = request.META.get("HTTP_HOST", "unknown")
 
     response_status = 200 if is_healthy else 503
     # logger.tracea(f"{response_status=}")
-
     # logger.tracez( request.META)
     return JsonResponse(
         {
             "status": overall_status,
             "latency_ms": round(duration_ms, 2),
             "environment": env_name,
-            "host": request.META.get("HTTP_HOST", "unknown"),
+            "host": hostinfo,
             # "details": {name: asdict(result) for name, result in checks.items()},
             "details": {k: v.to_dict() for k, v in checks.items()},
         },
