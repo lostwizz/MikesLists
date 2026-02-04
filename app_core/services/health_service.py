@@ -509,15 +509,15 @@ def run_sd_latency() -> dict[str, CheckResult]:
 # -----------------------------------------------------------------
 def run_ping_test() -> dict[str, CheckResult]:
     try:
-        if settings.ENV_NAME !="dev":
+        if settings.ENV_NAME != "dev":
             return {
                 "network_check": CheckResult(
                     name="network check",
                     status="skip",
                     message="",
                     raw_value="",
-            )
-}
+                )
+            }
         subprocess.check_call(
             ["ping", "-c", "1", "-W", "1", "8.8.8.8"], stdout=subprocess.DEVNULL
         )
@@ -617,14 +617,15 @@ def health_service():
 
     # logger.info( f" about to exit health_services.py {checks=},   {env_name=}")
 
-    if settings.ENV_NAME !="dev":
+    if settings.ENV_NAME != "dev":
         for result in checks.values():
             result.raw_value = None
             result.message = None
 
-    checksNotSkipped = {name: result for name, result in checks.items()
-          if result.status != "skip"}
-
-
+    checksNotSkipped = {
+        name: result
+        for name, result in checks.items()
+        if result.status != "skip"
+    }
 
     return checksNotSkipped, env_name

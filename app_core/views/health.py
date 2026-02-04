@@ -32,7 +32,7 @@ from django.db import connections  # Add this line
 from app_core.services.health_service import health_service, CheckResult
 from app_core.logging.logging import logger
 
-
+# -----------------------------------------------------------------
 def health(request):
 
     # Start the clock
@@ -65,10 +65,10 @@ def health(request):
     # logger.traces((f"{overall_status=}"))
 
     # Calculate Latency
-    if settings.ENV_NAME !="dev":
-        duration_ms =0
-        hostinfo =None
-        ev_name=None
+    if settings.ENV_NAME != "dev":
+        duration_ms = 0
+        hostinfo = None
+        ev_name = None
     else:
         duration_ms = (time.perf_counter() - start_time) * 1000
         hostinfo = request.META.get("HTTP_HOST", "unknown")

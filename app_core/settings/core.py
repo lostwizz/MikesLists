@@ -33,7 +33,7 @@ from pathlib import Path
 from decouple import config
 
 
-IS_PI=True
+IS_PI = True
 
 ADMINS = [
     ("Mike", "mmerrett@merrett.ca"),

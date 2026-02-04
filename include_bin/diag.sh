@@ -770,6 +770,95 @@ check_git() {
         echo -e "  msg:    ${CYAN}$LAST_MSG${RESET}"
     fi
 
+    echo -e "${BLUE}checking deatched HEAD state:${RESET}"
+    DETACHED=$(git -C "$PROJECT_PATH" symbolic-ref --short -q HEAD || echo "DETACHED")
+    if [[ "$DETACHED" == "DETACHED" ]]; then
+        echo -e "${YELLOW}⚠ repository is in a detached HEAD state${RESET}"
+        fail=true
+    else
+        echo -e "${GREEN}✓ not detached HEAD state ${RESET}"
+    fi
+
+    echo -e "${BLUE}checking upstream tracking branch:${RESET}"
+    UPSTREAM=$(git -C "$PROJECT_PATH" rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null)
+    if [[ -z "$UPSTREAM" ]]; then
+        echo -e "${YELLOW}⚠ no upstream tracking branch${RESET}"
+    else
+        echo -e "${GREEN}✓ upstream:${RESET} ${CYAN}$UPSTREAM${RESET}"
+    fi
+
+    echo -e "${BLUE}checking if local branch is ahead/behind remote:${RESET}"
+    if [[ -n "$UPSTREAM" ]]; then
+        AHEAD=$(git -C "$PROJECT_PATH" rev-list --left-right --count "$UPSTREAM"...HEAD | awk '{print $2}')
+        BEHIND=$(git -C "$PROJECT_PATH" rev-list --left-right --count "$UPSTREAM"...HEAD | awk '{print $1}')
+
+        echo -e "${BLUE}sync status with remote:${RESET}"
+        echo -e "  ahead:  ${CYAN}$AHEAD${RESET}"
+        echo -e "  behind: ${CYAN}$BEHIND${RESET}"
+    else
+        echo -e "${GREEN}✓ branch is not ahead/behind remote:${RESET} ${CYAN}$UPSTREAM${RESET}"
+    fi
+
+    echo -e "${BLUE}checking merge conflicts in working tree:${RESET}"
+    CONFLICTS=$(git -C "$PROJECT_PATH" diff --name-only --diff-filter=U)
+    if [[ -n "$CONFLICTS" ]]; then
+        echo -e "${RED}❌ unresolved merge conflicts:${RESET}"
+        echo "$CONFLICTS"
+        fail=true
+    else
+        echo -e "${GREEN}✓ no merge confilcts in working tree:${RESET} ${CYAN}$UPSTREAM${RESET}"
+    fi
+
+    echo -e "${BLUE}checking ignored-but-modified files:${RESET}"
+    IGNORED_MODIFIED=$(git -C "$PROJECT_PATH" ls-files -i -o -m --exclude-standard \
+            | grep -v "__pycache__" \
+            | grep -v ".pytest_cache" \
+            | grep -v ".mypy_cache" \
+            | grep -v ".ruff_cache" \
+            | grep -v "runserver.log" \
+    )
+
+
+    if [[ -n "$IGNORED_MODIFIED" ]]; then
+        echo -e "${YELLOW}⚠ ignored files modified:${RESET}"
+        echo "$IGNORED_MODIFIED"
+    else
+        echo -e "${GREEN}✓ no ignored-but-modified files:${RESET} ${CYAN}$UPSTREAM${RESET}"
+    fi
+
+    echo -e "${BLUE}checking submodules and their status:${RESET}"
+    if [[ -f "$PROJECT_PATH/.gitmodules" ]]; then
+        echo -e "${BLUE}checking submodules:${RESET}"
+        git -C "$PROJECT_PATH" submodule status
+    else
+        echo -e "${GREEN}✓ submodules and their status OK:${RESET} ${CYAN}$UPSTREAM${RESET}"
+    fi
+
+    echo -e "${BLUE}checking local-only commits (not pushed):${RESET}"
+    if [[ -n "$UPSTREAM" ]]; then
+        echo -e "${BLUE}local commits not pushed:${RESET}"
+        git -C "$PROJECT_PATH" log "$UPSTREAM"..HEAD --oneline || echo "  none"
+    else
+        echo -e "${GREEN}✓ local-only commits OK:${RESET} ${CYAN}$UPSTREAM${RESET}"
+    fi
+
+    if [[ -n "$UPSTREAM" ]]; then
+        echo -e "${BLUE}remote commits not pulled:${RESET}"
+        git -C "$PROJECT_PATH" log HEAD.."$UPSTREAM" --oneline || echo "  none"
+    else
+        echo -e "${GREEN}✓ remote commits OK:${RESET} ${CYAN}$UPSTREAM${RESET}"
+    fi
+
+    REMOTE_URL=$(git -C "$PROJECT_PATH" remote get-url origin 2>/dev/null)
+    echo -e "${BLUE}remote origin:${RESET} ${CYAN}${REMOTE_URL}${RESET}"
+
+    echo -e "${BLUE}recent commits:${RESET}"
+    git -C "$PROJECT_PATH" log -5 --pretty=format:"  %C(yellow)%h%Creset %C(cyan)%ad%Creset %Cgreen%an%Creset %s" --date=short
+    echo ""
+
+
+
+
     $fail && return 1 || return 0
 }
 
@@ -1438,19 +1527,38 @@ check_packages() {
     #############################################
     echo -e "\n${YELLOW}[10.3] checking for extra installed packages (not in requirements.txt)${RESET}"
 
+    REQUIREMENTS_DEV_FILE="$PROJECT_PATH/requirements-dev.txt"
+
+echo -e "  REQUIREMENTS_DEV_FILE= $REQUIREMENTS_DEV_FILE"
+
     EXTRA=0
+
     while IFS= read -r inst; do
         pkg=$(echo "$inst" | cut -d'=' -f1)
 
-        if ! grep -qi "^${pkg}==" "$REQUIREMENTS_FILE"; then
+        # Check main requirements.txt
+        in_main=$(grep -qi "^${pkg}==" "$REQUIREMENTS_FILE"; echo $?)
+
+        # Check dev requirements only if in DEV
+        if [[ -n "$REQUIREMENTS_DEV_FILE" ]]; then
+            in_dev=$(grep -qi "^${pkg}==" "$REQUIREMENTS_DEV_FILE"; echo $?)
+        else
+            in_dev=1
+        fi
+
+        # If not in either file → extra package
+        if [[ $in_main -ne 0 && $in_dev -ne 0 ]]; then
             echo -e "${YELLOW}⚠ extra package installed:${RESET} $pkg"
             EXTRA=$((EXTRA + 1))
         fi
+
     done <<< "$INSTALLED"
 
     if (( EXTRA == 0 )); then
         echo -e "${GREEN}✓ no extra packages${RESET}"
     fi
+
+
 
     #############################################
     # Final result
