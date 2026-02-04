@@ -9,9 +9,9 @@ app_core.settings.core
 
 
 """
-__version__ = "0.0.0.000098-dev"
+__version__ = "0.0.0.000099-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-03 19:37:24"
+__updated__ = "2026-02-03 21:25:14"
 ###############################################################################
 
 
@@ -32,6 +32,8 @@ import os
 from pathlib import Path
 from decouple import config
 
+
+IS_PI=True
 
 ADMINS = [
     ("Mike", "mmerrett@merrett.ca"),

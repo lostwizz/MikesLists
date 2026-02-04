@@ -9,9 +9,9 @@ health_service
 
 
 """
-__version__ = "0.0.1.000005-dev"
+__version__ = "0.0.1.000008-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-03 20:38:13"
+__updated__ = "2026-02-03 21:28:42"
 ###############################################################################
 
 
@@ -141,15 +141,21 @@ def run_health_psutil_check(name, spec) -> CheckResult:
 # -----------------------------------------------------------------
 def run_health_check(name, spec) -> CheckResult:
     # logger.traces(f"{name=} {spec=}" )
-    try:
-        output = run_cmd(spec["cmd"])
-        status, message, raw_value = spec["parser"](output)
-        return CheckResult(
-            name=name, status=status, message=message, raw_value=raw_value
-        )
+    if settings.ENV_NAME in ("dev"):
+        if hasattr(settings, "IS_PI") and settings.IS_PI:
+            try:
+                output = run_cmd(spec["cmd"])
+                status, message, raw_value = spec["parser"](output)
+                return CheckResult(
+                    name=name, status=status, message=message, raw_value=raw_value
+                )
 
-    except Exception as e:
-        return CheckResult(name=name, status="fail", message=str(e), raw_value="")
+            except Exception as e:
+                return CheckResult(name=name, status="fail", message=str(e), raw_value="")
+        else:
+            logger.info("this is not a PI (by setting IS_PI)")
+    else:
+        logger.info("not the dev environment so skipping this vcgencmd")
 
 
 # -----------------------------------------------------------------

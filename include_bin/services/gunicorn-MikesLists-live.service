@@ -21,7 +21,7 @@ ExecStart=/srv/django/venv-live/bin/gunicorn \
           --access-logfile - \
           --workers 3 \
           --bind unix:/srv/django/MikesLists_live/MikesLists.sock \
-          MikesLists.wsgi:application
+          app_core.wsgi:application
 
 Restart=always
 RestartSec=5
