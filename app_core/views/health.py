@@ -68,9 +68,11 @@ def health(request):
     if settings.ENV_NAME !="dev":
         duration_ms =0
         hostinfo =None
+        ev_name=None
     else:
         duration_ms = (time.perf_counter() - start_time) * 1000
         hostinfo = request.META.get("HTTP_HOST", "unknown")
+        ev_name = settings.ENV_NAME
 
     response_status = 200 if is_healthy else 503
     # logger.tracea(f"{response_status=}")
@@ -79,7 +81,7 @@ def health(request):
         {
             "status": overall_status,
             "latency_ms": round(duration_ms, 2),
-            "environment": env_name,
+            "environment": ev_name,
             "host": hostinfo,
             # "details": {name: asdict(result) for name, result in checks.items()},
             "details": {k: v.to_dict() for k, v in checks.items()},
