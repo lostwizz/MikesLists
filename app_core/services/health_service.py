@@ -9,9 +9,9 @@ health_service
 
 
 """
-__version__ = "0.0.1.000008-dev"
+__version__ = "0.0.1.000010-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-03 21:28:42"
+__updated__ = "2026-02-03 21:34:04"
 ###############################################################################
 
 
@@ -154,9 +154,10 @@ def run_health_check(name, spec) -> CheckResult:
                 return CheckResult(name=name, status="fail", message=str(e), raw_value="")
         else:
             logger.info("this is not a PI (by setting IS_PI)")
+            return CheckResult(name=name, status="skip", message="not IS_PI", raw_value="")
     else:
         logger.info("not the dev environment so skipping this vcgencmd")
-
+        return CheckResult(name=name, status="skip", message="not in DEV", raw_value="")
 
 # -----------------------------------------------------------------
 def parse_throttling(output) -> tuple[str, str, str]:

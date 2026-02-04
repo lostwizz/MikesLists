@@ -13,9 +13,9 @@ use:
 
 
 """
-__version__ = "0.0.0.000012-dev"
+__version__ = "0.0.0.000013-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-02 19:39:37"
+__updated__ = "2026-02-03 21:32:46"
 ###############################################################################
 
 
@@ -76,6 +76,8 @@ class Command(BaseCommand):
             self.stdout.write("Running individual component audits...")
             # logger.traceu(" snow is falling")
             for c in checks.values():
+                if c.get("status", "unknown") == 'skip':
+                    continue
                 # Use dictionary access [key] or .get(key)
 
                 # logger.tracev(f"before status  {c=}")
