@@ -13,12 +13,12 @@ To dump all the defined (assuming the base set never change):
         from app_core.logging.logging import logger
         logger.dump_all_loggers()
 
-
+logger.dump_all_loggers()
 
 """
 __version__ = "0.0.0.000025-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-01 00:40:26"
+__updated__ = "2026-02-02 22:24:17"
 ###############################################################################
 import logging
 
@@ -30,7 +30,6 @@ class LoggingProxy:
     # -----------------------------------------------------------------
     def __init__(self, name):
         self.name = name
-
 
     # -----------------------------------------------------------------
     def __getattr__(self, name):
@@ -81,28 +80,50 @@ class LoggingProxy:
         print("-" * 75)
 
         # Sort by the level number (the first element of the tuple)
-        for name, (num, color, char) in sorted(all_display_levels.items(), key=lambda x: x[1][0]):
+        for name, (num, color, char) in sorted(
+            all_display_levels.items(), key=lambda x: x[1][0]
+        ):
             data = f"{name:<25} | {num:<10} | "
             # Fire the actual log message using the numeric level
             self.log(num, f"Sample {name} output  - " + data)
 
 
 # -----------------------------------------------------------------
+# def add_custom_logging_levels(levels_dict):
+#     for name, (num, color, prefix) in levels_dict.items():
+#         logging.addLevelName(num, name)
+
+#         # We attach the prefix to the method so it's accessible if needed
+#         def log_method(self, message, *args, level_num=num, **kwargs):
+#             if self.isEnabledFor(level_num):
+#                 self._log(level_num, message, args, **kwargs)
+
+#         setattr(logging.Logger, name.lower(), log_method)
 def add_custom_logging_levels(levels_dict):
     for name, (num, color, prefix) in levels_dict.items():
         logging.addLevelName(num, name)
 
-        # We attach the prefix to the method so it's accessible if needed
         def log_method(self, message, *args, level_num=num, **kwargs):
             if self.isEnabledFor(level_num):
-                self._log(level_num, message, args, **kwargs)
+                self._log(level_num, message, args, stacklevel=2, **kwargs)
 
         setattr(logging.Logger, name.lower(), log_method)
+
+def patch_builtin_levels():
+    for method_name in ["debug", "info", "warning", "error", "critical"]:
+        original = getattr(logging.Logger, method_name)
+
+        def wrapper(self, message, *args, _orig=original, **kwargs):
+            return _orig(self, message, *args, stacklevel=2, **kwargs)
+
+        setattr(logging.Logger, method_name, wrapper)
 
 
 
 logger = LoggingProxy("app_core")
 
+
+patch_builtin_levels()
 
 from app_core.logging.constants import CUSTOM_LOG_LEVELS
 

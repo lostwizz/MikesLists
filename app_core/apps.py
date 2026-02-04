@@ -10,7 +10,7 @@ app_core.logging.logging
 """
 __version__ = "0.0.0.000025-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-01 00:47:45"
+__updated__ = "2026-02-02 13:37:08"
 ###############################################################################
 
 
@@ -25,4 +25,4 @@ class AppCoreConfig(AppConfig):
 
         # This imports your logging setup and runs the initialization code
         from app_core.logging.logging import logger
-        logger.warning("hello woprld- i am here")
+        # logger.warning("hello world- i am here")

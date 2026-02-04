@@ -19,6 +19,25 @@ import sqlparse
 import re
 
 
+class ColorFormatter(logging.Formatter):
+    COLORS = {
+        "DEBUG": "\033[36m",
+        "INFO": "\033[32m",
+        "WARNING": "\033[33m",
+        "ERROR": "\033[31m",
+        "CRITICAL": "\033[41m",
+    }
+
+    RESET = "\033[0m"
+
+    def format(self, record):
+        color = self.COLORS.get(record.levelname, "")
+        message = super().format(record)
+        return f"{color}{message}{self.RESET}"
+
+
+
+
 # class PrettySQLFormatter(logging.Formatter):
 #     def format(self, record):
 #         raw_sql = getattr(record, "sql", record.getMessage())

@@ -15,9 +15,9 @@ Adding decorators to the path function:
                 ),
 
 """
-__version__ = "0.0.0.000012-dev"
+__version__ = "0.0.0.000016-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-30 17:53:01"
+__updated__ = "2026-02-03 19:50:13"
 ###############################################################################
 
 """
@@ -63,28 +63,26 @@ urlpatterns = [
     path("admin/", admin.site.urls),
 
     # Redirect /home → dashboard
-    path("home", redirect_home_to_dashboard),
+    # path("home", redirect_home_to_dashboard),
     path("home/", redirect_home_to_dashboard),
 
     # Redirect /dashboard → dashboard
-    path("dashboard", redirect_dashboard_to_dashboard),
+    # path("dashboard", redirect_dashboard_to_dashboard),
     path("dashboard/", redirect_dashboard_to_dashboard),
 
     # Redirect ONLY /accounts and /accounts/ → dashboard
     path("accounts", redirect_accounts_to_dashboard),
-    path("accounts/", redirect_accounts_to_dashboard),
-
-    # Real accounts URLs
+    # path("accounts/", redirect_accounts_to_dashboard),
     path("accounts/", include("app_accounts.urls")),
 
     # ToDo
     path("todo/", include("app_ToDo.urls")),
 
     # System / Core
-    path("status", status_view, name="status_dashboard"),
+    # path("status", status_view, name="status_dashboard"),
     path("status/", status_view, name="status_dashboard"),
 
-    path("health", health, name="health_check"),
+    # path("health", health, name="health_check"),
     path("health/", health, name="health_check"),
 
     # Site root → dashboard

@@ -10,7 +10,7 @@ app_core.settings.dev
 """
 __version__ = "0.0.0.000007-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-01 00:04:23"
+__updated__ = "2026-02-02 19:21:16"
 ###############################################################################
 
 # WSGI_REQUEST_HANDLER = "app_core.logging.request_handler.RequestHandlerWithIPAndUser"
@@ -48,16 +48,13 @@ AUTH_PASSWORD_VALIDATORS = []  # This disables all checks (NOT for production!)
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-
-
     # -------------------------------------------------
     # ROOT LOGGER (THIS MAKES logging.debug() WORK)
     # -------------------------------------------------
     "root": {
-        "handlers": ["console","app_file"],
+        "handlers": ["console", "app_file"],
         "level": "DEBUG",
     },
-
     # -------------------------
     # FORMATTERS
     # -------------------------
@@ -68,11 +65,10 @@ LOGGING = {
         },
         "color": {
             "()": "app_core.logging.color_formatter.ColorFormatter",
-            "format": "[{levelname}] {message}",
-            "style": "{",
+            # "format": "{levelname}|{module}|{filename}|%(lineno):4s|{message}",
+            'format': '%(levelname)7s|%(module)s|%(filename)s|%(lineno)4d|%(message)s',
+            # "style": "{",
         },
-
-
         "pretty_sql": {
             "()": "app_core.logging.logging_formatters.PrettySQLFormatter",
             "format": "\n[SQL]\n{sql}\n[Time] {duration} ms\n",  # Added a newline after [SQL]
@@ -109,7 +105,7 @@ LOGGING = {
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "color",
-            "filters": ["exclude_debug_and_success"], # Apply the filter here
+            "filters": ["exclude_debug_and_success"],  # Apply the filter here
             "level": "DEBUG",
         },
         "app_file": {
@@ -117,11 +113,10 @@ LOGGING = {
             "filename": "/srv/django/logs/app.log",
             "maxBytes": 5 * 1024 * 1024,  # 5 MB
             "backupCount": 5,
-            "formatter": "color",   # "simple",
+            "formatter": "color",  # "simple",
             # No filter here means the file gets EVERYTHING
             "level": "DEBUG",
         },
-
         # Optional SQL log file
         "sql_file": {
             "class": "logging.handlers.RotatingFileHandler",
@@ -131,7 +126,6 @@ LOGGING = {
             "formatter": "pretty_sql",
             "level": "DEBUG",
         },
-
         "request_file": {
             "class": "logging.handlers.RotatingFileHandler",
             "filename": "/srv/django/logs/requests.log",
@@ -164,8 +158,6 @@ LOGGING = {
             "level": "DEBUG",
             "propagate": False,
         },
-
-
         "django.db.backends": {
             # "handlers": ["console", "sql_file"],
             "handlers": ["sql_file"],
@@ -185,6 +177,7 @@ LOGGING = {
 
 # WSGI_SERVER_CLASS = "app_core.logging.custom_server.CustomWSGIServer"
 # WSGI_REQUEST_HANDLER = "app_core.logging.custom_server.RequestHandlerWithIPAndUser"
+
 
 def get_local_ip():
     try:

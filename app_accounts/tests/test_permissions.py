@@ -12,7 +12,7 @@ app_accounts.tests.test_permissions
 """
 __version__ = "0.0.0.000026-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-27 13:11:37"
+__updated__ = "2026-02-02 14:15:53"
 ###############################################################################
 
 
@@ -22,8 +22,6 @@ from django.urls import reverse
 from django.contrib.auth.models import Group, Permission, User
 from app_accounts.permissions import assign_permissions
 # from app_accounts.permissions import assign_permissions
-from app_accounts.management.commands.assign_permissions import Command
-from django.core.exceptions import PermissionDenied
 
 @pytest.mark.django_db
 def test_groups_are_created():
@@ -87,8 +85,10 @@ class TestGroupManagerAccess:
         """Guests should be redirected to the login page."""
         url = reverse('accounts:group_manager')
         response = client.get(url)
+
+        # Standard redirect check
         assert response.status_code == 302
-        assert '/login/' in response.url
+        assert reverse('login') in response.url
 
     def test_regular_user_denied(self, client, regular_user):
         """Users NOT in the Admins group should get a 403 Forbidden error."""

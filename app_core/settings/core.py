@@ -9,9 +9,9 @@ app_core.settings.core
 
 
 """
-__version__ = "0.0.0.000097-dev"
+__version__ = "0.0.0.000098-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-26 22:07:03"
+__updated__ = "2026-02-03 19:37:24"
 ###############################################################################
 
 
@@ -75,6 +75,7 @@ ENV_NAME = config("ENV_NAME")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG")
 
+APPEND_SLASH = True
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 

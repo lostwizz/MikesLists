@@ -455,9 +455,10 @@ check_django() {
 
     # 4.6F. Accounts Templates registration
     check_templates "4.0.6F" "/srv/django/MikesLists_dev/app_accounts/templates/registration" \
-        "logged_out.html" "login.html" "password_change_done.html" "password_change_form.html" \
-        "password_reset_complete.html" "password_reset_confirm.html" "password_reset_done.html" "password_reset_form.html" \
+        "logged_out.html" "password_change_done.html" "password_change_form.html" \
         "register.html"
+
+    #  "login.html", "password_reset_complete.html" "password_reset_confirm.html" "password_reset_done.html" "password_reset_form.html" \
 
     # 4.6G. ToDo Templates (Assuming standard Django namespacing)
     # check_templates "6G" "/srv/django/MikesLists_dev/app_ToDo/templates/app_ToDo" \
