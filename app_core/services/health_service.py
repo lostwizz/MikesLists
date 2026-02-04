@@ -9,9 +9,9 @@ health_service
 
 
 """
-__version__ = "0.0.1.000003-dev"
+__version__ = "0.0.1.000005-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-02 17:20:04"
+__updated__ = "2026-02-03 20:38:13"
 ###############################################################################
 
 
@@ -33,6 +33,7 @@ from django.db import connections
 from django.db.utils import OperationalError
 from django.conf import settings
 from dataclasses import dataclass, asdict
+
 # from app_core.logging.logging import logger
 
 from django.db import connections  # Add this line
@@ -44,7 +45,6 @@ from app_core.logging.logging import logger
 from typing import Union
 
 # logger.dump_all_loggers()
-
 
 
 # =================================================================
@@ -85,17 +85,18 @@ def bytes2human(n) -> str:
     return "%sB" % n
 
 
-
 # -----------------------------------------------------------------
 def _safe_decode(value: Union[str, bytes]) -> str:
     if isinstance(value, bytes):
         return value.decode()
     return value
 
+
 # -----------------------------------------------------------------
 def run_cmd(cmd) -> str:
     raw = subprocess.check_output(cmd)
     return _safe_decode(raw)
+
 
 # -----------------------------------------------------------------
 def normalize_details(raw_details: dict[str, dict]) -> dict[str, CheckResult]:
@@ -106,7 +107,7 @@ def normalize_details(raw_details: dict[str, dict]) -> dict[str, CheckResult]:
             name=data.get("name", key),
             status=data.get("status", "unknown"),
             message=data.get("message", ""),
-            raw_value=data.get("raw_value", "")
+            raw_value=data.get("raw_value", ""),
         )
 
     return normalized
@@ -129,7 +130,9 @@ def run_health_psutil_check(name, spec) -> CheckResult:
         # logger.green(f"{output=}")
 
         status, message, raw_value = spec["parser"](output)
-        return CheckResult(name=name, status=status, message=message, raw_value=raw_value)
+        return CheckResult(
+            name=name, status=status, message=message, raw_value=raw_value
+        )
 
     except Exception as e:
         return CheckResult(name=name, status="fail", message=str(e), raw_value="")
@@ -141,13 +144,16 @@ def run_health_check(name, spec) -> CheckResult:
     try:
         output = run_cmd(spec["cmd"])
         status, message, raw_value = spec["parser"](output)
-        return CheckResult(name=name, status=status, message=message, raw_value=raw_value)
+        return CheckResult(
+            name=name, status=status, message=message, raw_value=raw_value
+        )
 
     except Exception as e:
         return CheckResult(name=name, status="fail", message=str(e), raw_value="")
 
+
 # -----------------------------------------------------------------
-def parse_throttling(output)-> tuple[str, str, str]:
+def parse_throttling(output) -> tuple[str, str, str]:
 
     # THROTTLE_FLAGS = {
     #     0x1:      ("fail", "Under‑voltage detected now"),
@@ -160,14 +166,14 @@ def parse_throttling(output)-> tuple[str, str, str]:
     #     0x80000:  ("warn", "Soft temperature limit has occurred"),
     # }
     THROTTLE_FLAGS = {
-        0x1:      ("fail", "now Under‑voltage"),
-        0x2:      ("fail", "ARM frequency capped now"),
-        0x4:      ("fail", "Currently throttled"),
-        0x8:      ("fail", "Soft temperature limit active now"),
-        0x10000:  ("warn", "pastUV"),
-        0x20000:  ("warn", "pastFC"),
-        0x40000:  ("warn", "pastTH"),
-        0x80000:  ("warn", "pastSTL"),
+        0x1: ("fail", "now Under‑voltage"),
+        0x2: ("fail", "ARM frequency capped now"),
+        0x4: ("fail", "Currently throttled"),
+        0x8: ("fail", "Soft temperature limit active now"),
+        0x10000: ("warn", "pastUV"),
+        0x20000: ("warn", "pastFC"),
+        0x40000: ("warn", "pastTH"),
+        0x80000: ("warn", "pastSTL"),
     }
     result = output
     # Expect "throttled=0x12345"
@@ -202,60 +208,66 @@ def parse_throttling(output)-> tuple[str, str, str]:
 
 
 # -----------------------------------------------------------------
-def parse_temperature(output)-> tuple[str, str, str]:
+def parse_temperature(output) -> tuple[str, str, str]:
     temp_val = float(re.findall(r"[-+]?\d*\.\d+|\d+", output)[0])
     status = "ok" if temp_val <= 80 else "warn" if temp_val <= 100 else "hot"
     return status, str(temp_val), output
 
 
 # -----------------------------------------------------------------
-def parse_voltage(output)-> tuple[str, str, str]:
+def parse_voltage(output) -> tuple[str, str, str]:
     v_val = float(re.findall(r"[-+]?\d*\.\d+|\d+", output)[0])
     status = "ok" if v_val >= 0.85 else "warn" if v_val >= 0.80 else "fail"
     return status, str(v_val), output
 
+
 # -----------------------------------------------------------------
-def parse_gpu_mem(output)-> tuple[str, str, str]:
+def parse_gpu_mem(output) -> tuple[str, str, str]:
     vgpu = int(re.findall(r"[-+]?\d*\.\d+|\d+", output)[0])
-    status = "ok" if vgpu >=4 else "fail"
+    status = "ok" if vgpu >= 4 else "fail"
     return status, str(vgpu), output
 
-# -----------------------------------------------------------------
-def parse_arm_mem(output)-> tuple[str, str, str]:
-    varm = int(re.findall(r"[-+]?\d*\.\d+|\d+", output)[0])
-    status = "ok" if varm >=1000 else "fail"
-    return status, str(varm), output
 
 # -----------------------------------------------------------------
-def parse_reloc_mem(output)-> tuple[str, str, str]:
+def parse_arm_mem(output) -> tuple[str, str, str]:
+    varm = int(re.findall(r"[-+]?\d*\.\d+|\d+", output)[0])
+    status = "ok" if varm >= 1000 else "fail"
+    return status, str(varm), output
+
+
+# -----------------------------------------------------------------
+def parse_reloc_mem(output) -> tuple[str, str, str]:
     reloc = int(re.findall(r"[-+]?\d*\.\d+|\d+", output)[0])
     status = "ok" if reloc in (4, 8) else "fail"
     return status, str(reloc), output
 
+
 # -----------------------------------------------------------------
 def parse_iowait(output) -> tuple[str, str, str]:
-    '''
-           0 • 	 – time spent in user mode
-           1 • 	 – time spent in kernel mode
-           2 • 	 – idle time
-           3 • 	 – user mode with low priority
-           4 • 	 – waiting for I/O
-           5 • 	 – hardware interrupts
-           6 • 	 – software interrupts
-           7 • 	 – time stolen by hypervisor
-           8 • 	 – guest OS
-           9 • 	 – low‑priority guest OS
-            Not all fields appear on all platforms, but the structure is consistent
-    '''
+    """
+    0 • 	 – time spent in user mode
+    1 • 	 – time spent in kernel mode
+    2 • 	 – idle time
+    3 • 	 – user mode with low priority
+    4 • 	 – waiting for I/O
+    5 • 	 – hardware interrupts
+    6 • 	 – software interrupts
+    7 • 	 – time stolen by hypervisor
+    8 • 	 – guest OS
+    9 • 	 – low‑priority guest OS
+     Not all fields appear on all platforms, but the structure is consistent
+    """
     iwait = output[4]
     status = "ok" if (iwait <= 0.9) else "fail"
     return status, str(iwait), output
+
 
 # -----------------------------------------------------------------
 def parse_virtual_mem(output) -> tuple[str, str, str]:
     virt_mem = output[0]
     status = "ok" if virt_mem < 80 else "warn"
-    return status, bytes2human(virt_mem) , output
+    return status, bytes2human(virt_mem), output
+
 
 # -----------------------------------------------------------------
 def parse_cpu_load(output) -> tuple[str, str, str]:
@@ -263,9 +275,10 @@ def parse_cpu_load(output) -> tuple[str, str, str]:
         a = str(output)
         cpu = float(a)
         status = "ok" if cpu < 80.0 else "warn"
-        return status, str(cpu) +"%", output
-    except Exception as e:
+        return status, str(cpu) + "%", output
+    except Exception:
         logger.exception("why")
+
 
 # -----------------------------------------------------------------
 def parse_threads(output) -> tuple[str, str, str]:
@@ -275,7 +288,9 @@ def parse_threads(output) -> tuple[str, str, str]:
     status = "ok" if th < 20 else "warn"
     return status, str(th), output
 
+
 # -----------------------------------------------------------------
+
 
 # -----------------------------------------------------------------
 # -----------------------------------------------------------------
@@ -287,7 +302,7 @@ def run_database_check() -> dict[str, CheckResult]:
 
     try:
         db_conn = connections["default"]
-            # Check if connection is actually alive
+        # Check if connection is actually alive
         with db_conn.cursor() as cursor:
             cursor.execute("SELECT 1")
             result = cursor.fetchone()[0]
@@ -299,18 +314,18 @@ def run_database_check() -> dict[str, CheckResult]:
         }
     except Exception as e:
         return {
-            "database":  CheckResult(
+            "database": CheckResult(
                 name="database", status="fail", message=str(e), raw_value=str(result)
             )
         }
 
+
 # -----------------------------------------------------------------
 def run_disk_check() -> dict[str, CheckResult]:
     return {
-        "storage": CheckResult(
-            name="storage", status="fail", message="", raw_value=""
-        )
+        "storage": CheckResult(name="storage", status="fail", message="", raw_value="")
     }
+
 
 # -----------------------------------------------------------------
 def run_disk_check() -> dict[str, CheckResult]:
@@ -365,6 +380,7 @@ def run_ram_check() -> dict[str, CheckResult]:
                 raw_value="",
             )
         }
+
 
 # -----------------------------------------------------------------
 def run_cpu_check() -> dict[str, CheckResult]:
@@ -549,10 +565,8 @@ CHECKS = {
         "cmd": ["psutil", "cpu_percent"],
         "parser": parse_cpu_load,
     },
-
-
-
 }
+
 
 # -----------------------------------------------------------------
 def health_service():
@@ -574,7 +588,6 @@ def health_service():
         else:
             checks[name] = run_health_check(name, spec)
         # logger.mark("")
-
 
     # Add non-command checks (database, RAM, CPU, zombies, etc.)
     checks.update(run_database_check())

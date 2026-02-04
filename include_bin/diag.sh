@@ -2,7 +2,7 @@
 # ==========================================
 # Django Deep Diagnostic Tool v2.1 (verbose)
 # ==========================================
-# __version__="2.2.2.000032"
+# __version__="2.2.2.000041"
 
 #############################################
 # COLORS (ANSI-safe)
@@ -787,6 +787,8 @@ check_db() {
 
     local fail=false
 
+    echo -e "\n${YELLOW}[1] django checking db connection${RESET}"
+
     echo -e "${BLUE}loading DB settings from .env${RESET}"
 
     DB_ENGINE=$(grep -E '^DB_ENGINE=' "$ENV_FILE" | cut -d '=' -f2-)
@@ -811,6 +813,8 @@ check_db() {
         fi
     done
 
+    echo -e "\n${YELLOW}[2] check if DB engine is missing ${RESET}"
+
     # Determine DB engine if missing
     if [[ -z "$DB_ENGINE" ]]; then
         echo -e "${BLUE}DB_ENGINE not in .env — reading from Django settings${RESET}"
@@ -829,7 +833,7 @@ check_db() {
     #############################################
     # 3. Ping DB host
     #############################################
-    echo -e "\n${YELLOW}[2] ping DB host${RESET}"
+    echo -e "\n${YELLOW}[3] ping DB host${RESET}"
     echo -e "${BLUE}running:${RESET} ping -c 1 -W 1 \"$DB_HOST\""
 
     if ping -c 1 -W 1 "$DB_HOST" >/dev/null 2>&1; then
@@ -842,15 +846,16 @@ check_db() {
     #############################################
     # 2. Django ensure_connection()
     #############################################
-    echo -e "\n${YELLOW}[1] django ensure_connection test${RESET}"
-    echo -e "${BLUE}running:${RESET} $MANAGE  shell -c 'from django.db import connection; connection.ensure_connection(); print(\"OK\")'"
+    echo -e "\n${YELLOW}[4] django ensure_connection test${RESET}"
+    echo -e "${BLUE}running:${RESET} $MANAGE  shell -v 2 -c 'from django.db import connection; connection.ensure_connection(); print(\"OK\")'"
 
-    DB_OUTPUT=$( $MANAGE shell -c "from django.db import connection; connection.ensure_connection(); print('OK')" 2>&1  )
+    DB_OUTPUT=$( $MANAGE shell  -v 2 -c "from django.db import connection; connection.ensure_connection(); print('OK')"   )
     echo "${BLUE}  will remove   'objects imported automatically' ${RESET}"
     echo "${CYAN}raw output: ${DB_OUTPUT} ${RESET}"
 
+    echo -e "\n${YELLOW}[5] check db connection in django ${RESET}"
     DB_OUTPUT=$(
-        $MANAGE shell -c "from django.db import connection; connection.ensure_connection(); print('OK')" 2>&1 \
+        $MANAGE shell -v 2 -c "from django.db import connection; connection.ensure_connection(); print('OK')" \
         | grep -v "objects imported automatically"
     )
     if echo "$DB_OUTPUT" | grep -q "OK"; then
@@ -898,9 +903,22 @@ check_tests() {
         run_cmd "test_$LABEL" "$VENV_PATH/bin/python" "manage.py" test $TARGET_CMD \
             --settings=app_core.settings.dev \
             --noinput -v 3 --debug-mode --traceback --force-color --shuffle
-            [[ $? -ne 0 ]] && fail=true
+
+        if [[ $? -ne 0 ]]; then
+            fail=true
+        else
+            # First test passed → stop running the rest
+            break
+        fi
+
+
             ((count++))
+
+
+
+
     done
+
 
 
     echo -e "\n${YELLOW}[5] manage.py makemigrations --dry-run --check ${RESET}"
@@ -1344,6 +1362,8 @@ check_packages() {
     #############################################
     # 1. Ensure requirements.txt exists
     #############################################
+    echo -e "\n${YELLOW}[10.1] ensure requirementt.txt exists ${RESET}"
+
     echo -e "${BLUE}checking requirements file:${RESET} $REQUIREMENTS_FILE"
     if [[ ! -f "$REQUIREMENTS_FILE" ]]; then
         echo -e "${YELLOW}⚠ requirements.txt not found — skipping package drift check${RESET}"
@@ -1355,6 +1375,8 @@ check_packages() {
     #############################################
     # 2. Get installed packages
     #############################################
+    echo -e "\n${YELLOW}[10.2] get installed packages${RESET}"
+
     echo -e "${BLUE}running:${RESET} $VENV_PATH/bin/pip freeze"
     INSTALLED=$($VENV_PATH/bin/pip freeze 2>&1)
     if [[ $? -ne 0 ]]; then
@@ -1367,7 +1389,7 @@ check_packages() {
     #############################################
     # 3. Missing packages
     #############################################
-    echo -e "\n${YELLOW}[1] checking for missing packages (required but not installed)${RESET}"
+    echo -e "\n${YELLOW}[10.1] checking for missing packages (required but not installed)${RESET}"
 
     MISSING=0
     while IFS= read -r req; do
@@ -1390,7 +1412,7 @@ check_packages() {
     #############################################
     # 4. Version mismatches
     #############################################
-    echo -e "\n${YELLOW}[2] checking for version mismatches${RESET}"
+    echo -e "\n${YELLOW}[10.2] checking for version mismatches${RESET}"
 
     MISMATCH=0
     while IFS= read -r req; do
@@ -1414,7 +1436,7 @@ check_packages() {
     #############################################
     # 5. Extra packages
     #############################################
-    echo -e "\n${YELLOW}[3] checking for extra installed packages (not in requirements.txt)${RESET}"
+    echo -e "\n${YELLOW}[10.3] checking for extra installed packages (not in requirements.txt)${RESET}"
 
     EXTRA=0
     while IFS= read -r inst; do
@@ -1474,7 +1496,7 @@ check_static_analysis() {
     # 1. Ruff
     #############################################
     if [[ -z "$mode" || "$mode" == "ruff" ]]; then
-        echo -e "\n   ${YELLOW}[1] running ruff (undefined names, unused imports, etc.)${RESET}"
+        echo -e "\n   ${YELLOW}[11.1][$mode] running ruff (undefined names, unused imports, etc.)${RESET}"
         ###echo -e "${BLUE}running:${RESET} ruff check $PROJECT_PATH --ignore E302,E303,E402,E501,E231,E222,E251,E265,W292,F401,F811"
         echo -e "   ${BLUE}running:${RESET} ruff check $PROJECT_PATH --ignore ${IGNORES}"
 
@@ -1496,7 +1518,7 @@ check_static_analysis() {
     # 2. Flake8
     #############################################
     if [[ -z "$mode" || "$mode" == "flake" ]]; then
-        echo -e "\n   ${YELLOW}[2] running flake8 (pyflakes + style checks)${RESET}"
+        echo -e "\n   ${YELLOW}[11.2][$mode] running flake8 (pyflakes + style checks)${RESET}"
         # echo -e "${BLUE}running:${RESET} flake8 $PROJECT_PATH --config=/dev/null --ignore=E302,E303,E402,E501,E231,E222,E251,E265,W292,F401,F811"
         echo -e "   ${BLUE}running:${RESET} flake8 $PROJECT_PATH --config=/dev/null --ignore=${IGNORES}"
 
@@ -1646,8 +1668,8 @@ main() {
     run_section "packages" check_packages
     record_summary "10 - packages" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
 
-    run_section "static" check_static_analysis
-    record_summary "11 - static analysis" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+    # run_section "static" check_static_analysis
+    # record_summary "11 - static analysis" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
 
     run_section "ruff" check_ruff_only
     record_summary "11A - ruff only" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)

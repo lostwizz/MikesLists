@@ -16,9 +16,9 @@ app_core.views.health
 
 
 """
-__version__ = "0.0.0.000025-dev"
+__version__ = "0.0.0.000026-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-02 14:55:32"
+__updated__ = "2026-02-03 20:39:12"
 ###############################################################################
 
 import time
@@ -60,7 +60,6 @@ def health(request):
     if any(c.status in ("fail", "hot", "power_issue") for c in checks.values()):
         overall_status = "issues_detected"
 
-
     # logger.traces((f"{overall_status=}"))
 
     # Calculate Latency
@@ -77,7 +76,7 @@ def health(request):
             "environment": env_name,
             "host": request.META.get("HTTP_HOST", "unknown"),
             # "details": {name: asdict(result) for name, result in checks.items()},
-            "details":  {k: v.to_dict() for k, v in checks.items()},
+            "details": {k: v.to_dict() for k, v in checks.items()},
         },
         status=response_status,
     )
