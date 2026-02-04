@@ -9,9 +9,9 @@ health_service
 
 
 """
-__version__ = "0.0.1.000013-dev"
+__version__ = "0.0.1.000014-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-03 21:47:51"
+__updated__ = "2026-02-03 21:51:58"
 ###############################################################################
 
 
@@ -509,6 +509,15 @@ def run_sd_latency() -> dict[str, CheckResult]:
 # -----------------------------------------------------------------
 def run_ping_test() -> dict[str, CheckResult]:
     try:
+        if settings.ENV_NAME !="dev":
+            return {
+                "network_check": CheckResult(
+                    name="network check",
+                    status="skip",
+                    message="",
+                    raw_value="",
+            )
+}
         subprocess.check_call(
             ["ping", "-c", "1", "-W", "1", "8.8.8.8"], stdout=subprocess.DEVNULL
         )
@@ -610,8 +619,8 @@ def health_service():
 
     if settings.ENV_NAME !="dev":
         for result in checks.values():
-            result.raw_value = ""
-            result.message = ""
+            result.raw_value = None
+            result.message = None
 
     checksNotSkipped = {name: result for name, result in checks.items()
           if result.status != "skip"}
