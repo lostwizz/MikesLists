@@ -113,7 +113,7 @@ INSTALLED_APPS = [
     'app_accounts.apps.AppAccountsConfig',
     "app_ToDo",
     "widget_tweaks",
-    "django_extensions",
+
     # "guardian",
 ]
 
