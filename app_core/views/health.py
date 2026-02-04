@@ -16,9 +16,9 @@ app_core.views.health
 
 
 """
-__version__ = "0.0.0.000026-dev"
+__version__ = "0.0.0.000028-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-03 20:39:12"
+__updated__ = "2026-02-03 21:43:51"
 ###############################################################################
 
 import time
@@ -39,6 +39,8 @@ def health(request):
     start_time = time.perf_counter()
 
     checks, env_name = health_service()
+
+
 
     # # Testing block to check for JSON serialization errors
     # for name, result in checks.items():

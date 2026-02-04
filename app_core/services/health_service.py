@@ -9,9 +9,9 @@ health_service
 
 
 """
-__version__ = "0.0.1.000010-dev"
+__version__ = "0.0.1.000013-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-03 21:34:04"
+__updated__ = "2026-02-03 21:47:51"
 ###############################################################################
 
 
@@ -608,4 +608,14 @@ def health_service():
 
     # logger.info( f" about to exit health_services.py {checks=},   {env_name=}")
 
-    return checks, env_name
+    if settings.ENV_NAME !="dev":
+        for result in checks.values():
+            result.raw_value = ""
+            result.message = ""
+
+    checksNotSkipped = {name: result for name, result in checks.items()
+          if result.status != "skip"}
+
+
+
+    return checksNotSkipped, env_name
