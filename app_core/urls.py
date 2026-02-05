@@ -14,10 +14,27 @@ Adding decorators to the path function:
                     name='settings'
                 ),
 
+
+# TODO:
+# COMMENT:
+# NOTE:
+# USEFULL:
+# LEARN:
+# RECHECK
+# INCOMPLETE
+# SEE NOTES
+# POST
+# HACK
+# FIXME
+# BUG
+# [ ] something to do
+# [x]  i did sometrhing
+
+
 """
-__version__ = "0.0.0.000016-dev"
+__version__ = "0.0.0.000018-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-03 19:50:13"
+__updated__ = "2026-02-05 12:14:19"
 ###############################################################################
 
 """
@@ -56,6 +73,8 @@ from app_core.views.home import (
     catchall_redirect,
 )
 
+
+# NOTE  - Becarfull of the traling slash - it is important
 
 urlpatterns = [
     # Admin

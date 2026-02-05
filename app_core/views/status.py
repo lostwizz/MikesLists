@@ -9,9 +9,9 @@ app_core.views.status
 
 
 """
-__version__ = "0.0.0.000005-dev"
+__version__ = "0.0.0.000009-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-28 20:44:44"
+__updated__ = "2026-02-05 12:23:17"
 ###############################################################################
 
 
@@ -30,12 +30,19 @@ from django.http import HttpResponseForbidden
 
 from app_accounts.utils.roles import get_user_role
 
+from app_core.logging.logging import logger
 
-ALLOWED_IPS = ["10.0.0.0/24", "127.0.0.1"]
+
+
+# ALLOWED_IPS = ["10.0.0.0/24", "127.0.0.1"]
 
 
 def ip_allowed(request):
     ip = request.META.get("REMOTE_ADDR")
+    logger.traced(f'{request.META.get("REMOTE_ADDR")=}')
+    logger.tracer(f'{request.META=}')
+    logger.tracew(f'{ip.startswith("10.0.0.")=}')
+    logger.tracex(f'{ip == "127.0.0.1"=}')
     return ip.startswith("10.0.0.") or ip == "127.0.0.1"
 
 
