@@ -8,9 +8,9 @@ app_core.settings.dev
 
 
 """
-__version__ = "0.0.0.000015-dev"
+__version__ = "0.0.0.000017-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-05 12:49:22"
+__updated__ = "2026-02-05 13:19:31"
 ###############################################################################
 
 # WSGI_REQUEST_HANDLER = "app_core.logging.request_handler.RequestHandlerWithIPAndUser"
@@ -80,10 +80,13 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 
-LOGGING["handlers"]["console"]["level"] = "DEBUG"
+# LOGGING["handlers"]["console"]["level"] = "DEBUG"
+LOGGING["handlers"]["console"]["level"] = "EVERYTHING"
 LOGGING["handlers"]["console"]["filters"] = []
-LOGGING["loggers"]["django.db.backends"]["level"] = "DEBUG"
-LOGGING["root"]["level"] = "DEBUG"
+# LOGGING["loggers"]["django.db.backends"]["level"] = "DEBUG"
+LOGGING["loggers"]["django.db.backends"]["level"] = "EVERYTHING"
+# LOGGING["root"]["level"] = "DEBUG"
+LOGGING["root"]["level"] = "EVERYTHING"
 
 LOGGING["handlers"]["app_file"]["filename"] = "/srv/django/logs_dev/app.log"
 LOGGING["handlers"]["sql_file"]["filename"] = "/srv/django/logs_dev/sql.log"
