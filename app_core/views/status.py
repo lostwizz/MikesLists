@@ -9,9 +9,9 @@ app_core.views.status
 
 
 """
-__version__ = "0.0.0.000019-dev"
+__version__ = "0.0.0.000020-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-05 15:01:50"
+__updated__ = "2026-02-05 15:07:07"
 ###############################################################################
 
 
@@ -40,12 +40,14 @@ from app_core.logging.logging import logger
 def ip_allowed(request):
     # Try to get the forwarded IP; if not found, fall back to REMOTE_ADDR or an empty string
     forwarded = request.META.get("HTTP_X_FORWARDED_FOR", "")
+    logger.tracei(f'{forwarded=}')
     ip = forwarded.split(",")[0].strip() if forwarded else request.META.get("REMOTE_ADDR", "")
 
     # Now 'ip' is guaranteed to be a string (even if empty)
     logger.tracex(f'{ip=}')
     logger.tracew(f'{ip.startswith("10.0.0.")=}')
     logger.tracex(f'{ip == "127.0.0.1"=}')
+    logger.tracex(f'{ip=}')
 
     return ip.startswith("10.0.0.") or ip == "127.0.0.1"
 
