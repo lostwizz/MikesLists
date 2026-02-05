@@ -9,9 +9,9 @@ health_service
 
 
 """
-__version__ = "0.0.1.000014-dev"
+__version__ = "0.0.1.000015-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-03 21:51:58"
+__updated__ = "2026-02-05 14:16:10"
 ###############################################################################
 
 
@@ -243,10 +243,10 @@ def parse_arm_mem(output) -> tuple[str, str, str]:
 
 
 # -----------------------------------------------------------------
-def parse_reloc_mem(output) -> tuple[str, str, str]:
-    reloc = int(re.findall(r"[-+]?\d*\.\d+|\d+", output)[0])
-    status = "ok" if reloc in (4, 8) else "fail"
-    return status, str(reloc), output
+# def parse_reloc_mem(output) -> tuple[str, str, str]:
+#     reloc = int(re.findall(r"[-+]?\d*\.\d+|\d+", output)[0])
+#     status = "ok" if reloc in (4, 8) else "fail"
+#     return status, str(reloc), output
 
 
 # -----------------------------------------------------------------
@@ -561,10 +561,10 @@ CHECKS = {
         "cmd": ["vcgencmd", "get_mem arm"],
         "parser": parse_arm_mem,
     },
-    "reloc_mem": {
-        "cmd": ["vcgencmd", "get_mem reloc"],
-        "parser": parse_reloc_mem,
-    },
+    # "reloc_mem": {
+    #     "cmd": ["vcgencmd", "get_mem reloc"],
+    #     "parser": parse_reloc_mem,
+    # },
     "active_threads": {
         "cmd": ["threading", "active_count"],
         "parser": parse_threads,

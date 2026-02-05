@@ -16,12 +16,16 @@ To dump all the defined (assuming the base set never change):
 logger.dump_all_loggers()
 
 """
-__version__ = "0.0.0.000025-dev"
+__version__ = "0.0.0.000036-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-02 22:24:17"
+__updated__ = "2026-02-05 14:52:15"
 ###############################################################################
 import logging
 
+from app_core.logging.constants import CUSTOM_LOG_LEVELS
+
+# DEBUG: Print this to your console to see if it's empty
+print(f"DEBUG: CUSTOM_LOG_LEVELS contains {len(CUSTOM_LOG_LEVELS)} levels")
 
 # =================================================================
 # =================================================================
@@ -88,26 +92,25 @@ class LoggingProxy:
             self.log(num, f"Sample {name} output  - " + data)
 
 
-# -----------------------------------------------------------------
-# def add_custom_logging_levels(levels_dict):
-#     for name, (num, color, prefix) in levels_dict.items():
-#         logging.addLevelName(num, name)
 
-#         # We attach the prefix to the method so it's accessible if needed
-#         def log_method(self, message, *args, level_num=num, **kwargs):
-#             if self.isEnabledFor(level_num):
-#                 self._log(level_num, message, args, **kwargs)
-
-#         setattr(logging.Logger, name.lower(), log_method)
 def add_custom_logging_levels(levels_dict):
+    # If the dictionary is empty, the import didn't trigger the add() calls
+    if not levels_dict:
+        print("CRITICAL: CUSTOM_LOG_LEVELS is empty. Forcing registration...")
+        import app_core.logging.constants as const
+        # This forces the module-level code in constants.py to run
+        levels_dict = const.CUSTOM_LOG_LEVELS
+
     for name, (num, color, prefix) in levels_dict.items():
         logging.addLevelName(num, name)
+        def make_method(level_num):
+            def log_method(self, message, *args, **kwargs):
+                if self.isEnabledFor(level_num):
+                    self._log(level_num, message, args, stacklevel=2, **kwargs)
+            return log_method
+        setattr(logging.Logger, name.lower(), make_method(num))
 
-        def log_method(self, message, *args, level_num=num, **kwargs):
-            if self.isEnabledFor(level_num):
-                self._log(level_num, message, args, stacklevel=2, **kwargs)
 
-        setattr(logging.Logger, name.lower(), log_method)
 
 def patch_builtin_levels():
     for method_name in ["debug", "info", "warning", "error", "critical"]:
@@ -120,15 +123,14 @@ def patch_builtin_levels():
 
 
 
-logger = LoggingProxy("app_core")
+# logger = LoggingProxy("app_core")
 
 
-patch_builtin_levels()
-
-from app_core.logging.constants import CUSTOM_LOG_LEVELS
 
 # Now call the function here, where it is defined
 add_custom_logging_levels(CUSTOM_LOG_LEVELS)
+
+patch_builtin_levels()
 
 # Instantiate the proxy
 logger = LoggingProxy("app_core")

@@ -9,9 +9,9 @@ app_core.views.status
 
 
 """
-__version__ = "0.0.0.000009-dev"
+__version__ = "0.0.0.000019-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-05 12:23:17"
+__updated__ = "2026-02-05 15:01:50"
 ###############################################################################
 
 
@@ -32,17 +32,21 @@ from app_accounts.utils.roles import get_user_role
 
 from app_core.logging.logging import logger
 
-
+# logger.dump_all_loggers()
 
 # ALLOWED_IPS = ["10.0.0.0/24", "127.0.0.1"]
 
 
 def ip_allowed(request):
-    ip = request.META.get("REMOTE_ADDR")
-    logger.traced(f'{request.META.get("REMOTE_ADDR")=}')
-    logger.tracer(f'{request.META=}')
+    # Try to get the forwarded IP; if not found, fall back to REMOTE_ADDR or an empty string
+    forwarded = request.META.get("HTTP_X_FORWARDED_FOR", "")
+    ip = forwarded.split(",")[0].strip() if forwarded else request.META.get("REMOTE_ADDR", "")
+
+    # Now 'ip' is guaranteed to be a string (even if empty)
+    logger.tracex(f'{ip=}')
     logger.tracew(f'{ip.startswith("10.0.0.")=}')
     logger.tracex(f'{ip == "127.0.0.1"=}')
+
     return ip.startswith("10.0.0.") or ip == "127.0.0.1"
 
 
@@ -204,3 +208,8 @@ def dashboard(request):
         template = "app_core/dashboard/readonly.html"
 
     return render(request, template)
+
+
+# import logging
+# # Explicitly register the level name BEFORE the LOGGING dict is defined
+# logging.addLevelName(-1000, "EVERYTHING")

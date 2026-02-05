@@ -8,9 +8,9 @@ app_core.settings.dev
 
 
 """
-__version__ = "0.0.0.000017-dev"
+__version__ = "0.0.0.000020-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-05 13:19:31"
+__updated__ = "2026-02-05 14:56:59"
 ###############################################################################
 
 # WSGI_REQUEST_HANDLER = "app_core.logging.request_handler.RequestHandlerWithIPAndUser"
@@ -79,14 +79,14 @@ CSRF_TRUSTED_ORIGINS = [
     "http://*.local",
 ]
 
+LOGGING["handlers"]["console"]["level"] = "DEBUG"
+LOGGING["handlers"]["app_file"]["level"] = "DEBUG"      # Fixes app.log
+LOGGING["handlers"]["sql_file"]["level"] = "DEBUG"      # Fixes sql.log
+LOGGING["handlers"]["request_file"]["level"] = "DEBUG"  # Fixes requests.log
 
-# LOGGING["handlers"]["console"]["level"] = "DEBUG"
-LOGGING["handlers"]["console"]["level"] = "EVERYTHING"
 LOGGING["handlers"]["console"]["filters"] = []
-# LOGGING["loggers"]["django.db.backends"]["level"] = "DEBUG"
-LOGGING["loggers"]["django.db.backends"]["level"] = "EVERYTHING"
-# LOGGING["root"]["level"] = "DEBUG"
-LOGGING["root"]["level"] = "EVERYTHING"
+LOGGING["loggers"]["django.db.backends"]["level"] = "DEBUG"
+LOGGING["root"]["level"] = "DEBUG"
 
 LOGGING["handlers"]["app_file"]["filename"] = "/srv/django/logs_dev/app.log"
 LOGGING["handlers"]["sql_file"]["filename"] = "/srv/django/logs_dev/sql.log"

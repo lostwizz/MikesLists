@@ -9,9 +9,9 @@ app_core.settings.core
 
 
 """
-__version__ = "0.0.0.000101-dev"
+__version__ = "0.0.0.000107-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-05 12:47:21"
+__updated__ = "2026-02-05 14:55:59"
 ###############################################################################
 
 
@@ -233,7 +233,6 @@ EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
 
 
 
-
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -311,7 +310,7 @@ LOGGING = {
             "class": "logging.handlers.RotatingFileHandler",
             # "filename": "/srv/django/logs/sql.log",
             "maxBytes": 10 * 1024 * 1024,
-            "backupCount": 3,
+            "backupCount": 9,
             "formatter": "pretty_sql",
             "level": "DEBUG",
         },
@@ -355,7 +354,7 @@ LOGGING = {
         },
         "django.server": {
             "handlers": ["request_file"],
-            "level": "INFO",
+            "level": "DEBUG",
             "propagate": False,
         },
     },
