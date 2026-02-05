@@ -8,9 +8,9 @@ app_core.settings.dev
 
 
 """
-__version__ = "0.0.0.000020-dev"
+__version__ = "0.0.0.000023-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-05 14:56:59"
+__updated__ = "2026-02-05 15:17:23"
 ###############################################################################
 
 # WSGI_REQUEST_HANDLER = "app_core.logging.request_handler.RequestHandlerWithIPAndUser"
@@ -88,6 +88,6 @@ LOGGING["handlers"]["console"]["filters"] = []
 LOGGING["loggers"]["django.db.backends"]["level"] = "DEBUG"
 LOGGING["root"]["level"] = "DEBUG"
 
-LOGGING["handlers"]["app_file"]["filename"] = "/srv/django/logs_dev/app.log"
-LOGGING["handlers"]["sql_file"]["filename"] = "/srv/django/logs_dev/sql.log"
-LOGGING["handlers"]["request_file"]["filename"] = "/srv/django/logs_dev/requests.log"
+LOGGING["handlers"]["app_file"]["filename"] = "/srv/django/logs/app_dev.log"
+LOGGING["handlers"]["sql_file"]["filename"] = "/srv/django/logs/sql_dev.log"
+LOGGING["handlers"]["request_file"]["filename"] = "/srv/django/logs/requests_dev.log"

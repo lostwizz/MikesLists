@@ -9,9 +9,9 @@ app_core.views.status
 
 
 """
-__version__ = "0.0.0.000020-dev"
+__version__ = "0.0.0.000021-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-05 15:07:07"
+__updated__ = "2026-02-05 15:11:12"
 ###############################################################################
 
 
@@ -49,6 +49,7 @@ def ip_allowed(request):
     logger.tracex(f'{ip == "127.0.0.1"=}')
     logger.tracex(f'{ip=}')
 
+    logger.traceq(f'{(ip.startswith("10.0.0.") or ip == "127.0.0.1")}=')
     return ip.startswith("10.0.0.") or ip == "127.0.0.1"
 
 
