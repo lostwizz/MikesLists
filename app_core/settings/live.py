@@ -8,9 +8,9 @@ app_core.settings.live
 
 
 """
-__version__ = "0.0.0.000070-dev"
+__version__ = "0.0.0.000075-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-23 01:09:44"
+__updated__ = "2026-02-05 12:49:01"
 ###############################################################################
 
 
@@ -21,3 +21,13 @@ from .core import *  # noqa: F403
 # TEMPLATES[0]["OPTIONS"]["context_processors"].append(
 #     "MikesLists.context_processors.env_name"
 # )
+
+
+LOGGING["handlers"]["console"]["level"] = "WARNING"
+LOGGING["handlers"]["console"]["filters"] = ["exclude_debug_and_success"]
+LOGGING["loggers"]["django.db.backends"]["level"] = "WARNING"
+LOGGING["root"]["level"] = "INFO"
+# LOGGING["handlers"]["app_file"]["filename"] = "/srv/django/logs_live/app.log"
+LOGGING["handlers"]["app_file"]["filename"] = "/srv/django/logs_live/app.log"
+LOGGING["handlers"]["sql_file"]["filename"] = "/srv/django/logs_live/sql.log"
+LOGGING["handlers"]["request_file"]["filename"] = "/srv/django/logs_live/requests.log"

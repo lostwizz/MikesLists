@@ -8,9 +8,9 @@ app_core.settings.dev
 
 
 """
-__version__ = "0.0.0.000007-dev"
+__version__ = "0.0.0.000015-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-03 23:41:10"
+__updated__ = "2026-02-05 12:49:22"
 ###############################################################################
 
 # WSGI_REQUEST_HANDLER = "app_core.logging.request_handler.RequestHandlerWithIPAndUser"
@@ -48,133 +48,6 @@ MIDDLEWARE += [
 
 AUTH_PASSWORD_VALIDATORS = []  # This disables all checks (NOT for production!)
 
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    # -------------------------------------------------
-    # ROOT LOGGER (THIS MAKES logging.debug() WORK)
-    # -------------------------------------------------
-    "root": {
-        "handlers": ["console", "app_file"],
-        "level": "DEBUG",
-    },
-    # -------------------------
-    # FORMATTERS
-    # -------------------------
-    "formatters": {
-        "simple": {
-            "format": "[{levelname}] {message}",
-            "style": "{",
-        },
-        "color": {
-            "()": "app_core.logging.color_formatter.ColorFormatter",
-            # "format": "{levelname}|{module}|{filename}|%(lineno):4s|{message}",
-            'format': '%(levelname)7s|%(module)s|%(filename)s|%(lineno)4d|%(message)s',
-            # "style": "{",
-        },
-        "pretty_sql": {
-            "()": "app_core.logging.logging_formatters.PrettySQLFormatter",
-            "format": "\n[SQL]\n{sql}\n[Time] {duration} ms\n",  # Added a newline after [SQL]
-            "style": "{",
-        },
-        "request_line": {
-            # The custom handler injects: IP + username + message
-            "format": "[REQ] {message}",
-            "style": "{",
-        },
-    },
-    # -------------------------
-    # FILTERS
-    # -------------------------
-    "filters": {
-        "ignore_bad_request_version": {
-            "()": "django.utils.log.CallbackFilter",
-            "callback": lambda record: "Bad request version" not in record.getMessage(),
-        },
-        "ignore_https_warning": {
-            "()": "django.utils.log.CallbackFilter",
-            "callback": lambda record: "You're accessing the development server over HTTPS"
-            not in record.getMessage(),
-        },
-        "exclude_debug_and_success": {
-            "()": "app_core.logging.filters.ExcludeLevelFilter",
-            # "levels_to_exclude": ["DEBUG", "SUCCESS"], # Add any level name here
-        },
-    },
-    # -------------------------
-    # HANDLERS
-    # -------------------------
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-            "formatter": "color",
-            "filters": ["exclude_debug_and_success"],  # Apply the filter here
-            "level": "DEBUG",
-        },
-        "app_file": {
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": "/srv/django/logs/app.log",
-            "maxBytes": 5 * 1024 * 1024,  # 5 MB
-            "backupCount": 5,
-            "formatter": "color",  # "simple",
-            # No filter here means the file gets EVERYTHING
-            "level": "DEBUG",
-        },
-        # Optional SQL log file
-        "sql_file": {
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": "/srv/django/logs/sql.log",
-            "maxBytes": 10 * 1024 * 1024,
-            "backupCount": 3,
-            "formatter": "pretty_sql",
-            "level": "DEBUG",
-        },
-        "request_file": {
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": "/srv/django/logs/requests.log",
-            "maxBytes": 5 * 1024 * 1024,
-            "backupCount": 5,
-            "formatter": "request_line",
-            "filters": [
-                "ignore_bad_request_version",
-                "ignore_https_warning",
-            ],
-            "level": "DEBUG",
-        },
-    },
-    # -------------------------
-    # LOGGERS
-    # -------------------------
-    "loggers": {
-        "app_core": {
-            "handlers": ["app_file", "console"],
-            "level": "DEBUG",
-            "propagate": False,
-        },
-        "app_ToDo": {
-            "handlers": ["app_file"],
-            "level": "DEBUG",
-            "propagate": False,
-        },
-        "app_account": {
-            "handlers": ["app_file", "console"],
-            "level": "DEBUG",
-            "propagate": False,
-        },
-        "django.db.backends": {
-            # "handlers": ["console", "sql_file"],
-            "handlers": ["sql_file"],
-            "level": "DEBUG",
-            "propagate": False,
-        },
-        "django.server": {
-            "handlers": ["request_file"],
-            "level": "INFO",
-            "propagate": False,
-        },
-    },
-}
-
 
 # WSGI_REQUEST_HANDLER = "app_core.logging.request_handler.RequestHandlerWithIP"
 
@@ -205,3 +78,13 @@ CSRF_TRUSTED_ORIGINS = [
     f"http://{LOCAL_IP}",
     "http://*.local",
 ]
+
+
+LOGGING["handlers"]["console"]["level"] = "DEBUG"
+LOGGING["handlers"]["console"]["filters"] = []
+LOGGING["loggers"]["django.db.backends"]["level"] = "DEBUG"
+LOGGING["root"]["level"] = "DEBUG"
+
+LOGGING["handlers"]["app_file"]["filename"] = "/srv/django/logs_dev/app.log"
+LOGGING["handlers"]["sql_file"]["filename"] = "/srv/django/logs_dev/sql.log"
+LOGGING["handlers"]["request_file"]["filename"] = "/srv/django/logs_dev/requests.log"
