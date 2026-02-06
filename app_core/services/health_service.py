@@ -9,9 +9,9 @@ health_service
 
 
 """
-__version__ = "0.0.1.000061-dev"
+__version__ = "0.0.1.000065-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-06 00:55:29"
+__updated__ = "2026-02-06 01:06:32"
 ###############################################################################
 
 
@@ -45,6 +45,8 @@ from typing import Union
 
 
 # =================================================================
+# =================================================================
+# =================================================================
 @dataclass
 class CheckResult:
     name: str
@@ -52,18 +54,20 @@ class CheckResult:
     message: str = None
     raw_value: str = None
 
+    # -----------------------------------------------------------------
     def __post_init__(self):
         if isinstance(self.raw_value, str):
             self.raw_value = self.raw_value.replace("\n", "")
 
+    # -----------------------------------------------------------------
     def to_json(self) -> str:
         return json.dumps(asdict(self))
 
+    # -----------------------------------------------------------------
     def to_dict(self):
-        from django.conf import settings
         data = {"name": self.name, "status": self.status}
 
-        if settings.ENV_NAME not in ["live", "prod"]:
+        if is_dev():
             data["message"] = self.message
             data["raw_value"] = self.raw_value
 
