@@ -9,9 +9,9 @@ app_core.logging.constants
 
 
 """
-__version__ = "0.0.0.000041-dev"
+__version__ = "0.0.0.000043-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-05 15:01:23"
+__updated__ = "2026-02-05 22:32:26"
 ###############################################################################
 
 
@@ -19,6 +19,7 @@ __updated__ = "2026-02-05 15:01:23"
 # =================================================================
 
 import logging
+
 
 # -----------------------------------------------------------------
 def add(name, num, color, char=""):
@@ -29,7 +30,7 @@ def add(name, num, color, char=""):
 # Format: "NAME": (LevelNum, ColorCode, PrefixChar)
 CUSTOM_LOG_LEVELS = {}
 
-add( "SUCCESS", 25, "\x1b[1;32m", "✅")
+add("SUCCESS", 25, "\x1b[1;32m", "✅")
 add("HARDWARE", 35, "\x1b[1;35m", "⚙️")
 
 add("SMTP", 998, "\x1b[00;34;41m", "📤")

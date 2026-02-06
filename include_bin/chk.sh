@@ -1,7 +1,7 @@
 #!/bin/bash
 # ==========================================
 # Django Health Check - Unified Edition
-# __version__="0.2.0.000007-dev"
+# __version__="0.2.0.000011-dev"
 # ==========================================
 
 ENVS=("dev" "test" "live")
@@ -246,41 +246,42 @@ done
 echo -e "\n${MAGENTA}[4.5] Application Endpoint Health Check${RESET}"
 
 echo "Checking Application Endpoints..."
-for ENV in "${ENVS[@]}"; do
-    echo -e "  ${ENV}:"
-    PORT=${PORTS[$ENV]}
-    BASE_URL="http://localhost:${PORT}"
+# for ENV in "${ENVS[@]}"; do   ---- only dev has the django extensions
+ENV="dev"
+echo -e "  ${ENV}:"
+PORT=${PORTS[$ENV]}
+BASE_URL="http://localhost:${PORT}"
 
-    VENV="/srv/django/venv-${ENV}/bin/python"
-    MANAGE="/srv/django/MikesLists_${ENV}/manage.py"
+VENV="/srv/django/venv-${ENV}/bin/python"
+MANAGE="/srv/django/MikesLists_${ENV}/manage.py"
 
-    # The pipe below fetches URLs and feeds them line-by-line into the while loop
-    ${VENV} ${MANAGE} show_urls --format aligned 2>/dev/null | \
-        awk '{print $1}' | \
-        grep -v '^/admin' | \
-        grep -v '^/static' | \
-        grep -v '\.' | \
-        grep -v 'HOSTNAME' | \
-        grep -v 'LOCAL_IP' | \
-        sed 's/<[^>]*>/1/g' | \
-        sort -u | \
-    while read -r path; do
-        # Skip if path is empty
-        [[ -z "$path" ]] && continue
+# The pipe below fetches URLs and feeds them line-by-line into the while loop
+${VENV} ${MANAGE} show_urls --format aligned 2>/dev/null | \
+    awk '{print $1}' | \
+    grep -v '^/admin' | \
+    grep -v '^/static' | \
+    grep -v '\.' | \
+    grep -v 'HOSTNAME' | \
+    grep -v 'LOCAL_IP' | \
+    sed 's/<[^>]*>/1/g' | \
+    sort -u | \
+while read -r path; do
+    # Skip if path is empty
+    [[ -z "$path" ]] && continue
 
-        # Get only the HTTP status code
-        STATUS=$(curl -o /dev/null -s -L -w "%{http_code}" "${BASE_URL}${path}")
+    # Get only the HTTP status code
+    STATUS=$(curl -o /dev/null -s -L -w "%{http_code}" "${BASE_URL}${path}")
 
-        # Treat 200 and 302 (Redirect) as success
-        if [[ "$STATUS" -eq 200 ]]; then
-            echo -e "     ${GREEN}✔ OK ${RESET}- HTTP:$STATUS - $path"
-        else
-            echo -e "     ${RED}✖ ERROR ${RESET} HTTP:$STATUS - $path"
-            ((FAIL++))
-        fi
-    done
-    echo ""
+    # Treat 200 and 302 (Redirect) as success
+    if [[ "$STATUS" -eq 200 ]]; then
+        echo -e "     ${GREEN}✔ OK ${RESET}- HTTP:$STATUS - $path"
+    else
+        echo -e "     ${RED}✖ ERROR ${RESET} HTTP:$STATUS - $path"
+        ((FAIL++))
+    fi
 done
+echo ""
+# done
 
 
 
@@ -452,6 +453,7 @@ for ENV in "${ENVS[@]}"; do
     BRANCH=$(git -C "$ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "UNKNOWN")
     echo -e "    Branch: ${CYAN}${BRANCH}${RESET}"
     CHANGES=$(git -C "$ROOT" status --porcelain)
+    echo -e "         git -C "$ROOT" status --porcelain"
     if [[ -z "$CHANGES" ]]; then
         echo -e "    ${GREEN}✔ Working tree clean${RESET}"
     else

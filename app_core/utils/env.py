@@ -13,9 +13,9 @@ app_core.utils.env
 
 
 """
-__version__ = "0.0.0.000034-dev"
+__version__ = "0.0.0.000036-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-05 22:01:26"
+__updated__ = "2026-02-05 23:07:19"
 ###############################################################################
 
 
@@ -49,11 +49,21 @@ def get_env() -> str:
 #     """Returns the current environment as an Enum member."""
 #     return AppEnv.current()
 
+# def is_dev() -> bool:
+#     return get_env() == AppEnv.DEV
+
+# def is_live() -> bool:
+#     return get_env() == AppEnv.LIVE
+
+# def is_test() -> bool:
+#     return get_env() == AppEnv.TEST
+
 def is_dev() -> bool:
-    return get_env() == AppEnv.DEV
+    # Compare string to string (e.g., "dev" == "dev")
+    return get_env() == AppEnv.DEV.value
 
 def is_live() -> bool:
-    return get_env() == AppEnv.LIVE
+    return get_env() == AppEnv.LIVE.value
 
 def is_test() -> bool:
-    return get_env() == AppEnv.TEST
+    return get_env() == AppEnv.TEST.value

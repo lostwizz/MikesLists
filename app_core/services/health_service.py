@@ -9,9 +9,9 @@ health_service
 
 
 """
-__version__ = "0.0.1.000049-dev"
+__version__ = "0.0.1.000061-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-05 21:22:17"
+__updated__ = "2026-02-06 00:55:29"
 ###############################################################################
 
 
@@ -48,22 +48,29 @@ from typing import Union
 @dataclass
 class CheckResult:
     name: str
-    status: str  # "ok", "warn", "fail", 'unknown'
-    message: str
-    raw_value: str
+    status: str
+    message: str = None
+    raw_value: str = None
 
-    # -----------------------------------------------------------------
     def __post_init__(self):
         if isinstance(self.raw_value, str):
             self.raw_value = self.raw_value.replace("\n", "")
 
-    # -----------------------------------------------------------------
     def to_json(self) -> str:
         return json.dumps(asdict(self))
 
-    # -----------------------------------------------------------------
-    def to_dict(self) -> dict:
-        return asdict(self)
+    def to_dict(self):
+        from django.conf import settings
+        data = {"name": self.name, "status": self.status}
+
+        if settings.ENV_NAME not in ["live", "prod"]:
+            data["message"] = self.message
+            data["raw_value"] = self.raw_value
+
+        return data
+
+
+
 
 
 # -----------------------------------------------------------------
@@ -98,21 +105,6 @@ def _safe_decode(value: Union[str, bytes]) -> str:
 def run_cmd(cmd) -> str:
     raw = subprocess.check_output(cmd)
     return _safe_decode(raw)
-
-
-# # -----------------------------------------------------------------
-# def normalize_details(raw_details: dict[str, dict]) -> dict[str, CheckResult]:
-#     normalized: dict[str, CheckResult] = {}
-
-#     for key, data in raw_details.items():
-#         normalized[key] = CheckResult(
-#             name=data.get("name", key),
-#             status=data.get("status", "unknown"),
-#             message=data.get("message", ""),
-#             raw_value=data.get("raw_value", "").replace("\n", ""),
-#         )
-
-#     return normalized
 
 
 # -----------------------------------------------------------------
@@ -310,28 +302,6 @@ def parse_threads(output) -> tuple[str, str, str]:
 # -----------------------------------------------------------------
 # -----------------------------------------------------------------
 # -----------------------------------------------------------------
-# -----------------------------------------------------------------
-# -----------------------------------------------------------------
-def run_database_check() -> dict[str, CheckResult]:
-
-    try:
-        db_conn = connections["default"]
-        # Check if connection is actually alive
-        with db_conn.cursor() as cursor:
-            cursor.execute("SELECT 1")
-            result = cursor.fetchone()[0]
-
-        return {
-            "database": CheckResult(
-                name="database", status="ok", message=" select 1", raw_value=str(result)
-            )
-        }
-    except Exception as e:
-        return {
-            "database": CheckResult(
-                name="database", status="fail", message=str(e), raw_value=str(result)
-            )
-        }
 
 
 # -----------------------------------------------------------------
@@ -546,6 +516,33 @@ def run_ping_test() -> dict[str, CheckResult]:
 
 # -----------------------------------------------------------------
 # -----------------------------------------------------------------
+def run_database_check() -> dict[str, CheckResult]:
+
+    try:
+        db_conn = connections["default"]
+        # Check if connection is actually alive
+        with db_conn.cursor() as cursor:
+            cursor.execute("SELECT 1")
+            result = cursor.fetchone()[0]
+
+        return {
+            "database": CheckResult(
+                name="database", status="ok", message=" select 1", raw_value=str(result)
+            )
+        }
+    except Exception as e:
+        error_msg = str(e)
+
+        logger.info(f"{error_msg=}")
+        return {
+            "database": CheckResult(
+                name="database", status="fail", message=error_msg, raw_value=""
+            )
+        }
+
+
+# -----------------------------------------------------------------
+# -----------------------------------------------------------------
 # -----------------------------------------------------------------
 CHECKS = {
     "throttling": {
@@ -613,7 +610,6 @@ def health_service():
         # logger.mark("")
 
     # Add non-command checks (database, RAM, CPU, zombies, etc.)
-    checks.update(run_database_check())
     checks.update(run_disk_check())
     checks.update(run_ram_check())
     checks.update(run_cpu_check())
@@ -621,10 +617,11 @@ def health_service():
     checks.update(run_zombie_check())
     checks.update(run_sd_latency())
     checks.update(run_ping_test())
+    checks.update(run_database_check())
 
     logger.info(f" about to exit health_services.py {checks=}")
 
-    if is_dev():
+    if not is_dev():
         for result in checks.values():
             result.raw_value = None
             result.message = None

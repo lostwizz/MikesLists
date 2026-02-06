@@ -16,9 +16,9 @@ app_core.views.health
 
 
 """
-__version__ = "0.0.0.000048-dev"
+__version__ = "0.0.0.000056-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-05 21:58:14"
+__updated__ = "2026-02-05 22:38:55"
 ###############################################################################
 
 import time
@@ -34,22 +34,22 @@ from app_core.logging.logging import logger
 
 from app_core.utils.env import is_dev, get_env
 
+
 # -----------------------------------------------------------------
 def health(request):
 
     # Start the clock
     start_time = time.perf_counter()
 
-    checks= health_service()
+    checks = health_service()
     details = {
-                k: {
-                    key: value
-                    for key, value in v.to_dict().items()
-                    if is_dev() or key not in ["raw_value", "message"]
-                }
-                for k, v in checks.items()
-            }
-
+        k: {
+            key: value
+            for key, value in v.to_dict().items()
+            if is_dev() or key not in ["raw_value", "message"]
+        }
+        for k, v in checks.items()
+    }
 
     # # Testing block to check for JSON serialization errors
     # for name, result in checks.items():
@@ -82,6 +82,8 @@ def health(request):
         hostinfo = request.META.get("HTTP_HOST", "unknown")
 
     response_status = 200 if is_healthy else 503
+
+
     # logger.tracea(f"{response_status=}")
     # logger.tracez( request.META)
     return JsonResponse(
@@ -91,6 +93,6 @@ def health(request):
             "environment": get_env(),
             "host": hostinfo,
             "details": details,
-        # status=response_status,
-        }
+        },
+        status = response_status,
     )
