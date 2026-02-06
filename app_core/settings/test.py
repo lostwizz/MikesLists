@@ -8,9 +8,9 @@ app_core.settings.test
 
 
 """
-__version__ = "0.0.0.000076-dev"
+__version__ = "0.0.0.000077-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-05 15:35:13"
+__updated__ = "2026-02-05 22:05:05"
 ###############################################################################
 
 from .core import *  # noqa: F403
@@ -33,7 +33,7 @@ LOGGING["handlers"]["console"]["filters"] = []
 LOGGING["handlers"]["app_file"]["level"] = "CRITICAL"
 # LOGGING["handlers"]["app_file"]["level"] = "DEBUG"
 
-LOGGING["handlers"]["sql_file"]["level"] = "CRITICAVL"
+LOGGING["handlers"]["sql_file"]["level"] = "CRITICAL"
 # LOGGING["handlers"]["sql_file"]["level"] = "DEBUG"
 
 LOGGING["handlers"]["request_file"]["level"] = "CRITICAL"
