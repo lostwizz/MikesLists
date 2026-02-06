@@ -2,10 +2,10 @@
 # ==========================================
 # version_watcher.sh
 #
-# __version__ = "0.1.0.000013-dev"
+# __version__ = "0.1.0.000014-dev"
 #
 # __author__ = "Mike Merrett"
-# __updated__ = "2026-02-05 15:18:27"
+# __updated__ = "2026-02-05 22:02:23"
 # __created__ = "2026-01-02 19:49:31"
 # __description__ = "Auto version bump watcher"
 # ==========================================
@@ -22,6 +22,7 @@ set -euo pipefail
 # Check status: sudo systemctl status watcher.service
 # View logs: If it’s not working, check the output with journalctl -u watcher.service -f
 #    to see the complete log use   --- journalctl -u watcher.service
+# sudo journalctl --unit=gunicorn-MikesLists-test.service --vacuum-time=1s
 
 # Stop it: sudo systemctl stop watcher.service
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 # ==========================================
 # Django Health Check - Unified Edition
-# __version__="0.2.0.000006-dev"
+# __version__="0.2.0.000007-dev"
 # ==========================================
 
 ENVS=("dev" "test" "live")
@@ -205,7 +205,7 @@ for ENV in "${ENVS[@]}"; do
         echo -e "  HTTP Code: $HTTP_CODE"
         echo -e "  Body Length: ${#HTTP_BODY}"
         # echo -e "  First 100 chars of Body: ${HTTP_BODY:0:100}"
-        echo -e "  full Body: ${HTTP_BODY}"
+        # echo -e "  full Body: ${HTTP_BODY}"
 
     # # DEBUG SECTION END
 

@@ -9,9 +9,9 @@ app_core.views.status
 
 
 """
-__version__ = "0.0.0.000021-dev"
+__version__ = "0.0.0.000026-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-05 15:11:12"
+__updated__ = "2026-02-05 21:42:34"
 ###############################################################################
 
 
@@ -20,8 +20,7 @@ import subprocess
 import sys
 from dataclasses import dataclass, asdict
 
-from django.conf import settings
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import user_passes_test
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 # from accounts.utils.roles import get_user_role
@@ -29,6 +28,7 @@ from django.shortcuts import render
 from django.http import HttpResponseForbidden
 
 from app_accounts.utils.roles import get_user_role
+from app_core.utils.env import is_dev, get_env
 
 from app_core.logging.logging import logger
 
@@ -49,7 +49,7 @@ def ip_allowed(request):
     logger.tracex(f'{ip == "127.0.0.1"=}')
     logger.tracex(f'{ip=}')
 
-    logger.traceq(f'{(ip.startswith("10.0.0.") or ip == "127.0.0.1")}=')
+    logger.traceq(f'returning: {(ip.startswith("10.0.0.") or ip == "127.0.0.1")}=')
     return ip.startswith("10.0.0.") or ip == "127.0.0.1"
 
 
@@ -78,8 +78,8 @@ def collect_checks() -> list[CheckResult]:
     checks: list[CheckResult] = []
 
     # Environment
-    env = getattr(settings, "ENV_NAME", "dev")
-    checks.append(CheckResult(name="Environment", status="ok", message=env))
+    # env = getattr(settings, "ENV_NAME", "dev")
+    checks.append(CheckResult(name="Environment", status="ok", message=get_env()))
 
     # Python/Django
     checks.append(
@@ -156,14 +156,14 @@ def collect_checks() -> list[CheckResult]:
     return checks
 
 
-@login_required
+########################@login_required
 @user_passes_test(is_staff)
 def status_view(request: HttpRequest) -> HttpResponse:
 
     if not ip_allowed(request):
         return HttpResponseForbidden("IP not allowed")
 
-    env = getattr(settings, "ENV_NAME", "dev").lower()
+    # env = getattr(settings, "ENV_NAME", "dev").lower()
     checks = collect_checks()
 
     # Handle JSON API
@@ -171,13 +171,13 @@ def status_view(request: HttpRequest) -> HttpResponse:
         request.headers.get("Accept") == "application/json" or request.GET.get("format") == "json"
     ):
         data = {
-            "env": env,
+            "env": get_env(),
             "checks": [asdict(c) for c in checks],
         }
         return JsonResponse(data)
 
     # Handle restart (DEV only, POST)
-    restart_allowed = env == "dev"
+    restart_allowed = is_dev()
     restart_status: str | None = None
 
     if request.method == "POST" and restart_allowed:
@@ -192,7 +192,7 @@ def status_view(request: HttpRequest) -> HttpResponse:
             restart_status = "Bounce script not found or not executable"
 
     context = {
-        "env": env,
+        "env": get_env(),
         "checks": checks,
         "restart_allowed": restart_allowed,
         "restart_status": restart_status,

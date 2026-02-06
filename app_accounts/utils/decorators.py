@@ -3,24 +3,30 @@
 ###############################################################################
 r"""
 decorators.py
-decorators
+app_accounts.utils.decorators
 /srv/django/MikesLists_dev/app_accounts/utils/decorators.py
+
 
 
 # Optional: Custom permission/group decorators
 
 
 """
-__version__ = "0.0.0.000020-dev"
+__version__ = "0.0.0.000023-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-03 23:34:54"
+__updated__ = "2026-02-05 21:32:54"
 ###############################################################################
 
 from django.shortcuts import redirect
 from django.core.exceptions import PermissionDenied
 from functools import wraps
 
+from app_core.utils.env import is_dev, get_env
+
+# -----------------------------------------------------------------
 def group_required(group_name):
+
+    # -----------------------------------------------------------------
     """
     Decorator for views that checks if a user is in a specific group.
     Usage: @group_required('Admins')
@@ -45,6 +51,7 @@ def group_required(group_name):
 from django.core.exceptions import PermissionDenied
 from functools import wraps
 
+# -----------------------------------------------------------------
 def user_owns_object(model_class, field_name='user'):
     """
     Checks if the logged-in user owns the specific object.

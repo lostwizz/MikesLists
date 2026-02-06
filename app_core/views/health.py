@@ -16,9 +16,9 @@ app_core.views.health
 
 
 """
-__version__ = "0.0.0.000029-dev"
+__version__ = "0.0.0.000048-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-03 21:57:46"
+__updated__ = "2026-02-05 21:58:14"
 ###############################################################################
 
 import time
@@ -32,14 +32,23 @@ from django.db import connections  # Add this line
 from app_core.services.health_service import health_service, CheckResult
 from app_core.logging.logging import logger
 
+from app_core.utils.env import is_dev, get_env
+
 # -----------------------------------------------------------------
 def health(request):
 
     # Start the clock
     start_time = time.perf_counter()
 
-    checks, env_name = health_service()
-
+    checks= health_service()
+    details = {
+                k: {
+                    key: value
+                    for key, value in v.to_dict().items()
+                    if is_dev() or key not in ["raw_value", "message"]
+                }
+                for k, v in checks.items()
+            }
 
 
     # # Testing block to check for JSON serialization errors
@@ -65,14 +74,12 @@ def health(request):
     # logger.traces((f"{overall_status=}"))
 
     # Calculate Latency
-    if settings.ENV_NAME != "dev":
+    if is_dev():
         duration_ms = 0
         hostinfo = None
-        ev_name = None
     else:
         duration_ms = (time.perf_counter() - start_time) * 1000
         hostinfo = request.META.get("HTTP_HOST", "unknown")
-        ev_name = settings.ENV_NAME
 
     response_status = 200 if is_healthy else 503
     # logger.tracea(f"{response_status=}")
@@ -81,10 +88,9 @@ def health(request):
         {
             "status": overall_status,
             "latency_ms": round(duration_ms, 2),
-            "environment": ev_name,
+            "environment": get_env(),
             "host": hostinfo,
-            # "details": {name: asdict(result) for name, result in checks.items()},
-            "details": {k: v.to_dict() for k, v in checks.items()},
-        },
-        status=response_status,
+            "details": details,
+        # status=response_status,
+        }
     )

@@ -9,71 +9,14 @@ app_core.logging.logging_formatters
 
 
 """
-__version__ = "0.0.0.000070-dev"
+__version__ = "0.0.0.000073-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-23 01:08:49"
+__updated__ = "2026-02-05 18:16:59"
 ###############################################################################
 
 import logging
 import sqlparse
 import re
-
-
-class ColorFormatter(logging.Formatter):
-    COLORS = {
-        "DEBUG": "\033[36m",
-        "INFO": "\033[32m",
-        "WARNING": "\033[33m",
-        "ERROR": "\033[31m",
-        "CRITICAL": "\033[41m",
-    }
-
-    RESET = "\033[0m"
-
-    def format(self, record):
-        color = self.COLORS.get(record.levelname, "")
-        message = super().format(record)
-        return f"{color}{message}{self.RESET}"
-
-
-
-
-# class PrettySQLFormatter(logging.Formatter):
-#     def format(self, record):
-#         raw_sql = getattr(record, "sql", record.getMessage())
-#         duration = getattr(record, "duration", "0.0")
-
-#         # 1. Standardize spacing
-#         clean_sql = " ".join(raw_sql.split())
-
-#         # 2. Add a newline before the first parenthesis to prevent horizontal drift
-#         # This makes 'CREATE TABLE name' its own line and '(' start at col 0
-#         clean_sql = clean_sql.replace(" (", "\n(", 1)
-
-#         # 3. Format with sqlparse
-#         formatted_sql = sqlparse.format(
-#             clean_sql,
-#             reindent=True,
-#             indent_width=4,
-#             keyword_case="upper",
-#         )
-
-#         # 4. Cleanup any lingering weirdness
-#         # Ensure no line has more than 4-8 spaces of indentation
-#         final_lines = []
-#         for line in formatted_sql.splitlines():
-#             stripped = line.lstrip()
-#             if stripped:
-#                 # If the line starts with a column definition or constraint, indent it
-#                 if stripped.startswith("`") or stripped.startswith("PRIMARY"):
-#                     final_lines.append("    " + stripped)
-#                 else:
-#                     final_lines.append(stripped)
-
-#         record.sql = "\n".join(final_lines)
-#         record.duration = duration
-
-#         return super().format(record)
 
 
 class PrettySQLFormatter(logging.Formatter):

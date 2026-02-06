@@ -8,15 +8,16 @@ app_core.home
 
 
 """
-__version__ = "0.0.0.000004-dev"
+__version__ = "0.0.0.000005-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-28 21:45:32"
+__updated__ = "2026-02-05 21:39:23"
 ###############################################################################
 
 from django.conf import settings
 from django.shortcuts import render, redirect
 
 from django.contrib.auth.decorators import login_required
+from app_core.utils.env import is_dev, get_env
 
 
 def redirect_root_to_dashboard(request):
@@ -38,5 +39,4 @@ def catchall_redirect(request, path=None):
 
 
 def home(request):
-    env_name = settings.ENV_NAME
-    return render(request, "app_core.home.html", {"env": env_name})
+    return render(request, "app_core.home.html", {"env": get_env()})

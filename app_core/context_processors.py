@@ -8,21 +8,20 @@ app_core.context_processors
 
 
 """
-__version__ = "0.0.0.000004-dev"
+__version__ = "0.0.0.000006-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-23 01:10:39"
+__updated__ = "2026-02-05 21:24:44"
 ###############################################################################
-
-
 
 # MikesLists/context_processors.py
 from django.conf import settings
 
+from app_core.utils.env import is_dev, get_env
 
 def export_env_vars(request):
-    X = getattr(settings, "ENV_NAME", "dev")
-    # print(f"@@@{ X=}@@@")
-    return {"env": X}
+    # X = getattr(settings, "ENV_NAME", "dev")
+    # # print(f"@@@{ X=}@@@")
+    return {"env": get_env()}
 
 
 def user_info(request):
@@ -37,11 +36,11 @@ def user_info(request):
         else:
             ip = request.META.get("REMOTE_ADDR", "")
 
-        env = getattr(settings, "ENV_NAME", "dev")
+        # env = getattr(settings, "ENV_NAME", "dev")
         return {
             "sidebar_username": username,
             "sidebar_ip": ip,
-            "sidebar_env": env,
+            "sidebar_env": get_env(),
             'user_profile': getattr(request.user, 'profile', None),
         }
     return {}

@@ -9,9 +9,9 @@ health_service
 
 
 """
-__version__ = "0.0.1.000015-dev"
+__version__ = "0.0.1.000049-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-05 14:16:10"
+__updated__ = "2026-02-05 21:22:17"
 ###############################################################################
 
 
@@ -20,21 +20,18 @@ import time
 import psutil
 import os
 import subprocess
-import threading
 import re
 import json
-import logging
 import importlib
 
 
-from app_core.logging.decorators import log_function_call
-from django.contrib.auth.decorators import login_required
 from django.db import connections
-from django.db.utils import OperationalError
 from django.conf import settings
 from dataclasses import dataclass, asdict
 
 # from app_core.logging.logging import logger
+
+from app_core.utils.env import is_dev, get_env
 
 from django.db import connections  # Add this line
 from app_core.logging.logging import logger
@@ -54,6 +51,11 @@ class CheckResult:
     status: str  # "ok", "warn", "fail", 'unknown'
     message: str
     raw_value: str
+
+    # -----------------------------------------------------------------
+    def __post_init__(self):
+        if isinstance(self.raw_value, str):
+            self.raw_value = self.raw_value.replace("\n", "")
 
     # -----------------------------------------------------------------
     def to_json(self) -> str:
@@ -98,19 +100,19 @@ def run_cmd(cmd) -> str:
     return _safe_decode(raw)
 
 
-# -----------------------------------------------------------------
-def normalize_details(raw_details: dict[str, dict]) -> dict[str, CheckResult]:
-    normalized: dict[str, CheckResult] = {}
+# # -----------------------------------------------------------------
+# def normalize_details(raw_details: dict[str, dict]) -> dict[str, CheckResult]:
+#     normalized: dict[str, CheckResult] = {}
 
-    for key, data in raw_details.items():
-        normalized[key] = CheckResult(
-            name=data.get("name", key),
-            status=data.get("status", "unknown"),
-            message=data.get("message", ""),
-            raw_value=data.get("raw_value", ""),
-        )
+#     for key, data in raw_details.items():
+#         normalized[key] = CheckResult(
+#             name=data.get("name", key),
+#             status=data.get("status", "unknown"),
+#             message=data.get("message", ""),
+#             raw_value=data.get("raw_value", "").replace("\n", ""),
+#         )
 
-    return normalized
+#     return normalized
 
 
 # -----------------------------------------------------------------
@@ -141,7 +143,7 @@ def run_health_psutil_check(name, spec) -> CheckResult:
 # -----------------------------------------------------------------
 def run_health_check(name, spec) -> CheckResult:
     # logger.traces(f"{name=} {spec=}" )
-    if settings.ENV_NAME in ("dev"):
+    if is_dev():
         if hasattr(settings, "IS_PI") and settings.IS_PI:
             try:
                 output = run_cmd(spec["cmd"])
@@ -151,13 +153,18 @@ def run_health_check(name, spec) -> CheckResult:
                 )
 
             except Exception as e:
-                return CheckResult(name=name, status="fail", message=str(e), raw_value="")
+                return CheckResult(
+                    name=name, status="fail", message=str(e), raw_value=""
+                )
         else:
             logger.info("this is not a PI (by setting IS_PI)")
-            return CheckResult(name=name, status="skip", message="not IS_PI", raw_value="")
+            return CheckResult(
+                name=name, status="skip", message="not IS_PI", raw_value=""
+            )
     else:
         logger.info("not the dev environment so skipping this vcgencmd")
         return CheckResult(name=name, status="skip", message="not in DEV", raw_value="")
+
 
 # -----------------------------------------------------------------
 def parse_throttling(output) -> tuple[str, str, str]:
@@ -509,7 +516,7 @@ def run_sd_latency() -> dict[str, CheckResult]:
 # -----------------------------------------------------------------
 def run_ping_test() -> dict[str, CheckResult]:
     try:
-        if settings.ENV_NAME != "dev":
+        if not is_dev():
             return {
                 "network_check": CheckResult(
                     name="network check",
@@ -590,7 +597,7 @@ def health_service():
     Detailed health check returning a status list for all core components.
     """
 
-    env_name = getattr(settings, "ENV_NAME", "unknown")
+    # env_name = getattr(settings, "ENV_NAME", "unknown")
 
     # checks: list[CheckResult] = []
     checks: dict[str, CheckResult] = {}
@@ -615,17 +622,14 @@ def health_service():
     checks.update(run_sd_latency())
     checks.update(run_ping_test())
 
-    # logger.info( f" about to exit health_services.py {checks=},   {env_name=}")
+    logger.info(f" about to exit health_services.py {checks=}")
 
-    if settings.ENV_NAME != "dev":
+    if is_dev():
         for result in checks.values():
             result.raw_value = None
             result.message = None
 
     checksNotSkipped = {
-        name: result
-        for name, result in checks.items()
-        if result.status != "skip"
+        name: result for name, result in checks.items() if result.status != "skip"
     }
-
-    return checksNotSkipped, env_name
+    return checksNotSkipped

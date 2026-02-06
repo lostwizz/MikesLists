@@ -32,9 +32,9 @@ Adding decorators to the path function:
 
 
 """
-__version__ = "0.0.0.000018-dev"
+__version__ = "0.0.0.000019-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-05 12:14:19"
+__updated__ = "2026-02-05 16:15:30"
 ###############################################################################
 
 """
@@ -98,7 +98,7 @@ urlpatterns = [
     path("todo/", include("app_ToDo.urls")),
 
     # System / Core
-    # path("status", status_view, name="status_dashboard"),
+    path("status", status_view, name="status_dashboard"),
     path("status/", status_view, name="status_dashboard"),
 
     # path("health", health, name="health_check"),

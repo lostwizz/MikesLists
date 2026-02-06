@@ -8,9 +8,9 @@ app_core.settings.test
 
 
 """
-__version__ = "0.0.0.000072-dev"
+__version__ = "0.0.0.000076-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-05 15:16:50"
+__updated__ = "2026-02-05 15:35:13"
 ###############################################################################
 
 from .core import *  # noqa: F403
@@ -26,14 +26,24 @@ MIDDLEWARE += [
 # )
 
 
+# LOGGING["handlers"]["console"]["level"] = "DEBUG"
 LOGGING["handlers"]["console"]["level"] = "DEBUG"
 LOGGING["handlers"]["console"]["filters"] = []
+
 LOGGING["handlers"]["app_file"]["level"] = "CRITICAL"
-LOGGING["handlers"]["sql_file"]["level"] = "CRITICAL"
+# LOGGING["handlers"]["app_file"]["level"] = "DEBUG"
+
+LOGGING["handlers"]["sql_file"]["level"] = "CRITICAVL"
+# LOGGING["handlers"]["sql_file"]["level"] = "DEBUG"
+
 LOGGING["handlers"]["request_file"]["level"] = "CRITICAL"
+# LOGGING["handlers"]["request_file"]["level"] = "DEBUG"
+
 LOGGING["loggers"]["django.db.backends"]["level"] = "WARNING"
+# LOGGING["loggers"]["django.db.backends"]["level"] = "DEBUG"
+
 LOGGING["root"]["level"] = "DEBUG"
 
-LOGGING["handlers"]["app_file"]["filename"] = "/srv/django/logs/app_test.log"
-LOGGING["handlers"]["sql_file"]["filename"] = "/srv/django/logs/sql_test.log"
+LOGGING["handlers"]["app_file"]["filename"] =     "/srv/django/logs/app_test.log"
+LOGGING["handlers"]["sql_file"]["filename"] =     "/srv/django/logs/sql_test.log"
 LOGGING["handlers"]["request_file"]["filename"] = "/srv/django/logs/requests_test.log"

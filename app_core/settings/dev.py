@@ -8,9 +8,9 @@ app_core.settings.dev
 
 
 """
-__version__ = "0.0.0.000023-dev"
+__version__ = "0.0.0.000024-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-05 15:17:23"
+__updated__ = "2026-02-05 15:33:47"
 ###############################################################################
 
 # WSGI_REQUEST_HANDLER = "app_core.logging.request_handler.RequestHandlerWithIPAndUser"

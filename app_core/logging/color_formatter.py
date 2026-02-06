@@ -10,9 +10,9 @@ app_core.logging.color_formatter
 
 
 """
-__version__ = "0.0.0.000012-dev"
+__version__ = "0.0.0.000014-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-01 00:30:05"
+__updated__ = "2026-02-05 17:09:29"
 ###############################################################################
 # app_core/logging/color_formatter.py
 import logging
