@@ -8,10 +8,11 @@ health_service
 
 
 
+
 """
-__version__ = "0.0.1.000065-dev"
+__version__ = "0.0.1.000071-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-06 01:06:32"
+__updated__ = "2026-02-07 23:00:56"
 ###############################################################################
 
 
@@ -29,13 +30,9 @@ from django.db import connections
 from django.conf import settings
 from dataclasses import dataclass, asdict
 
-# from app_core.logging.logging import logger
-
 from app_core.utils.env import is_dev, get_env
 
 from django.db import connections  # Add this line
-from app_core.logging.logging import logger
-
 from app_core.logging.logging import logger
 
 
@@ -153,12 +150,12 @@ def run_health_check(name, spec) -> CheckResult:
                     name=name, status="fail", message=str(e), raw_value=""
                 )
         else:
-            logger.info("this is not a PI (by setting IS_PI)")
+            # logger.info("this is not a PI (by setting IS_PI)")
             return CheckResult(
                 name=name, status="skip", message="not IS_PI", raw_value=""
             )
     else:
-        logger.info("not the dev environment so skipping this vcgencmd")
+        # logger.info("not the dev environment so skipping this vcgencmd")
         return CheckResult(name=name, status="skip", message="not in DEV", raw_value="")
 
 
@@ -287,7 +284,7 @@ def parse_cpu_load(output) -> tuple[str, str, str]:
         status = "ok" if cpu < 80.0 else "warn"
         return status, str(cpu) + "%", output
     except Exception:
-        logger.exception("why")
+        logger.exception("why parse_cpu_load exception")
 
 
 # -----------------------------------------------------------------
@@ -334,6 +331,7 @@ def run_disk_check() -> dict[str, CheckResult]:
         }
 
     except Exception as e:
+        logger.exception("in run_disk_check")
         return {
             "storage": CheckResult(
                 name="storage",
@@ -531,16 +529,14 @@ def run_database_check() -> dict[str, CheckResult]:
 
         return {
             "database": CheckResult(
-                name="database", status="ok", message=" select 1", raw_value=str(result)
+                name="database", status="ok", message=f"select 1 = {result}", raw_value=str(result)
             )
         }
     except Exception as e:
-        error_msg = str(e)
-
-        logger.info(f"{error_msg=}")
+        logger.error("Database check failed: %s", e)
         return {
             "database": CheckResult(
-                name="database", status="fail", message=error_msg, raw_value=""
+                name="database", status="fail", message=str(e), raw_value=""
             )
         }
 
@@ -623,7 +619,7 @@ def health_service():
     checks.update(run_ping_test())
     checks.update(run_database_check())
 
-    logger.info(f" about to exit health_services.py {checks=}")
+    # logger.info(f" about to exit health_services.py {checks=}")
 
     if not is_dev():
         for result in checks.values():

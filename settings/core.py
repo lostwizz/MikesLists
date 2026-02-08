@@ -9,9 +9,9 @@ app_core.settings.core
 
 
 """
-__version__ = "0.0.0.000107-dev"
+__version__ = "0.0.0.000121-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-05 14:55:59"
+__updated__ = "2026-02-08 01:00:51"
 ###############################################################################
 
 
@@ -50,7 +50,7 @@ ALLOWED_HOSTS = [
     "10.0.0.9",
     "pidj",
     "pidj.local",
-    ".local",          # wildcard for any *.local hostname
+    ".local",  # wildcard for any *.local hostname
 ]
 
 # CSRF_TRUSTED_ORIGINS = [
@@ -110,10 +110,9 @@ INSTALLED_APPS = [
     "reversion",
     "app_core",
     # "app_accounts",
-    'app_accounts.apps.AppAccountsConfig',
+    "app_accounts.apps.AppAccountsConfig",
     "app_ToDo",
     "widget_tweaks",
-
     # "guardian",
 ]
 
@@ -130,21 +129,20 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-
     "app_accounts.middleware.login_required_middleware.LoginRequiredMiddleware",
     "app_accounts.middleware.login_required_middleware.ActiveUserMiddleware",
-
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # "app_accounts.middleware.admin_logout.ForceAdminLogoutMiddleware"
 ]
 
 
-# #    "DIRS": [BASE_DIR / "templates"],
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],
+        "DIRS": [
+            BASE_DIR / "templates",
+        ],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -153,8 +151,8 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "app_core.context_processors.export_env_vars",
-                "django.template.context_processors.request",
                 "app_core.context_processors.user_info",
+                # "django.contrib.admin.context_processors.request",
             ],
         },
     },
@@ -232,7 +230,6 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
 
 
-
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -254,7 +251,7 @@ LOGGING = {
         "color": {
             "()": "app_core.logging.color_formatter.ColorFormatter",
             # "format": "{levelname}|{module}|{filename}|%(lineno):4s|{message}",
-            'format': '%(levelname)7s|%(module)s|%(filename)s|%(lineno)4d|%(message)s',
+            "format": "%(levelname)7s|%(module)s|%(filename)s|%(lineno)4d|%(message)s",
             # "style": "{",
         },
         "pretty_sql": {

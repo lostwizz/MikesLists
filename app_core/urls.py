@@ -32,9 +32,9 @@ Adding decorators to the path function:
 
 
 """
-__version__ = "0.0.0.000019-dev"
+__version__ = "0.0.0.000024-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-05 16:15:30"
+__updated__ = "2026-02-06 17:13:20"
 ###############################################################################
 
 """
@@ -106,6 +106,7 @@ urlpatterns = [
 
     # Site root → dashboard
     path("", redirect_root_to_dashboard, name="root_redirect"),
+
 
     # Global password reset URLs required by Django's built-in auth system
     path(

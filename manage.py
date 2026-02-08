@@ -7,9 +7,9 @@ manage.py
 
 
 """
-__version__ = "0.0.1.000002-dev"
+__version__ = "0.0.1.000005-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-31 23:42:20"
+__updated__ = "2026-02-07 20:49:35"
 ###############################################################################
 
 import os  # <--- THIS WAS MISSING
@@ -22,11 +22,11 @@ def main():
         # Look at the physical path of this file, not the current working directory
         file_path = os.path.abspath(__file__)
         if "MikesLists_live" in file_path:
-            os.environ["DJANGO_SETTINGS_MODULE"] = "app_core.settings.live"
+            os.environ["DJANGO_SETTINGS_MODULE"] = "settings.live"
         elif "MikesLists_test" in file_path:
-            os.environ["DJANGO_SETTINGS_MODULE"] = "app_core.settings.test"
+            os.environ["DJANGO_SETTINGS_MODULE"] = "settings.test"
         else:
-            os.environ["DJANGO_SETTINGS_MODULE"] = "app_core.settings.dev"
+            os.environ["DJANGO_SETTINGS_MODULE"] = "settings.dev"
 
     try:
         from django.core.management import execute_from_command_line

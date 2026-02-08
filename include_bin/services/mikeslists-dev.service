@@ -15,7 +15,7 @@ Environment="PYTHONPATH=/srv/django/MikesLists_dev"
 ##Environment="PATH=/srv/django/venv-dev/bin"
 Environment="PATH=/srv/django/venv-dev/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-Environment="DJANGO_SETTINGS_MODULE=app_core.settings.dev"
+Environment="DJANGO_SETTINGS_MODULE=settings.dev"
 Environment="PYTHONUNBUFFERED=1" 
 EnvironmentFile=/srv/django/MikesLists_dev/.env
 

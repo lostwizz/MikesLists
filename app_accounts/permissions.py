@@ -46,9 +46,9 @@ Use groups in your signals (you already do this
 
 
 """
-__version__ = "0.0.0.000014-dev"
+__version__ = "0.0.0.000015-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-27 11:01:39"
+__updated__ = "2026-02-07 22:30:47"
 ###############################################################################
 
 import logging
@@ -108,7 +108,7 @@ def ensure_groups_and_permissions():
 
         group.permissions.set(perms_to_assign)
 
-    logger.info("Permission assignment complete")
+    # logger.info("Permission assignment complete")
 
 
 

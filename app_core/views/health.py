@@ -16,9 +16,9 @@ app_core.views.health
 
 
 """
-__version__ = "0.0.0.000056-dev"
+__version__ = "0.0.0.000058-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-05 22:38:55"
+__updated__ = "2026-02-07 23:07:59"
 ###############################################################################
 
 import time
@@ -81,8 +81,7 @@ def health(request):
         duration_ms = (time.perf_counter() - start_time) * 1000
         hostinfo = request.META.get("HTTP_HOST", "unknown")
 
-    response_status = 200 if is_healthy else 503
-
+    response_status = 200  ############# if is_healthy else 503
 
     # logger.tracea(f"{response_status=}")
     # logger.tracez( request.META)
@@ -94,5 +93,5 @@ def health(request):
             "host": hostinfo,
             "details": details,
         },
-        status = response_status,
+        status=response_status,
     )

@@ -3,14 +3,15 @@
 ###############################################################################
 r"""
 dev.py
-app_core.settings.dev
-/srv/django/MikesLists_dev/app_core/settings/dev.py
+settings.dev
+/srv/django/MikesLists_dev/settings/dev.py
+
 
 
 """
-__version__ = "0.0.0.000024-dev"
+__version__ = "0.0.0.000026-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-05 15:33:47"
+__updated__ = "2026-02-07 20:23:46"
 ###############################################################################
 
 # WSGI_REQUEST_HANDLER = "app_core.logging.request_handler.RequestHandlerWithIPAndUser"

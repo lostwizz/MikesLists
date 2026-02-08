@@ -2,7 +2,7 @@
 # ==========================================
 # Django Deep Diagnostic Tool v2.1 (verbose)
 # ==========================================
-# __version__="2.2.2.000042"
+# __version__="2.2.2.000098"
 
 #############################################
 # COLORS (ANSI-safe)
@@ -37,6 +37,13 @@ DEBUG=false
 RUN_ALL=true
 declare -A RUN_SECTION
 
+# Per‑app minimum coverage thresholds
+declare -A COVERAGE_THRESHOLDS=(
+    ["app_core"]=85
+    ["app_accounts"]=80
+    ["app_ToDo"]=75
+)
+
 #############################################
 # HELP TEXT
 #############################################
@@ -69,6 +76,8 @@ show_help() {
     echo "  --nginx            Only run Nginx diagnostics"
     echo "  --git              Only run Git diagnostics"
     echo "  --env              Only validate environment variables"
+    echo "  --check_tests      Only run the manage.py test"
+    echo "  --check_tests67    Only run section 6.7 - pytest --cov(erage)"
     echo "  --permissions      Only check file permissions"
     echo "  --packages         Only check Python packages"
     echo "  --help             Show this help and exit"
@@ -89,7 +98,7 @@ for arg in "$@"; do
         --all)
             RUN_ALL=true
             ;;
-        --gunicorn|--django|--route_audits|--url_audit|--db|--nginx|--git|--env|--permissions|--packages|--lint|--static|--environment|--check_tests)
+        --gunicorn|--django|--route_audits|--url_audit|--db|--nginx|--git|--env|--permissions|--packages|--lint|--static|--environment|--check_tests|--check_tests67)
             RUN_ALL=false
             RUN_SECTION["$arg"]=true
             ;;
@@ -134,6 +143,28 @@ run_cmd() {
     OUTPUT=$("${cmd[@]}" 2>&1)
     # )
     local STATUS=$?
+
+
+    # Detect coverage commands
+    if printf '%s ' "${cmd[@]}" | grep -q -- '--cov'; then
+        echo -e "${YELLOW}--- Coverage Output ---${RESET}"
+        echo "$OUTPUT"
+        echo -e "${YELLOW}------------------------${RESET}"
+
+        # Determine which app this coverage run is for
+        for app in "${!COVERAGE_THRESHOLDS[@]}"; do
+            if printf '%s ' "${cmd[@]}" | grep -q "$app"; then
+                print_coverage_summary "$app" "$OUTPUT"
+            fi
+        done
+
+        if [[ "$COVERAGE_FAILED" == true ]]; then
+            echo -e "${RED}❌ Coverage thresholds not met${RESET}"
+            return 1
+        fi
+    fi
+
+
 
     if $DEBUG; then
         echo -e "${YELLOW}output:${RESET}"
@@ -561,7 +592,7 @@ route_audits() {
     done
 
     echo -e "\n${YELLOW}[7] checking export_env_vars in core.py ${RESET}"
-    if grep -q "export_env_vars" "/srv/django/MikesLists_dev/app_core/settings/core.py"; then
+    if grep -q "export_env_vars" "/srv/django/MikesLists_dev/settings/core.py"; then
 
         echo -e "   ${GREEN}✓ Environment Context Processor is active."
     else
@@ -657,7 +688,7 @@ if project_path not in sys.path:
 
 # 2. SET THE SETTINGS MODULE BEFORE IMPORTING DJANGO
 # Match the path used in your manual shell success
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'app_core.settings.core')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings.core')
 
 import django
 try:
@@ -990,7 +1021,7 @@ check_tests() {
         echo -e "\n${YELLOW}[$count] Testing: $LABEL ${RESET}"
 
         run_cmd "test_$LABEL" "$VENV_PATH/bin/python" "manage.py" test $TARGET_CMD \
-            --settings=app_core.settings.dev \
+            --settings=settings.dev \
             --noinput -v 3 --debug-mode --traceback --force-color --shuffle
 
         if [[ $? -ne 0 ]]; then
@@ -1001,13 +1032,9 @@ check_tests() {
         fi
 
 
-            ((count++))
-
-
-
+        ((count++))
 
     done
-
 
 
     echo -e "\n${YELLOW}[5] manage.py makemigrations --dry-run --check ${RESET}"
@@ -1041,6 +1068,116 @@ check_tests() {
 
     $fail && return 1 || return 0
 }
+
+#############################################
+# SECTION 6.7 — Nginx Diagnostics
+#############################################
+
+extract_coverage() {
+    local output="$1"
+    echo "$output" \
+        | awk '/^TOTAL/ {print $4}' \
+        | sed 's/%//'
+}
+print_coverage_summary() {
+    local app="$1"
+    local output="$2"
+
+    local threshold=${COVERAGE_THRESHOLDS[$app]}
+    local percent
+    percent=$(extract_coverage "$output")
+
+    if [[ -z "$percent" ]]; then
+        echo -e "${YELLOW}⚠️  $app: No TOTAL line found${RESET}"
+        return
+    fi
+
+    if (( percent >= threshold )); then
+        echo -e "${GREEN}✔ $app: ${percent}% (>= ${threshold}%)${RESET}"
+    else
+        echo -e "${RED}✘ $app: ${percent}% (< ${threshold}%)${RESET}"
+        COVERAGE_FAILED=true
+    fi
+}
+check_tests67() {
+    echo "========================================"
+    echo "   6.7 - python test code"
+    echo "========================================"
+
+    echo -e "${CYAN}checking python tests${RESET}"
+
+    local fail=false
+
+    echo -e "\n${YELLOW}[2] PY Coverage Testing config file: $LABEL ${RESET}"
+    cat .coveragerc
+
+
+    echo -e "\n${YELLOW}[2] PY Coverage Testing: $LABEL ${RESET}"
+
+    # NOTE:  -- reads MikesLists_dev/pytest.ini
+    # NOTE:  i took this parameter out because the admin site does some builtin stuff in django: --fail-on-template-vars
+
+
+    echo "Project_path=$PROJECT_PATH"
+    cd "$PROJECT_PATH" || exit 1
+
+
+    coverage erase >/dev/null 2>&1
+
+
+    run_cmd "PY Coverage Testing" \
+        /srv/django/venv-dev/bin/pytest \
+        app_core \
+        --cache-clear \
+        --verbosity=3 \
+        --disable-warnings \
+        --color=yes \
+        --cov-fail-under=85 \
+        --cov=app_core \
+        --cov-report=term-missing \
+
+
+    if [[ $? -ne 0 ]]; then
+        fail=true
+    fi
+
+    coverage erase >/dev/null 2>&1
+
+    run_cmd "PY Coverage Testing" \
+        /srv/django/venv-dev/bin/pytest \
+        app_accounts \
+        --cache-clear \
+        --verbosity=3 \
+        --disable-warnings \
+        --color=yes \
+        --cov-fail-under=85 \
+        --cov=app_accounts \
+        --cov-report=term-missing \
+
+
+    if [[ $? -ne 0 ]]; then
+        fail=true
+    fi
+
+    coverage erase >/dev/null 2>&1
+
+    run_cmd "PY Coverage Testing" \
+        /srv/django/venv-dev/bin/pytest \
+        app_ToDo \
+        --cache-clear \
+        --verbosity=3 \
+        --disable-warnings \
+        --color=yes \
+        --cov-fail-under=85 \
+        --cov=app_ToDo \
+        --cov-report=term-missing \
+
+
+    if [[ $? -ne 0 ]]; then
+        fail=true
+    fi
+}
+
 
 
 #############################################
@@ -1529,7 +1666,7 @@ check_packages() {
 
     REQUIREMENTS_DEV_FILE="$PROJECT_PATH/requirements-dev.txt"
 
-echo -e "  REQUIREMENTS_DEV_FILE= $REQUIREMENTS_DEV_FILE"
+    echo -e "  REQUIREMENTS_DEV_FILE= $REQUIREMENTS_DEV_FILE"
 
     EXTRA=0
 
@@ -1763,6 +1900,10 @@ main() {
 
     run_section "check_tests" check_tests
     record_summary "6.5 - check_tests"  $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+
+    run_section "check_tests67" check_tests67
+    record_summary "6.7 - check_tests"  $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+
 
     run_section "nginx" check_nginx
     record_summary "7 - nginx" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)

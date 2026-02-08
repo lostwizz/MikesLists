@@ -3,6 +3,7 @@ from django.test import override_settings
 from app_core.utils.env import get_env, is_dev
 from app_core.services.health_service import CheckResult
 
+
 @pytest.mark.django_db
 class TestBaseLogic:
 
@@ -42,7 +43,7 @@ class TestEnvironmentEdgeCases:
         assert get_env() == "dev"
         assert is_dev() is True
 
-    @override_settings(ENV_NAME="production") # Test unknown strings
+    @override_settings(ENV_NAME="production")  # Test unknown strings
     def test_unknown_env_fallback(self):
         """Ensure unknown environments fallback safely to DEV (or your chosen default)."""
         # Based on your current logic, it falls back to DEV

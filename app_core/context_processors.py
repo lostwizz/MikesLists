@@ -8,9 +8,9 @@ app_core.context_processors
 
 
 """
-__version__ = "0.0.0.000006-dev"
+__version__ = "0.0.0.000007-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-05 21:24:44"
+__updated__ = "2026-02-07 18:25:56"
 ###############################################################################
 
 # MikesLists/context_processors.py

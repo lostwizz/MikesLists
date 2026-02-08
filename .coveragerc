@@ -1,0 +1,18 @@
+[run]
+branch = True
+parallel = True
+
+# IMPORTANT: leave "source" empty so pytest-cov controls it
+source =
+
+omit =
+    */migrations/*
+    */tests/*
+    */__init__.py
+
+[report]
+show_missing = True
+skip_covered = False
+
+[html]
+directory = coverage_html

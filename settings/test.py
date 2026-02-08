@@ -8,9 +8,9 @@ app_core.settings.test
 
 
 """
-__version__ = "0.0.0.000077-dev"
+__version__ = "0.0.0.000078-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-05 22:05:05"
+__updated__ = "2026-02-07 20:22:28"
 ###############################################################################
 
 from .core import *  # noqa: F403
