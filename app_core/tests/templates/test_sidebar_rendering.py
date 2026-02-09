@@ -4,9 +4,9 @@ app_core.tests.test_sidebar_rendering
 
 
 '''
-__version__ = "0.0.0.000063-dev"
+__version__ = "0.0.0.000064-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-07 23:48:42"
+__updated__ = "2026-02-08 21:40:05"
 
 
 

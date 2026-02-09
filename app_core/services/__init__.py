@@ -8,12 +8,9 @@ app_core.views
 
 
 """
-__version__ = "0.0.0.000012-dev"
+__version__ = "0.0.0.000014-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-08 22:49:46"
+__updated__ = "2026-02-08 22:01:50"
 ###############################################################################
-
-# from .debug import *
-# from .health import *
-# from .home import *
-# from .status import *
+# app_core.services package
+# Intentionally left minimal to avoid import side effects.

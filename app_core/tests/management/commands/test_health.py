@@ -25,9 +25,9 @@ tests.test_health
 
 
 """
-__version__ = "0.0.1.000047-dev"
+__version__ = "0.0.1.000048-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-08 01:35:28"
+__updated__ = "2026-02-08 21:39:40"
 ###############################################################################
 from django.test import TestCase, override_settings
 from django.urls import reverse

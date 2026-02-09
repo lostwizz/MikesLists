@@ -2,7 +2,7 @@
 # ==========================================
 # Django Deep Diagnostic Tool v2.1 (verbose)
 # ==========================================
-# __version__="2.2.2.000098"
+# __version__="2.2.2.000100"
 
 #############################################
 # COLORS (ANSI-safe)
@@ -176,9 +176,15 @@ run_cmd() {
         echo -e "${RED}❌ ${label} failed (exit ${STATUS})${RESET}"
         echo -e "${YELLOW}output:${RESET}"
         echo "$OUTPUT"
+        if [["$FAIL_FAST" == true]]; then
+            exit 99
+        fi
         return $STATUS
     else
         echo -e "${GREEN}✓ ${label} succeeded${RESET}"
+        if [["$FAIL_FAST" == true]]; then
+            exit 99
+        fi
         return 0
     fi
 }

@@ -9,9 +9,9 @@ settings.dev
 
 
 """
-__version__ = "0.0.0.000026-dev"
+__version__ = "0.0.0.000030-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-07 20:23:46"
+__updated__ = "2026-02-08 22:35:12"
 ###############################################################################
 
 # WSGI_REQUEST_HANDLER = "app_core.logging.request_handler.RequestHandlerWithIPAndUser"
@@ -25,6 +25,15 @@ from .core import *  # noqa: F403
 
 # INSTALLED_APPS.append('rest_framework')
 # INSTALLED_APPS.append('rest_framework.authtoken')
+
+ADMIN_ALLOWED_IP_PREFIXES = [
+    "10.0.0.",
+    "127.0.0.1",
+    "10.0.0.0/24"
+]
+
+STATUS_ALLOW_RESTART = True
+STATUS_RESTART_SCRIPT = "/home/pi/bin/bounce.sh"
 
 
 

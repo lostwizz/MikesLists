@@ -8,9 +8,9 @@ app_core.settings.live
 
 
 """
-__version__ = "0.0.0.000080-dev"
+__version__ = "0.0.0.000082-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-07 20:22:27"
+__updated__ = "2026-02-08 22:35:24"
 ###############################################################################
 
 
@@ -21,6 +21,13 @@ from .core import *  # noqa: F403
 # TEMPLATES[0]["OPTIONS"]["context_processors"].append(
 #     "MikesLists.context_processors.env_name"
 # )
+ADMIN_ALLOWED_IP_PREFIXES = [
+    "10.0.0.",
+    "127.0.0.1",
+]
+
+STATUS_ALLOW_RESTART = False
+STATUS_RESTART_SCRIPT = "/home/pi/bin/bounce.sh"
 
 
 LOGGING["handlers"]["console"]["level"] = "WARNING"

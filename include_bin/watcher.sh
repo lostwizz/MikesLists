@@ -2,10 +2,10 @@
 # ==========================================
 # version_watcher.sh
 #
-# __version__ = "0.1.0.000014-dev"
+# __version__ = "0.1.0.000019-dev"
 #
 # __author__ = "Mike Merrett"
-# __updated__ = "2026-02-08 01:36:50"
+# __updated__ = "2026-02-08 23:30:17"
 # __created__ = "2026-01-02 19:49:31"
 # __description__ = "Auto version bump watcher"
 # ==========================================
@@ -36,6 +36,9 @@ set -euo pipefail
 # Configuration
 ########################################
 
+########################################
+# Configuration
+########################################
 
 WATCH_DIRS=(
     "/srv/django/MikesLists_dev/"
@@ -43,12 +46,13 @@ WATCH_DIRS=(
     "/srv/django/MikesLists_live/"
     "/home/pi/bin"
 )
+
+# Canonical project root for normalization
+WORKSPACE_ROOT="/srv/django/MikesLists_dev"
+
 LOG_FILE="/var/log/version_watcher.log"
 
-# File filters: only consider these extensions
 ALLOWED_EXTENSIONS=("sh" "py" "service" "conf")
-
-# Pattern for version line (flexible spacing, double quotes)
 VERSION_KEY="__version__"
 
 ########################################
@@ -176,9 +180,15 @@ update_version_in_file() {
         return 0
     fi
 
-    # Update Version and Timestamp
-    sed -i -E "s|([#[:space:]]*${VERSION_KEY}[[:space:]]*=[[:space:]]*\")$from_v\"|\1$to_v\"|" "$file"
-    sed -i -E "s|([#[:space:]]*__updated__[[:space:]]*=[[:space:]]*\")[^\"]*\"|\1$current_ts\"|" "$file"
+    # Replace version robustly
+    sed -i -E \
+        "s|(__version__[[:space:]]*=[[:space:]]*\")[^\"]*\"|\1$to_v\"|" \
+        "$file"
+
+    # Replace timestamp robustly
+    sed -i -E \
+        "s|(__updated__[[:space:]]*=[[:space:]]*\")[^\"]*\"|\1$current_ts\"|" \
+        "$file"
 
     log "INFO" "File Updated: $file"
     log "INFO" "   Version:   [$from_v] -> [$to_v]"
@@ -187,13 +197,11 @@ update_version_in_file() {
 
 process_file() {
     local file="$1"
-    # Use a per-file lock based on the path hash to prevent global blocking
     local lock_file="/tmp/bump_$(echo "$file" | md5sum | awk '{print $1}').lock"
 
     [[ ! -f "$file" || ! -r "$file" ]] && return 0
     has_allowed_extension "$file" || return 1
 
-    # Check for Lock: If the lock file exists and is less than 2 seconds old, skip
     if [[ -f "$lock_file" ]]; then
         local now=$(date +%s)
         local mtime=$(stat -c %Y "$lock_file")
@@ -213,7 +221,6 @@ process_file() {
 
     [[ "$from_v" == "$to_v" ]] && return 0
 
-    # Refresh lock and update
     touch "$lock_file"
     update_version_in_file "$file" "$from_v" "$to_v"
 }
@@ -235,20 +242,27 @@ touch "$LOG_FILE" 2>/dev/null || {
 
 log "INFO" "Starting version watcher (DRY_RUN=$DRY_RUN, DEBUG=$DEBUG)"
 
-# Listen for close_write (file saved) and moved_to (atomic saves used by editors)
-# Removed 'attrib' as it triggers too many redundant events during sed/touch
 stdbuf -oL inotifywait -m -r \
     -e close_write -e moved_to \
     --format '%w %f' \
     --exclude '(\.tmp$|~$|\.swp$|\.swx$|\.git/)' \
     "${WATCH_DIRS[@]}" 2>>"$LOG_FILE" | while read -r W_DIR W_FILE; do
 
-    FULL_PATH="${W_DIR}${W_FILE}"
-    [[ "$FULL_PATH" == "$LOG_FILE" ]] && continue
+    RAW_PATH="${W_DIR}${W_FILE}"
+    FULL_PATH="$(realpath "$RAW_PATH")"
 
-    # Background the process with a tiny delay to ensure editor atomic-renames finish
+    # Normalize ONLY if inside WORKSPACE_ROOT
+    if [[ "$FULL_PATH" == "$WORKSPACE_ROOT"* ]]; then
+        REL_PATH="${FULL_PATH#$WORKSPACE_ROOT/}"
+        CANONICAL_PATH="$WORKSPACE_ROOT/$REL_PATH"
+    else
+        CANONICAL_PATH="$FULL_PATH"
+    fi
+
+    [[ "$CANONICAL_PATH" == "$LOG_FILE" ]] && continue
+
     (
         sleep 0.2
-        process_file "$FULL_PATH"
+        process_file "$CANONICAL_PATH"
     ) &
 done

@@ -8,12 +8,23 @@ app_core.settings.test
 
 
 """
-__version__ = "0.0.0.000078-dev"
+__version__ = "0.0.0.000080-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-07 20:22:28"
+__updated__ = "2026-02-08 22:35:40"
 ###############################################################################
 
 from .core import *  # noqa: F403
+
+
+ADMIN_ALLOWED_IP_PREFIXES = [
+    "10.0.0.",
+    "127.0.0.1",
+]
+
+
+STATUS_ALLOW_RESTART = False
+STATUS_RESTART_SCRIPT = "/home/pi/bin/bounce.sh"
+
 
 MIDDLEWARE += [
     "app_core.views.debug.DebugViewMiddleware",

@@ -32,9 +32,9 @@ Adding decorators to the path function:
 
 
 """
-__version__ = "0.0.0.000024-dev"
+__version__ = "0.0.0.000027-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-06 17:13:20"
+__updated__ = "2026-02-08 22:58:16"
 ###############################################################################
 
 """
@@ -63,7 +63,7 @@ from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required
 
 from app_core.views.health import health
-from app_core.views.status import status_view
+from app_core.views.status import status_view, dashboard
 
 from app_core.views.home import (
     redirect_root_to_dashboard,
@@ -72,6 +72,8 @@ from app_core.views.home import (
     redirect_dashboard_to_dashboard,
     catchall_redirect,
 )
+
+from app_core.utils.auth import is_staff
 
 
 # NOTE  - Becarfull of the traling slash - it is important
@@ -87,7 +89,9 @@ urlpatterns = [
 
     # Redirect /dashboard → dashboard
     # path("dashboard", redirect_dashboard_to_dashboard),
-    path("dashboard/", redirect_dashboard_to_dashboard),
+
+    # path("dashboard/", redirect_dashboard_to_dashboard),
+    path("dashboard/", dashboard, name="dashboard"),
 
     # Redirect ONLY /accounts and /accounts/ → dashboard
     path("accounts", redirect_accounts_to_dashboard),

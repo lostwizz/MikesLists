@@ -10,20 +10,27 @@ debug
 
 
 """
-__version__ = "0.0.0.000011-dev"
+__version__ = "0.0.0.000013-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-28 20:31:54"
+__updated__ = "2026-02-08 21:34:36"
 ###############################################################################
 
 # /srv/django/MikesLists_dev/MikesLists/debug.py
 
+
+###############################################################################
+###############################################################################
 class DebugViewMiddleware:
+
+    # -----------------------------------------------------------------
     def __init__(self, get_response):
         self.get_response = get_response
 
+    # -----------------------------------------------------------------
     def __call__(self, request):
         return self.get_response(request)
 
+    # -----------------------------------------------------------------
     def process_view(self, request, view_func, view_args, view_kwargs):
         try:
             view_name = request.resolver_match.view_name

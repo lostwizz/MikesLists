@@ -13,9 +13,9 @@ app_core.utils.env
 
 
 """
-__version__ = "0.0.0.000036-dev"
+__version__ = "0.0.0.000038-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-05 23:07:19"
+__updated__ = "2026-02-08 21:34:07"
 ###############################################################################
 
 
@@ -23,11 +23,14 @@ __updated__ = "2026-02-05 23:07:19"
 from enum import Enum
 from django.conf import settings
 
+###############################################################################
+###############################################################################
 class AppEnv(Enum):
     DEV = "dev"
     TEST = "test"
     LIVE = "live"
 
+    # -----------------------------------------------------------------
     @classmethod
     def current(cls):
         """Helper to get the current environment object from settings."""
@@ -41,22 +44,11 @@ class AppEnv(Enum):
 
 
 
+# -----------------------------------------------------------------
 def get_env() -> str:
     """Returns the current environment as a string (e.g., 'dev', 'test', 'live')."""
     return AppEnv.current().value  # Access .value to get the string from the Enum
 
-# def get_env() -> AppEnv:
-#     """Returns the current environment as an Enum member."""
-#     return AppEnv.current()
-
-# def is_dev() -> bool:
-#     return get_env() == AppEnv.DEV
-
-# def is_live() -> bool:
-#     return get_env() == AppEnv.LIVE
-
-# def is_test() -> bool:
-#     return get_env() == AppEnv.TEST
 
 def is_dev() -> bool:
     # Compare string to string (e.g., "dev" == "dev")
