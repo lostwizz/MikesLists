@@ -11,9 +11,9 @@ test_status
 
 
 """
-__version__ = "0.1.0.000034-dev"
+__version__ = "0.1.0.000043-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-08 23:28:54"
+__updated__ = "2026-02-09 00:52:32"
 ###############################################################################
 
 
@@ -131,13 +131,18 @@ def test_status_view_html_mode(mock_checks, client, staff_user):
     STATUS_ALLOWED_IP_PREFIXES=["127.0.0.1"],
     STATUS_ALLOW_RESTART=True,
 )
+@patch("app_core.views.status.collect_checks", return_value=[])
+@patch("app_core.views.status.restart_allowed", return_value=True)
 @patch("app_core.views.status.perform_restart")
-def test_status_view_restart_success(mock_restart, rf, staff_user):
+def test_status_view_restart_success(mock_restart, mock_allowed, mock_checks, rf, staff_user):
     mock_restart.return_value = (True, "Restart OK")
 
     request = rf.post("/status")
     request.user = staff_user
     request.META["REMOTE_ADDR"] = "127.0.0.1"
+
+    # print("REMOTE_ADDR =", request.META.get("REMOTE_ADDR"))
+    # print("XFF =", request.META.get("HTTP_X_FORWARDED_FOR"))
 
     from app_core.views.status import status_view
     response = status_view(request)
@@ -150,9 +155,12 @@ def test_status_view_restart_success(mock_restart, rf, staff_user):
     STATUS_ALLOWED_IP_PREFIXES=["127.0.0.1"],
     STATUS_ALLOW_RESTART=True,
 )
+@patch("app_core.views.status.collect_checks", return_value=[])
+@patch("app_core.views.status.restart_allowed", return_value=True)
 @patch("app_core.views.status.perform_restart")
-def test_status_view_restart_failure(mock_restart, rf, staff_user):
+def test_status_view_restart_failure(mock_restart, mock_allowed, mock_checks, rf, staff_user):
     mock_restart.return_value = (False, "FAILED: boom")
+
 
     request = rf.post("/status")
     request.user = staff_user

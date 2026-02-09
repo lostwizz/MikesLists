@@ -25,9 +25,9 @@ tests.test_health
 
 
 """
-__version__ = "0.0.1.000048-dev"
+__version__ = "0.0.1.000049-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-08 21:39:40"
+__updated__ = "2026-02-08 23:39:12"
 ###############################################################################
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -43,6 +43,7 @@ from jsonschema.exceptions import ValidationError
 # ---------------------------------------------------------------------------
 # 1. BASIC HEALTH SUCCESS TEST
 # ---------------------------------------------------------------------------
+
 
 class HealthTestCase(TestCase):
 
@@ -66,6 +67,7 @@ class HealthTestCase(TestCase):
 # ---------------------------------------------------------------------------
 # 2. MASKING LOGIC TESTS
 # ---------------------------------------------------------------------------
+
 
 class HealthMaskingTests(TestCase):
 
@@ -96,6 +98,7 @@ class HealthMaskingTests(TestCase):
 # 3. BASIC VIEW SERIALIZATION TEST
 # ---------------------------------------------------------------------------
 
+
 class HealthViewTests(TestCase):
 
     @override_settings(ENV_NAME="test")
@@ -112,6 +115,7 @@ class HealthViewTests(TestCase):
 # 4. SUCCESS LOGIC TEST (FIXED SIGNATURE)
 # ---------------------------------------------------------------------------
 
+
 class HealthLogicTests(TestCase):
 
     @patch("app_core.services.health_service.health_service")
@@ -126,11 +130,10 @@ class HealthLogicTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
-
-
 # ---------------------------------------------------------------------------
 # 5. JSON SCHEMA VALIDATION
 # ---------------------------------------------------------------------------
+
 
 health_response_schema = {
     "type": "object",
@@ -174,6 +177,7 @@ class HealthSchemaTests(TestCase):
 # 6. DATABASE FAILURE TEST
 # ---------------------------------------------------------------------------
 
+
 class HealthDatabaseTests(TestCase):
 
     @patch("app_core.services.health_service.connections")
@@ -181,13 +185,14 @@ class HealthDatabaseTests(TestCase):
         mock_connections.__getitem__.side_effect = Exception("Connection refused")
 
         response = self.client.get(reverse("health_check"))
-        self.assertIn(response.status_code,  [200, 503])
+        self.assertIn(response.status_code, [200, 503])
         self.assertEqual(response.json()["details"]["database"]["status"], "fail")
 
 
 # ---------------------------------------------------------------------------
 # 7. SUBPROCESS FAILURE TESTS
 # ---------------------------------------------------------------------------
+
 
 class HealthSubprocessTests(TestCase):
 

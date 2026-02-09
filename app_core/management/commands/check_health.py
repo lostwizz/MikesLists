@@ -13,9 +13,9 @@ use:
 
 
 """
-__version__ = "0.0.0.000013-dev"
+__version__ = "0.0.0.000014-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-03 21:32:46"
+__updated__ = "2026-02-08 23:34:26"
 ###############################################################################
 
 
@@ -23,7 +23,7 @@ import json
 from django.core.management.base import BaseCommand
 from django.test import RequestFactory
 from django.contrib.auth.models import User
-from app_core.views import health
+from app_core.views.health import health
 
 from app_core.services.health_service import CheckResult
 

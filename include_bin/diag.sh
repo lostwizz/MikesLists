@@ -2,7 +2,7 @@
 # ==========================================
 # Django Deep Diagnostic Tool v2.1 (verbose)
 # ==========================================
-# __version__="2.2.2.000100"
+# __version__="2.2.2.000103"
 
 #############################################
 # COLORS (ANSI-safe)
@@ -1734,7 +1734,7 @@ check_static_analysis() {
     # error codes found here -> https://pycodestyle.pycqa.org/en/latest/intro.html#error-codes
     #      or at https://flake8.pycqa.org/en/latest/user/error-codes.html
     #
-    IGNORES="E302,E303,E402,E501,E231,E222,E251,E265,W292,F401,F811,F405,F403"
+    IGNORES="E302,E303,E402,E501,E231,E222,E251,E265,W292,F401,F811,F405,F403,W503,W504"
     #IGNORES=""
 
     local mode="$1"   # "ruff", "flake", or empty for both
@@ -1749,7 +1749,7 @@ check_static_analysis() {
     if [[ -z "$mode" || "$mode" == "ruff" ]]; then
         echo -e "\n   ${YELLOW}[11.1][$mode] running ruff (undefined names, unused imports, etc.)${RESET}"
         ###echo -e "${BLUE}running:${RESET} ruff check $PROJECT_PATH --ignore E302,E303,E402,E501,E231,E222,E251,E265,W292,F401,F811"
-        echo -e "   ${BLUE}running:${RESET} ruff check $PROJECT_PATH --ignore ${IGNORES}"
+        echo -e "   ${BLUE}running:${RESET} ruff check $PROJECT_PATH --no-cache --ignore ${IGNORES}"
 
         RUFF_OUT=$("$VENV_PATH/bin/ruff" check "$PROJECT_PATH" \
             --ignore ${IGNORES} 2>&1)
@@ -1771,7 +1771,7 @@ check_static_analysis() {
     if [[ -z "$mode" || "$mode" == "flake" ]]; then
         echo -e "\n   ${YELLOW}[11.2][$mode] running flake8 (pyflakes + style checks)${RESET}"
         # echo -e "${BLUE}running:${RESET} flake8 $PROJECT_PATH --config=/dev/null --ignore=E302,E303,E402,E501,E231,E222,E251,E265,W292,F401,F811"
-        echo -e "   ${BLUE}running:${RESET} flake8 $PROJECT_PATH --config=/dev/null --ignore=${IGNORES}"
+        echo -e "   ${BLUE}running:${RESET} flake8 $PROJECT_PATH --config=/dev/null --no-cache --ignore=${IGNORES}"
 
         FLAKE_OUT=$("$VENV_PATH/bin/flake8" "$PROJECT_PATH" \
             --config=/dev/null  \

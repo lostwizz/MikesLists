@@ -16,9 +16,9 @@ app_core.views.health
 
 
 """
-__version__ = "0.0.0.000058-dev"
+__version__ = "0.0.0.000062-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-07 23:07:59"
+__updated__ = "2026-02-09 00:10:48"
 ###############################################################################
 
 import time
@@ -63,8 +63,9 @@ def health(request):
     #         logger.error(f"Problematic data: {asdict(result)}")
 
     # Determine overall status
-    is_healthy = all(c.status == "ok" for c in checks.values())
-    # logger.tracet(f"{is_healthy=}")
+    if False:
+        is_healthy = all(c.status == "ok" for c in checks.values())
+        logger.tracet(f"{is_healthy=}")
 
     # Compute overall status
     overall_status = "ok"
@@ -81,7 +82,7 @@ def health(request):
         duration_ms = (time.perf_counter() - start_time) * 1000
         hostinfo = request.META.get("HTTP_HOST", "unknown")
 
-    response_status = 200  ############# if is_healthy else 503
+    response_status = 200  # if is_healthy else 503
 
     # logger.tracea(f"{response_status=}")
     # logger.tracez( request.META)

@@ -15,11 +15,10 @@ and admin‑IP allow‑listing.
 
 
 """
-__version__ = "0.0.0.000044-dev"
+__version__ = "0.0.0.000051-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-08 22:27:12"
+__updated__ = "2026-02-09 00:48:59"
 ###############################################################################
-
 
 
 from typing import Any, Iterable
@@ -38,6 +37,9 @@ def get_client_ip(request: Any) -> str | None:
     xff = request.META.get("HTTP_X_FORWARDED_FOR")
     if xff:
         # X‑Forwarded‑For may contain multiple IPs
+
+        # s =  xff.split(",")[0].strip()
+        # logger.tracea(f"{s=}")
         return xff.split(",")[0].strip()
 
     return request.META.get("REMOTE_ADDR")
@@ -59,7 +61,9 @@ def is_ip_in_list(ip: str | None, allowed: Iterable[str]) -> bool:
         # CIDR support
         if "/" in entry:
             try:
-                if ipaddress.ip_address(ip) in ipaddress.ip_network(entry, strict=False):
+                if ipaddress.ip_address(ip) in ipaddress.ip_network(
+                    entry, strict=False
+                ):
                     return True
             except ValueError:
                 continue
@@ -72,7 +76,9 @@ def is_ip_in_list(ip: str | None, allowed: Iterable[str]) -> bool:
 
 
 # -----------------------------------------------------------------
-def is_ip_allowed_for_admin(ip: str | None, allowed_ranges: Iterable[str] | None = None) -> bool:
+def is_ip_allowed_for_admin(
+    ip: str | None, allowed_ranges: Iterable[str] | None = None
+) -> bool:
     """
     Determine whether an IP is allowed to access admin‑only features.
 
