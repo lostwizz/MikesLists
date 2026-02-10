@@ -1,0 +1,21 @@
+<!-- SYSTEM CHECKS -->
+<h3 style="margin-top:1rem;">System Checks</h3>
+<div style="display:flex; flex-direction:column; gap:0.6rem;">
+    {% for check in checks %}
+        <div class="card">
+            <div class="status-line">
+                <div class="name">{{ check.name }}</div>
+                <div>
+                    {% if check.status == "ok" %}
+                        <span class="badge badge-ok">OK</span>
+                    {% elif check.status == "warn" %}
+                        <span class="badge badge-warn">WARN</span>
+                    {% else %}
+                        <span class="badge badge-fail">FAIL</span>
+                    {% endif %}
+                </div>
+            </div>
+            {{ check.message }}
+        </div>
+    {% endfor %}
+</div>

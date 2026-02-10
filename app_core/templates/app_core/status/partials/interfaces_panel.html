@@ -1,0 +1,64 @@
+<!-- INTERFACES -->
+<div class="card" style="margin-top:1rem;">
+    <h3>Network Interfaces</h3>
+    <div style="display:flex; flex-wrap:wrap; gap:1rem; margin-top:0.5rem;">
+        {% for iface, data in interfaces.items %}
+            <div class="card iface-card">
+                <h4 class="iface-title">
+                    {{ iface }}
+                    {% if data.type == "wifi" %}📶{% endif %}
+                    {% if data.type == "ethernet" %}🔌{% endif %}
+                    {% if data.type == "loopback" %}♻️{% endif %}
+                </h4>
+                <!-- IPs -->
+                <div class="iface-row">
+                    <span class="iface-label">IPs</span>
+                    <span class="iface-value">{{ data.ips|join:", " }}</span>
+                </div>
+                <!-- MAC -->
+                <div class="iface-row">
+                    <span class="iface-label">MAC</span>
+                    <span class="iface-value">{{ data.mac|default:"—" }}</span>
+                </div>
+                <!-- Status -->
+                <div class="iface-row">
+                    <span class="iface-label">Status</span>
+                    <span class="iface-value">
+                        {% if data.state == "up" %}
+                            <span class="badge badge-ok">UP</span>
+                        {% else %}
+                            <span class="badge badge-fail">{{ data.state|upper }}</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <!-- Carrier -->
+                <div class="iface-row">
+                    <span class="iface-label">Carrier</span>
+                    <span class="iface-value">
+                        {% if data.carrier == "up" %}
+                            <span class="badge badge-ok">UP</span>
+                        {% else %}
+                            <span class="badge badge-fail">{{ data.carrier|upper }}</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <!-- SPEED -->
+                {% include "app_core/status/partials/_iface_speed.html" %}
+                <!-- Metric -->
+                <div class="iface-row">
+                    <span class="iface-label">Metric</span>
+                    <span class="iface-value">{{ data.metric|default:"—" }}</span>
+                </div>
+                <!-- Type -->
+                <div class="iface-row">
+                    <span class="iface-label">Type</span>
+                    <span class="iface-value">{{ data.type|title }}</span>
+                </div>
+                {% if data.type == "wifi" %}
+                    {% include "app_core/status/partials/_wifi_band.html" %}
+                    {% include "app_core/status/partials/_wifi_signal.html" %}
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+</div>

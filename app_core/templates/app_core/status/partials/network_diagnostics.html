@@ -1,0 +1,99 @@
+<!-- NETWORK DIAGNOSTICS -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h4>🌐 Network Diagnostics</h4>
+    </div>
+    <div class="card-body">
+        {% comment %}
+Compute summary score
+        {% endcomment %}
+        {% with total=0 count=0 %}
+            {% for name, diag in network.items %}
+                {% with count=count|add:"1" %}
+                    {% if diag.ok %}
+                        {% with total=total|add:"100" %}{% endwith %}
+                    {% else %}
+                        {% with total=total|add:"0" %}{% endwith %}
+                    {% endif %}
+                {% endwith %}
+            {% endfor %}
+            {% if count > 0 %}
+                {% with score=total|divisibleby:count %}
+                    <div class="card" style="margin-bottom:1rem;">
+                        <div class="status-line">
+                            <div class="name">Summary Health Score</div>
+                            <div style="font-size:1.2rem; font-weight:700;">{{ total|divisibleby:count }} / 100</div>
+                        </div>
+                        <div style="background:#333;
+                                    height:8px;
+                                    border-radius:4px;
+                                    overflow:hidden">
+                            <div style="height:100%;
+                                        width:{{ total|divisibleby:count }}%;
+                                        max-width:100%;
+                                        background: {% if total|divisibleby:count >= 90 %} #4caf50 {% elif total|divisibleby:count >= 70 %} #f9a825 {% else %} #e53935 {% endif %}">
+                            </div>
+                        </div>
+                    </div>
+                {% endwith %}
+            {% endif %}
+        {% endwith %}
+        <div style=" display:flex; flex-wrap:wrap; gap:1rem; margin-top:0.5rem; ">
+            {% for name, diag in network.items %}
+                <div class="card" style="width:300px;">
+                    <!-- Icon + Name -->
+                    <div class="status-line">
+                        <div class="name">
+                            {% if "dns" in name %}🌐{% endif %}
+                            {% if "http" in name %}🔗{% endif %}
+                            {% if "port" in name %}🧱{% endif %}
+                            {{ name|title }}
+                        </div>
+                        <div>
+                            {% if diag.ok %}
+                                <span class="badge badge-ok">OK</span>
+                            {% else %}
+                                <span class="badge badge-fail">FAIL</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <!-- Emoji -->
+                    <div style="font-size:1.4rem; margin:0.2rem 0;">{{ diag.emoji }}</div>
+                    <!-- Latency bar -->
+                    <div style="margin:0.3rem 0;">
+                        <div style="font-size:0.8rem; opacity:0.8;">Latency: {{ diag.latency_ms }} ms</div>
+                        <div style="background:#333;
+                                    height:6px;
+                                    border-radius:3px;
+                                    overflow:hidden">
+                            <div style="height:100%;
+                                        width:{{ diag.latency_ms|floatformat:0 }}%;
+                                        max-width:100%;
+                                        background: {% if diag.latency_ms < 100 %} #4caf50 {% elif diag.latency_ms < 300 %} #f9a825 {% else %} #e53935 {% endif %}">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Collapsible details -->
+                    <div style="margin-top:0.5rem;">
+                        <button class="toggle-btn"
+                                onclick="toggleDetails('net-{{ forloop.counter }}')"
+                                style="background:#333;
+                                       color:#ccc;
+                                       padding:0.25rem 0.6rem;
+                                       border-radius:0.3rem;
+                                       font-size:0.75rem">Details ▼</button>
+                        <div id="net-{{ forloop.counter }}"
+                             style="display:none;
+                                    margin-top:0.5rem;
+                                    font-size:0.8rem;
+                                    opacity:0.85">
+                            <pre style="white-space:pre-wrap; background:#222; padding:0.5rem; border-radius:0.3rem;">
+{{ diag.details|safe }}
+          </pre>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>

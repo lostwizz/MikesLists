@@ -1,0 +1,12 @@
+<!-- RESTART PANEL -->
+<div class="restart-box">
+    {% if restart_allowed %}
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn-restart">Restart services (DEV only)</button>
+        </form>
+    {% else %}
+        <button class="btn-restart" disabled>Restart disabled for {{ env|upper }}</button>
+    {% endif %}
+    {% if restart_status %}<div class="restart-status">Restart result: {{ restart_status }}</div>{% endif %}
+</div>

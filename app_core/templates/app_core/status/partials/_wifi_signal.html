@@ -1,0 +1,23 @@
+{% if data.wifi_signal %}
+    <div class="iface-row" style="margin-top:0.4rem;">
+        <span class="iface-label">Signal</span>
+        <span class="iface-value">
+            {# dBm text color #}
+            {% if data.wifi_signal > -55 %}
+                <span class="signal-good">{{ data.wifi_signal|floatformat:0 }} dBm</span>
+            {% elif data.wifi_signal > -70 %}
+                <span class="signal-ok">{{ data.wifi_signal|floatformat:0 }} dBm</span>
+            {% else %}
+                <span class="signal-bad">{{ data.wifi_signal|floatformat:0 }} dBm</span>
+            {% endif %}
+            {# Quality bar #}
+            {% if data.wifi_quality %}
+                <span class="signal-bar">
+                    <span class="signal-bar-fill"
+                          style="width:{{ data.wifi_quality|floatformat:0 }}%;
+                                 background: {{ data.wifi_color }}"></span>
+                </span>
+            {% endif %}
+        </span>
+    </div>
+{% endif %}

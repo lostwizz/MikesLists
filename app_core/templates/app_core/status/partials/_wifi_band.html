@@ -1,0 +1,14 @@
+{% comment %}
+Wi-Fi band display:
+- 2.4 GHz for 2400–2500 MHz
+- 5 GHz for 5000–5900 MHz
+- 6 GHz for 5925–7125 MHz
+Assumes:
+  data.frequency = MHz (integer)
+{% endcomment %}
+{% if data.wifi_band_label %}
+    <div class="iface-row">
+        <span class="iface-label">Band</span>
+        <span class="iface-value">{{ data.wifi_band_label }}</span>
+    </div>
+{% endif %}

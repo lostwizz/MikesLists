@@ -25,9 +25,9 @@ use with : from app_core.utils import net
 
 
 
-__version__ = "0.0.0.000050-dev"
+__version__ = "0.0.0.000071-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-09 23:26:17"
+__updated__ = "2026-02-10 01:10:48"
 """
 ###############################################################################
 
@@ -125,6 +125,8 @@ def get_wifi_info(iface: str) -> dict:
         "signal_dbm": None,   # e.g., -48
         "quality": None,      # e.g., 70
         "noise_dbm": None,    # e.g., -256
+        "frequency": None,
+
     }
 
     # ------------------------------------------------------------
@@ -154,6 +156,12 @@ def get_wifi_info(iface: str) -> dict:
             line = line.strip()
             if line.startswith("tx bitrate:"):
                 info["speed"] = line.split("tx bitrate:")[-1].strip()
+            if line.startswith("freq:"):
+                # Example: "freq: 5180"
+                freq_mhz = line.split("freq:")[-1].strip()
+                if freq_mhz.isdigit():
+                    info["frequency"] = int(freq_mhz)
+
     except Exception:
         pass
 
@@ -212,6 +220,112 @@ def _read_sysfs(path: str):
         return None
 
 
+
+# ----------------------------------------------------------------------
+# wifi calc the collor and band for the display
+# ----------------------------------------------------------------------
+def get_wifi_color_and_band(data):
+    freq = data.get("frequency")
+    signal = data.get("wifi_signal")
+
+    # Determine band
+    if freq is None:
+        band = None
+        band_label = None
+    elif freq >= 5925:
+        band = "6ghz"
+        band_label = f"6 GHz ({freq} MHz)"
+    elif freq >= 5000:
+        band = "5ghz"
+        band_label = f"5 GHz ({freq} MHz)"
+    else:
+        band = "2.4ghz"
+        band_label = f"2.4 GHz ({freq} MHz)"
+
+    # Determine color
+    if band == "6ghz":
+        color = "#ab47bc"   # purple
+    elif band == "5ghz":
+        color = "#2196f3"   # blue
+    else:
+        # Strength-based colors
+        if signal is None:
+            color = "#999"
+        elif signal > -55:
+            color = "#4caf50"   # green
+        elif signal > -70:
+            color = "#f9a825"   # yellow
+        else:
+            color = "#e53935"   # red
+
+    return {
+        "band": band,
+        "band_label": band_label,
+        "color": color,
+    }
+
+
+# ----------------------------------------------------------------------
+# set the wifi band info with colors
+# ----------------------------------------------------------------------
+def get_wifi_color_and_band(data):
+    freq = data.get("frequency")
+    signal = data.get("wifi_signal")
+
+    # Determine band + label
+    if freq is None:
+        band = None
+        band_label = None
+    elif freq >= 5925:
+        band = "6ghz"
+        band_label = f"6 GHz ({freq} MHz)"
+    elif freq >= 5000:
+        band = "5ghz"
+        band_label = f"5 GHz ({freq} MHz)"
+    else:
+        band = "2.4ghz"
+        band_label = f"2.4 GHz ({freq} MHz)"
+
+    # Determine color
+    if band == "6ghz":
+        color = "#ab47bc"   # purple
+    elif band == "5ghz":
+        color = "#2196f3"   # blue
+    else:
+        if signal is None:
+            color = "#999"
+        elif signal > -55:
+            color = "#4caf50"   # green
+        elif signal > -70:
+            color = "#f9a825"   # yellow
+        else:
+            color = "#e53935"   # red
+
+    return {
+        "band": band,
+        "band_label": band_label,
+        "color": color,
+    }
+
+# ----------------------------------------------------------------------
+# Host identity helper
+# ----------------------------------------------------------------------
+def get_host_identity() -> dict:
+    """
+    Return hostname and primary IP.
+    """
+    hostname = socket.gethostname()
+    try:
+        ip = socket.gethostbyname(hostname)
+    except Exception:
+        ip = None
+
+    return {"hostname": hostname, "ip": ip}
+
+
+
+
+
 # ----------------------------------------------------------------------
 # Main: Detailed interface info
 # ----------------------------------------------------------------------
@@ -234,7 +348,7 @@ def get_interfaces_detailed() -> dict:
     """
     ips = get_interface_ips()
     metrics = get_route_metrics()
-    result = {}
+    result={}
 
     for iface, ip_list in ips.items():
         base = f"/sys/class/net/{iface}"
@@ -267,14 +381,17 @@ def get_interfaces_detailed() -> dict:
         # Wi-Fi metrics
         wifi_signal = None
         wifi_quality = None
+        wifi_freq = None
         if iface_type == "wifi":
             wifi = get_wifi_info(iface)
             if wifi["speed"]:
                 speed = wifi["speed"]
             wifi_signal = wifi["signal_dbm"]
             wifi_quality = wifi["quality"]
+            wifi_freq = wifi.get("frequency")
 
-        result[iface] = {
+        # Build iface_data
+        iface_data = {
             "ips": ip_list,
             "mac": mac,
             "state": state,
@@ -284,23 +401,16 @@ def get_interfaces_detailed() -> dict:
             "wifi_quality": wifi_quality,
             "metric": metrics.get(iface),
             "type": iface_type,
+            "frequency": wifi_freq,
         }
+
+        wifi_info = get_wifi_color_and_band(iface_data)
+        iface_data["wifi_band"] = wifi_info["band"]
+        iface_data["wifi_band_label"] = wifi_info["band_label"]
+        iface_data["wifi_color"] = wifi_info["color"]
+
+        result[iface] = iface_data
+
 
     # Sort: lo → eth0 → wlan0 → everything else
     return dict(sorted(result.items(), key=lambda x: (x[0] != "lo", x[0])))
-
-
-# ----------------------------------------------------------------------
-# Host identity helper
-# ----------------------------------------------------------------------
-def get_host_identity() -> dict:
-    """
-    Return hostname and primary IP.
-    """
-    hostname = socket.gethostname()
-    try:
-        ip = socket.gethostbyname(hostname)
-    except Exception:
-        ip = None
-
-    return {"hostname": hostname, "ip": ip}
