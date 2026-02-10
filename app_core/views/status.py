@@ -9,9 +9,9 @@ app_core.views.status
 
 
 """
-__version__ = "0.1.0.000044-dev"
+__version__ = "0.1.0.000048-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-09 18:56:15"
+__updated__ = "2026-02-09 21:54:16"
 ###############################################################################
 
 
@@ -48,13 +48,7 @@ def status_view(request: HttpRequest) -> HttpResponse:
     if not is_admin_access_allowed(request):
         return HttpResponseForbidden("IP not allowed")
 
-    # FIXED: call through the module
-    checks = status_service.collect_checks()
-    network = status_service.network_diagnostics()
-    remote_ip = request.META.get("REMOTE_ADDR", "unknown")
-    host_identity = net.get_host_identity()
-    client_ip = ip.get_client_ip(request)
-
+    status_data = status_service.get_status(request)
 
     # JSON API mode
     if (
@@ -74,18 +68,8 @@ def status_view(request: HttpRequest) -> HttpResponse:
         success, msg = perform_restart()
         restart_status = msg
 
-    context = {
-        "env": get_env(),
-        "checks": checks,
-        "network": network,
-        "client_ip": client_ip,
-        "remote_ip": remote_ip,
-        "host_identity": host_identity,
-        "restart_allowed": restart_allowed(),
-        "restart_status": restart_status,
-    }
+    return render(request, "app_core/status/dashboard.html", status_data)
 
-    return render(request, "app_core/status/dashboard.html", context)
 
 # ---------------------------------------------------------------------------
 def dashboard(request):

@@ -2,7 +2,7 @@
 # ==========================================
 # Django Restart all services (DEV + TEST + LIVE)
 # ==========================================
-# __version__ = "0.2.0.000049-dev"
+# __version__ = "0.2.0.000050-dev"
 
 set -euo pipefail
 

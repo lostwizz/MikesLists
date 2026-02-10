@@ -18,154 +18,289 @@ not IP parsing or request metadata. Anything about client IPs belongs
 in app_core/utils/ip.py.
 All functions are pure, deterministic, and easy to test.
 
-
+Network utilities for interface diagnostics, Wi-Fi metrics,
+Ethernet speed, DNS/HTTP/port checks, and host identity.
 
 use with : from app_core.utils import net
 
 
 
-__version__ = "0.0.0.000031-dev"
+__version__ = "0.0.0.000050-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-09 19:37:40"
+__updated__ = "2026-02-09 23:26:17"
 """
 ###############################################################################
 
 from __future__ import annotations
 
+import os
 import socket
-import time
-import urllib.request
-import urllib.error
+import subprocess
 
 
-# -----------------------------------------------------------------
-def ping_host(host: str, timeout: float = 1.0) -> bool:
-    """
-    Return True if the host is reachable via TCP connect on port 80.
-
-    This is intentionally simple and avoids subprocess calls.
-    """
-    try:
-        conn = socket.create_connection((host, 80), timeout=timeout)
-        conn.close()
-        return True
-    except Exception:
-        return False
-
-
-# -----------------------------------------------------------------
-def check_port(host: str, port: int, timeout: float = 1.0) -> bool:
-    """
-    Return True if a TCP port is open.
-    """
-    try:
-        conn = socket.create_connection((host, port), timeout=timeout)
-        conn.close()
-        return True
-    except Exception:
-        return False
-
-
-# -----------------------------------------------------------------
-def resolve_hostname(hostname: str, timeout: float = 1.0) -> dict:
+# ----------------------------------------------------------------------
+# DNS resolver helper
+# ----------------------------------------------------------------------
+def resolve_hostname(hostname: str) -> dict:
     """
     Resolve a hostname to an IP address.
-
     Returns:
-        {
-            "ok": bool,
-            "ip": str | None,
-            "error": str | None,
-        }
+        {"ok": bool, "ip": str or None, "error": str or None}
     """
-    start = time.time()
     try:
         ip = socket.gethostbyname(hostname)
-    except Exception as exc:
-        return {"ok": False, "ip": None, "error": str(exc)}
-
-    elapsed = time.time() - start
-    if elapsed > timeout:
-        return {"ok": False, "ip": None, "error": "timeout"}
-
-    return {"ok": True, "ip": ip, "error": None}
+        return {"ok": True, "ip": ip, "error": None}
+    except Exception as e:
+        return {"ok": False, "ip": None, "error": str(e)}
 
 
-# -----------------------------------------------------------------
-def check_http(url: str, timeout: float = 2.0) -> dict:
+# ----------------------------------------------------------------------
+# HTTP check helper
+# ----------------------------------------------------------------------
+def check_http(url: str, timeout: float = 3.0) -> dict:
     """
-    Perform a simple HTTP GET request.
-
+    Perform a simple HTTP GET request using curl.
     Returns:
-        {
-            "ok": bool,
-            "status": int | None,
-            "error": str | None,
-        }
+        {"ok": bool, "status": int or None, "error": str or None}
     """
     try:
-        req = urllib.request.Request(url, method="GET")
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            return {"ok": True, "status": resp.status, "error": None}
-
-    except urllib.error.HTTPError as exc:
-        # HTTPError includes a status code
-        return {"ok": False, "status": exc.code, "error": str(exc)}
-
-    except Exception as exc:
-        return {"ok": False, "status": None, "error": str(exc)}
+        out = subprocess.check_output(
+            ["curl", "-I", "-m", str(timeout), "-s", "-o", "/dev/null", "-w", "%{http_code}", url],
+            text=True
+        )
+        status = int(out.strip())
+        return {"ok": 200 <= status < 400, "status": status, "error": None}
+    except Exception as e:
+        return {"ok": False, "status": None, "error": str(e)}
 
 
-# -----------------------------------------------------------------
-def get_ip_addresses() -> dict:
+# ----------------------------------------------------------------------
+# Port check helper
+# ----------------------------------------------------------------------
+def check_port(host: str, port: int, timeout: float = 1.0) -> bool:
     """
-    Return a mapping of network interfaces to IP addresses.
+    Return True if TCP port is open, False otherwise.
+    """
+    try:
+        with socket.create_connection((host, port), timeout=timeout):
+            return True
+    except Exception:
+        return False
 
-    This is intentionally simple and avoids platform‑specific libraries.
+
+# ----------------------------------------------------------------------
+# Interface IPs
+# ----------------------------------------------------------------------
+def get_interface_ips() -> dict:
+    """
+    Return {iface: [ip1, ip2]} using `ip -o -4 addr show`.
+    """
+    result = {}
+    try:
+        out = subprocess.check_output(
+            ["ip", "-o", "-4", "addr", "show"],
+            text=True
+        )
+        for line in out.splitlines():
+            parts = line.split()
+            iface = parts[1]
+            ip = parts[3].split("/")[0]
+            result.setdefault(iface, []).append(ip)
+    except Exception:
+        pass
+
+    return result
+
+
+# ----------------------------------------------------------------------
+# Wi-Fi info (speed, signal, quality)
+# ----------------------------------------------------------------------
+def get_wifi_info(iface: str) -> dict:
+    """
+    Return Wi-Fi link speed, signal strength, and quality.
+    Works on Raspberry Pi OS, Debian, Ubuntu, etc.
+    """
+    info = {
+        "speed": None,        # e.g., "144.4 MBit/s"
+        "signal_dbm": None,   # e.g., -48
+        "quality": None,      # e.g., 70
+        "noise_dbm": None,    # e.g., -256
+    }
+
+    # ------------------------------------------------------------
+    # 1. Parse /proc/net/wireless
+    # ------------------------------------------------------------
+    try:
+        with open("/proc/net/wireless") as f:
+            for line in f:
+                if iface in line:
+                    parts = line.split()
+                    info["quality"] = float(parts[2].replace(".", ""))
+                    info["signal_dbm"] = float(parts[3].replace(".", ""))
+                    info["noise_dbm"] = float(parts[4].replace(".", ""))
+    except Exception:
+        pass
+
+    # ------------------------------------------------------------
+    # 2. Parse `iw dev wlan0 link` for bitrate
+    # ------------------------------------------------------------
+    try:
+        out = subprocess.check_output(
+            ["iw", "dev", iface, "link"],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        )
+        for line in out.splitlines():
+            line = line.strip()
+            if line.startswith("tx bitrate:"):
+                info["speed"] = line.split("tx bitrate:")[-1].strip()
+    except Exception:
+        pass
+
+    return info
+
+
+# ----------------------------------------------------------------------
+# Route metrics
+# ----------------------------------------------------------------------
+def get_route_metrics() -> dict:
+    """
+    Return {iface: metric} from `ip route show`.
+    """
+    metrics = {}
+    try:
+        out = subprocess.check_output(["ip", "route", "show"], text=True)
+        for line in out.splitlines():
+            parts = line.split()
+            if "dev" in parts:
+                iface = parts[parts.index("dev") + 1]
+                if "metric" in parts:
+                    metric = int(parts[parts.index("metric") + 1])
+                else:
+                    metric = None
+                metrics[iface] = metric
+    except Exception:
+        pass
+
+    return metrics
+
+
+# ----------------------------------------------------------------------
+# Interface type detection
+# ----------------------------------------------------------------------
+def detect_interface_type(iface: str) -> str:
+    """
+    Return "wifi", "ethernet", "loopback", or "other".
+    """
+    if iface == "lo":
+        return "loopback"
+    if os.path.isdir(f"/sys/class/net/{iface}/wireless"):
+        return "wifi"
+    if iface.startswith("eth") or iface.startswith("en"):
+        return "ethernet"
+    return "other"
+
+
+# ----------------------------------------------------------------------
+# Read sysfs helper
+# ----------------------------------------------------------------------
+def _read_sysfs(path: str):
+    try:
+        with open(path) as f:
+            return f.read().strip()
+    except Exception:
+        return None
+
+
+# ----------------------------------------------------------------------
+# Main: Detailed interface info
+# ----------------------------------------------------------------------
+def get_interfaces_detailed() -> dict:
+    """
+    Return structured interface info:
+    {
+        iface: {
+            "ips": [...],
+            "mac": "...",
+            "state": "up/down/unknown",
+            "carrier": "up/down/unknown",
+            "speed": "1000 Mb/s" or None,
+            "wifi_quality": 70 or None,
+            "metric": int or None,
+            "type": "ethernet" | "wifi" | "loopback" | "other",
+            "wifi_signal": -48 or None,
+        }
+    }
+    """
+    ips = get_interface_ips()
+    metrics = get_route_metrics()
+    result = {}
+
+    for iface, ip_list in ips.items():
+        base = f"/sys/class/net/{iface}"
+
+        # MAC address
+        mac = _read_sysfs(f"{base}/address")
+
+        # operstate
+        state = _read_sysfs(f"{base}/operstate") or "unknown"
+
+        # carrier
+        carrier_raw = _read_sysfs(f"{base}/carrier")
+        if carrier_raw == "1":
+            carrier = "up"
+        elif carrier_raw == "0":
+            carrier = "down"
+        else:
+            carrier = "unknown"
+
+        # Ethernet speed
+        speed_raw = _read_sysfs(f"{base}/speed")
+        if speed_raw and speed_raw.isdigit():
+            speed = f"{speed_raw} Mb/s"
+        else:
+            speed = None
+
+        # Interface type
+        iface_type = detect_interface_type(iface)
+
+        # Wi-Fi metrics
+        wifi_signal = None
+        wifi_quality = None
+        if iface_type == "wifi":
+            wifi = get_wifi_info(iface)
+            if wifi["speed"]:
+                speed = wifi["speed"]
+            wifi_signal = wifi["signal_dbm"]
+            wifi_quality = wifi["quality"]
+
+        result[iface] = {
+            "ips": ip_list,
+            "mac": mac,
+            "state": state,
+            "carrier": carrier,
+            "speed": speed,
+            "wifi_signal": wifi_signal,
+            "wifi_quality": wifi_quality,
+            "metric": metrics.get(iface),
+            "type": iface_type,
+        }
+
+    # Sort: lo → eth0 → wlan0 → everything else
+    return dict(sorted(result.items(), key=lambda x: (x[0] != "lo", x[0])))
+
+
+# ----------------------------------------------------------------------
+# Host identity helper
+# ----------------------------------------------------------------------
+def get_host_identity() -> dict:
+    """
+    Return hostname and primary IP.
     """
     hostname = socket.gethostname()
     try:
         ip = socket.gethostbyname(hostname)
-        return {hostname: ip}
     except Exception:
-        return {hostname: None}
+        ip = None
 
-
-# -----------------------------------------------------------------
-def get_local_ip():
-    """
-    Return the primary LAN IP address (e.g., 10.0.0.x or 192.168.x.x).
-    Works even when hostname resolves to 127.0.0.1.
-    """
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        # Doesn't need to be reachable — no packets are sent
-        s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
-        s.close()
-        return ip
-    except Exception:
-        return "unknown"
-
-
-# -----------------------------------------------------------------
-def get_host_identity():
-    return {
-        "hostname": socket.gethostname(),
-        "ip": get_local_ip(),
-    }
-
-# -----------------------------------------------------------------
-# def get_host_identity():
-#     """Return hostname and primary IP address of this server."""
-#     hostname = socket.gethostname()
-
-#     try:
-#         ip = socket.gethostbyname(hostname)
-#     except Exception:
-#         ip = "unknown"
-
-#     return {
-#         "hostname": hostname,
-#         "ip": ip,
-#     }
+    return {"hostname": hostname, "ip": ip}

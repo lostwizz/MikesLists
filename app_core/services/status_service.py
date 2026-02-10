@@ -12,9 +12,9 @@ app_core.services.status_service
 
 
 """
-__version__ = "0.1.0.000029-dev"
+__version__ = "0.1.0.000039-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-09 19:14:45"
+__updated__ = "2026-02-09 22:03:01"
 ###############################################################################
 
 
@@ -32,7 +32,7 @@ from app_core.utils.shell import run
 from app_core.utils.env import get_env
 # from app_core.utils import get_client_ip
 
-from app_core.utils import net
+from app_core.utils import net, ip
 
 
 # ##############################################################################
@@ -44,6 +44,35 @@ class CheckResult:
     message: str
 
 
+
+
+# -----------------------------------------------------------------
+def get_status(request=None):
+    """
+    Unified status aggregator for both JSON and HTML.
+    """
+    return {
+        "status": "ok",
+
+        # Environment
+        "env": get_env(),
+
+        # System checks
+        "checks": collect_checks(),
+
+        # Network diagnostics
+        "network": network_diagnostics(),
+
+        # Interfaces
+        "interfaces": net.get_interfaces_detailed(),
+
+        # Host identity
+        "host_identity": net.get_host_identity(),
+
+        # Client identity
+        "remote_ip": request.META.get("REMOTE_ADDR") if request else None,
+        "client_ip": ip.get_client_ip(request) if request else None,
+    }
 
 
 # -----------------------------------------------------------------
@@ -96,18 +125,6 @@ def collect_checks() -> list[CheckResult]:
 
 
 
-# -----------------------------------------------------------------
-def get_status():
-    """
-    Main status aggregator.
-    Add network diagnostics cleanly under its own key.
-    """
-    return {
-        "status": "ok",
-        "network": network_diagnostics(),
-    }
-
-
 
 # -----------------------------------------------------------------
 def _emoji(ok: bool) -> str:
@@ -121,6 +138,24 @@ def _measure(fn, *args, **kwargs):
     result = fn(*args, **kwargs)
     latency = round((time.time() - start) * 1000, 2)
     return result, latency
+
+
+# -----------------------------------------------------------------
+def get_interfaces():
+    return net.get_interface_ips()
+
+# -----------------------------------------------------------------
+def get_host_identity():
+    return net.get_host_identity()
+
+# -----------------------------------------------------------------
+def get_client_ip(request):
+    return ip.get_client_ip(request)
+
+# -----------------------------------------------------------------
+def get_remote_ip(request):
+    return request.META.get("REMOTE_ADDR", "unknown")
+
 
 
 # -----------------------------------------------------------------

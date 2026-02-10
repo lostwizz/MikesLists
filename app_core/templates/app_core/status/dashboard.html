@@ -1,190 +1,533 @@
 {% load static %}
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <title>Status – {{ env|upper }}</title>
-  <style>
-    body {
-      font-family: system-ui, sans-serif;
-      background: #111;
-      color: #eee;
-      padding: 1.5rem;
-    }
-    h1 {
-      margin-bottom: 0.5rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .badge-env {
-      padding: 0.2rem 0.5rem;
-      border-radius: 0.3rem;
-      font-size: 0.8rem;
-      font-weight: 600;
-    }
-    .env-dev { background-color: #1565c0; }
-    .env-test { background-color: #f9a825; }
-    .env-live { background-color: #2e7d32; }
+  <head>
+    <meta charset="utf-8">
+    <title>Status – {{ env|upper }}</title>
 
-    .card {
-      background: #1e1e1e;
-      border-radius: 0.5rem;
-      padding: 0.75rem 1rem;
-      margin-bottom: 0.6rem;
-    }
-    .status-line {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.25rem;
-    }
-    .name { font-weight: 600; }
-    .badge {
-      padding: 0.15rem 0.45rem;
-      border-radius: 0.25rem;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-    }
-    .badge-ok { background-color: #2e7d32; }
-    .badge-warn { background-color: #f9a825; color: #000; }
-    .badge-fail { background-color: #c62828; }
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        background: #111;
+        color: #eee;
+        padding: 1.5rem;
+      }
 
-    .restart-box {
-      margin-top: 1rem;
-      padding: 0.75rem 1rem;
-      background: #1e1e1e;
-      border-radius: 0.5rem;
-    }
-    button {
-      padding: 0.4rem 0.9rem;
-      border-radius: 0.3rem;
-      border: none;
-      cursor: pointer;
-      font-weight: 600;
-    }
-    .btn-restart {
-      background-color: #f57c00;
-      color: #000;
-    }
-    .btn-restart[disabled] {
-      background-color: #555;
-      color: #999;
-      cursor: not-allowed;
-    }
-    .restart-status {
-      margin-top: 0.4rem;
-      font-size: 0.85rem;
-    }
-  </style>
-</head>
+      h1 {
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
 
-<body>
+      .badge-env {
+        padding: 0.2rem 0.5rem;
+        border-radius: 0.3rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+      }
 
-<div style="margin-bottom:1rem;">
-  <a href="/status/" style="color:#90caf9;">Back to dashboard</a>
-</div>
+      .env-dev { background-color: #1565c0; }
+      .env-test { background-color: #f9a825; color:#000; }
+      .env-live { background-color: #2e7d32; }
 
-<h1>
-  Status
-  <span class="badge-env env-{{ env }}">
-    {{ env|upper }}
-  </span>
-</h1>
+      .card {
+        background: #1e1e1e;
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.6rem;
+      }
 
-<!-- CHECKS SECTION -->
-<div class="card" style="margin-top:1rem;">
-    <div class="status-line">
-    <div class="name">Client IP</div>
-    <div>{{ client_ip }}</div>
-  </div>
+      .status-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.25rem;
+      }
 
+      .name { font-weight: 600; }
 
+      .badge {
+        padding: 0.15rem 0.45rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+      }
 
-  <div class="status-line">
-    <div class="name">Remote Client</div>
-    <div>{{ remote_ip }}</div>
-  </div>
+      .badge-ok { background-color: #2e7d32; }
+      .badge-warn { background-color: #f9a825; color:#000; }
+      .badge-fail { background-color: #c62828; }
 
-  <div class="status-line">
-    <div class="name">Server Hostname</div>
-    <div>{{ host_identity.hostname }}</div>
-  </div>
+      /* Restart panel */
+      .restart-box {
+        margin-top: 1rem;
+        padding: 0.75rem 1rem;
+        background: #1e1e1e;
+        border-radius: 0.5rem;
+      }
 
-  <div class="status-line">
-    <div class="name">Server IP</div>
-    <div>{{ host_identity.ip }}</div>
-  </div>
-</div>
+      button {
+        padding: 0.4rem 0.9rem;
+        border-radius: 0.3rem;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+      }
 
-{% if checks %}
-  {% for c in checks %}
-    <div class="card">
+      .btn-restart {
+        background-color: #f57c00;
+        color: #000;
+      }
+
+      .btn-restart[disabled] {
+        background-color: #555;
+        color: #999;
+        cursor: not-allowed;
+      }
+
+      .restart-status {
+        margin-top: 0.4rem;
+        font-size: 0.85rem;
+      }
+
+      /* Interface cards */
+      .iface-card {
+        width: 260px;
+        background:#2a2a2a;
+        padding:0.75rem;
+        border-radius:0.5rem;
+      }
+
+      .iface-title {
+        margin:0 0 0.4rem 0;
+        font-size:1.1rem;
+      }
+
+      .iface-row {
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin:0.2rem 0;
+        font-size:0.9rem;
+      }
+
+      .iface-label {
+        font-weight:600;
+        opacity:0.85;
+        padding-right:0.5rem;
+      }
+
+      .iface-value {
+        text-align:right;
+        white-space:nowrap;
+      }
+
+      /* Speed colors */
+      .speed-good { color:#4caf50; }
+      .speed-ok   { color:#f9a825; }
+      .speed-bad  { color:#e53935; }
+
+      /* Wi-Fi signal colors */
+      .signal-good { color:#4caf50; }
+      .signal-ok   { color:#f9a825; }
+      .signal-bad  { color:#e53935; }
+
+      /* Tiny signal bar */
+      .signal-bar {
+        display:inline-block;
+        width:60px;
+        height:6px;
+        border-radius:3px;
+        background:#333;
+        overflow:hidden;
+        margin-left:0.35rem;
+      }
+
+      .signal-bar-fill {
+        height:100%;
+        background:linear-gradient(90deg,#e53935,#f9a825,#4caf50);
+      }
+    </style>
+    <script>
+function toggleDetails(id) {
+  const el = document.getElementById(id);
+  el.style.display = (el.style.display === "none" || el.style.display === "") ? "block" : "none";
+}
+</script>
+  </head>
+
+  <body>
+
+    <div style="margin-bottom:1rem;">
+      <a href="/status/" style="color:#90caf9;">Back to dashboard</a>
+    </div>
+
+    <h1>
+      Status
+      <span class="badge-env env-{{ env }}">{{ env|upper }}</span>
+    </h1>
+
+    <!-- BASIC INFO -->
+    <div class="card" style="margin-top:1rem;">
       <div class="status-line">
-        <div class="name">{{ c.name }}</div>
-        <span class="badge badge-{{ c.status }}">{{ c.status|upper }}</span>
+        <div class="name">Client IP</div>
+        <div>{{ client_ip }}</div>
       </div>
-      <div>{{ c.message }}</div>
+      <div class="status-line">
+        <div class="name">Remote Client</div>
+        <div>{{ remote_ip }}</div>
+      </div>
+      <div class="status-line">
+        <div class="name">Server Hostname</div>
+        <div>{{ host_identity.hostname }}</div>
+      </div>
+      <div class="status-line">
+        <div class="name">Server IP</div>
+        <div>{{ host_identity.ip }}</div>
+      </div>
+    </div>
+
+    <!-- INTERFACES -->
+    <div class="card" style="margin-top:1rem;">
+      <h3>Network Interfaces</h3>
+
+      <div style="display:flex; flex-wrap:wrap; gap:1rem; margin-top:0.5rem;">
+        {% for iface, data in interfaces.items %}
+          <div class="card iface-card">
+
+            <h4 class="iface-title">
+              {{ iface }}
+              {% if data.type == "wifi" %}📶{% endif %}
+              {% if data.type == "ethernet" %}🔌{% endif %}
+              {% if data.type == "loopback" %}♻️{% endif %}
+            </h4>
+
+            <div class="iface-row">
+              <span class="iface-label">IPs</span>
+              <span class="iface-value">{{ data.ips|join:", " }}</span>
+            </div>
+
+            <div class="iface-row">
+              <span class="iface-label">MAC</span>
+              <span class="iface-value">{{ data.mac|default:"—" }}</span>
+            </div>
+
+            <div class="iface-row">
+              <span class="iface-label">Status</span>
+              <span class="iface-value">
+                {% if data.state == "up" %}
+                  <span class="badge badge-ok">UP</span>
+                {% else %}
+                  <span class="badge badge-fail">{{ data.state|upper }}</span>
+                {% endif %}
+              </span>
+            </div>
+
+            <div class="iface-row">
+              <span class="iface-label">Carrier</span>
+              <span class="iface-value">
+                {% if data.carrier == "up" %}
+                  <span class="badge badge-ok">UP</span>
+                {% else %}
+                  <span class="badge badge-fail">{{ data.carrier|upper }}</span>
+                {% endif %}
+              </span>
+            </div>
+
+            <!-- SPEED -->
+            <div class="iface-row">
+              <span class="iface-label">Speed</span>
+              <span class="iface-value">
+                {% if data.speed %}
+                  {% with s=data.speed %}
+                    {% with num=s|cut:"Mb/s"|cut:"MBit/s"|cut:" " %}
+                      {% if num|floatformat:0 >= 500 %}
+                        <span class="speed-good">{{ data.speed }}</span>
+                      {% elif num|floatformat:0 >= 100 %}
+                        <span class="speed-ok">{{ data.speed }}</span>
+                      {% else %}
+                        <span class="speed-bad">{{ data.speed }}</span>
+                      {% endif %}
+                    {% endwith %}
+                  {% endwith %}
+                {% else %}
+                  —
+                {% endif %}
+              </span>
+            </div>
+
+            <div class="iface-row">
+              <span class="iface-label">Metric</span>
+              <span class="iface-value">{{ data.metric|default:"—" }}</span>
+            </div>
+
+            <div class="iface-row">
+              <span class="iface-label">Type</span>
+              <span class="iface-value">{{ data.type|title }}</span>
+            </div>
+
+            <!-- WIFI SIGNAL -->
+            {% if data.wifi_signal %}
+              <div class="iface-row">
+                <span class="iface-label">Signal</span>
+                <span class="iface-value">
+                  {% if data.wifi_signal > -55 %}
+                    <span class="signal-good">{{ data.wifi_signal|floatformat:0 }} dBm</span>
+                  {% elif data.wifi_signal > -70 %}
+                    <span class="signal-ok">{{ data.wifi_signal|floatformat:0 }} dBm</span>
+                  {% else %}
+                    <span class="signal-bad">{{ data.wifi_signal|floatformat:0 }} dBm</span>
+                  {% endif %}
+
+                  {% if data.wifi_quality %}
+                    <span class="signal-bar">
+                      <span class="signal-bar-fill" style="width:{{ data.wifi_quality|floatformat:0 }}%;"></span>
+                    </span>
+                  {% endif %}
+                </span>
+              </div>
+            {% endif %}
+
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+
+
+<!-- NETWORK DIAGNOSTICS -->
+<h3 style="margin-top:1.5rem;">Network Diagnostics</h3>
+
+{% comment %}
+Compute summary score
+{% endcomment %}
+{% with total=0 count=0 %}
+  {% for name, diag in network.items %}
+    {% with count=count|add:"1" %}
+      {% if diag.ok %}
+        {% with total=total|add:"100" %}
+        {% endwith %}
+      {% else %}
+        {% with total=total|add:"0" %}
+        {% endwith %}
+      {% endif %}
+    {% endwith %}
+  {% endfor %}
+
+  {% if count > 0 %}
+    {% with score=total|divisibleby:count %}
+      <div class="card" style="margin-bottom:1rem;">
+        <div class="status-line">
+          <div class="name">Summary Health Score</div>
+          <div style="font-size:1.2rem; font-weight:700;">
+            {{ total|divisibleby:count }} / 100
+          </div>
+        </div>
+
+        <div style="background:#333; height:8px; border-radius:4px; overflow:hidden;">
+          <div style="
+            height:100%;
+            width:{{ total|divisibleby:count }}%;
+            max-width:100%;
+            background:
+              {% if total|divisibleby:count >= 90 %}
+                #4caf50
+              {% elif total|divisibleby:count >= 70 %}
+                #f9a825
+              {% else %}
+                #e53935
+              {% endif %};
+          "></div>
+        </div>
+      </div>
+    {% endwith %}
+  {% endif %}
+{% endwith %}
+
+<div style="
+  display:flex;
+  flex-wrap:wrap;
+  gap:1rem;
+  margin-top:0.5rem;
+">
+
+  {% for name, diag in network.items %}
+    <div class="card" style="width:300px;">
+
+      <!-- Icon + Name -->
+      <div class="status-line">
+        <div class="name">
+          {% if "dns" in name %}🌐{% endif %}
+          {% if "http" in name %}🔗{% endif %}
+          {% if "port" in name %}🧱{% endif %}
+          {{ name|title }}
+        </div>
+
+        <div>
+          {% if diag.ok %}
+            <span class="badge badge-ok">OK</span>
+          {% else %}
+            <span class="badge badge-fail">FAIL</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Emoji -->
+      <div style="font-size:1.4rem; margin:0.2rem 0;">
+        {{ diag.emoji }}
+      </div>
+
+      <!-- Latency bar -->
+      <div style="margin:0.3rem 0;">
+        <div style="font-size:0.8rem; opacity:0.8;">
+          Latency: {{ diag.latency_ms }} ms
+        </div>
+
+        <div style="background:#333; height:6px; border-radius:3px; overflow:hidden;">
+          <div style="
+            height:100%;
+            width:{{ diag.latency_ms|floatformat:0 }}%;
+            max-width:100%;
+            background:
+              {% if diag.latency_ms < 100 %}
+                #4caf50
+              {% elif diag.latency_ms < 300 %}
+                #f9a825
+              {% else %}
+                #e53935
+              {% endif %};
+          "></div>
+        </div>
+      </div>
+
+      <!-- Collapsible details -->
+      <div style="margin-top:0.5rem;">
+        <button class="toggle-btn"
+                onclick="toggleDetails('net-{{ forloop.counter }}')"
+                style="
+                  background:#333;
+                  color:#ccc;
+                  padding:0.25rem 0.6rem;
+                  border-radius:0.3rem;
+                  font-size:0.75rem;
+                ">
+          Details ▼
+        </button>
+
+        <div id="net-{{ forloop.counter }}"
+             style="display:none; margin-top:0.5rem; font-size:0.8rem; opacity:0.85;">
+          <pre style="white-space:pre-wrap; background:#222; padding:0.5rem; border-radius:0.3rem;">
+{{ diag.details|safe }}
+          </pre>
+        </div>
+      </div>
+
     </div>
   {% endfor %}
-{% else %}
-  <p>No checks defined.</p>
-{% endif %}
 
-<!-- NETWORK DIAGNOSTICS PANEL -->
-<div class="card mt-4">
-  <div class="card-header">
-    <h4>🌐 Network Diagnostics</h4>
-  </div>
-  <div class="card-body">
-
-    {% if network %}
-      <table class="table table-sm table-striped">
-        <thead>
-          <tr>
-            <th>Check</th>
-            <th>Status</th>
-            <th>Latency</th>
-            <th>Details</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for name, item in network.items %}
-          <tr>
-            <td><strong>{{ name }}</strong></td>
-            <td>{{ item.emoji }} {{ item.ok|yesno:"OK,FAIL" }}</td>
-            <td>{{ item.latency_ms }} ms</td>
-            <td><pre class="small">{{ item.details|safe }}</pre></td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    {% else %}
-      <p>No network diagnostics available.</p>
-    {% endif %}
-
-  </div>
 </div>
 
-<!-- RESTART PANEL -->
-<div class="restart-box">
-  {% if restart_allowed %}
-    <form method="post">
-      {% csrf_token %}
-      <button type="submit" class="btn-restart">Restart services (DEV only)</button>
-    </form>
-  {% else %}
-    <button class="btn-restart" disabled>Restart disabled for {{ env|upper }}</button>
-  {% endif %}
 
-  {% if restart_status %}
-    <div class="restart-status">
-      Restart result: {{ restart_status }}
+
+<!-- SYSTEM CHECKS -->
+<h3 style="margin-top:1rem;">System Checks</h3>
+
+<div style="display:flex; flex-direction:column; gap:0.6rem;">
+
+  {% for check in checks %}
+    <div class="card">
+
+      <div class="status-line">
+        <div class="name">{{ check.name }}</div>
+
+        <div>
+          {% if check.status == "ok" %}
+            <span class="badge badge-ok">OK</span>
+          {% elif check.status == "warn" %}
+            <span class="badge badge-warn">WARN</span>
+          {% else %}
+            <span class="badge badge-fail">FAIL</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Latency bar (if present) -->
+      {% if check.latency_ms %}
+        {% with pct=check.latency_ms|divisibleby:5 %}
+        <div style="margin:0.3rem 0;">
+          <div style="font-size:0.8rem; opacity:0.8;">
+            Latency: {{ check.latency_ms }} ms
+          </div>
+          <div style="background:#333; height:6px; border-radius:3px; overflow:hidden;">
+            <div style="
+              height:100%;
+              width:{{ check.latency_ms|floatformat:0 }}%;
+              max-width:100%;
+              background:
+                {% if check.latency_ms < 100 %}
+                  #4caf50
+                {% elif check.latency_ms < 300 %}
+                  #f9a825
+                {% else %}
+                  #e53935
+                {% endif %};
+            "></div>
+          </div>
+        </div>
+        {% endwith %}
+      {% endif %}
+
+      <!-- Message -->
+      <div style="opacity:0.8; font-size:0.85rem; margin-top:0.4rem;">
+        {{ check.message }}
+      </div>
+
+      <!-- Collapsible details -->
+      {% if check.details %}
+        <div style="margin-top:0.5rem;">
+          <button class="toggle-btn"
+                  onclick="toggleDetails('details-{{ forloop.counter }}')"
+                  style="
+                    background:#333;
+                    color:#ccc;
+                    padding:0.25rem 0.6rem;
+                    border-radius:0.3rem;
+                    font-size:0.75rem;
+                  ">
+            Details ▼
+          </button>
+
+          <div id="details-{{ forloop.counter }}"
+               style="display:none; margin-top:0.5rem; font-size:0.8rem; opacity:0.85;">
+            <pre style="white-space:pre-wrap; background:#222; padding:0.5rem; border-radius:0.3rem;">
+{{ check.details|safe }}
+            </pre>
+          </div>
+        </div>
+      {% endif %}
+
     </div>
-  {% endif %}
+  {% endfor %}
+
 </div>
+<!-- RESTART PANEL -->
+    <div class="restart-box">
+      {% if restart_allowed %}
+        <form method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn-restart">Restart services (DEV only)</button>
+        </form>
+      {% else %}
+        <button class="btn-restart" disabled>Restart disabled for {{ env|upper }}</button>
+      {% endif %}
 
-<a href="/app_accounts/logout/" style="color:#90caf9;">Logout</a>
+      {% if restart_status %}
+        <div class="restart-status">Restart result: {{ restart_status }}</div>
+      {% endif %}
+    </div>
 
-</body>
+    <a href="/app_accounts/logout/" style="color:#90caf9;">Logout</a>
+
+  </body>
 </html>
