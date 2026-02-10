@@ -55,8 +55,7 @@
                     <span class="iface-value">{{ data.type|title }}</span>
                 </div>
                 {% if data.type == "wifi" %}
-                    {% include "app_core/status/partials/_wifi_band.html" %}
-                    {% include "app_core/status/partials/_wifi_signal.html" %}
+                    {% include "app_core/status/partials/_wifi_data.html" %}
                 {% endif %}
             </div>
         {% endfor %}

@@ -25,9 +25,9 @@ use with : from app_core.utils import net
 
 
 
-__version__ = "0.0.0.000071-dev"
+__version__ = "0.0.0.000078-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-10 01:10:48"
+__updated__ = "2026-02-10 01:30:47"
 """
 ###############################################################################
 
@@ -117,16 +117,18 @@ def get_interface_ips() -> dict:
 # ----------------------------------------------------------------------
 def get_wifi_info(iface: str) -> dict:
     """
-    Return Wi-Fi link speed, signal strength, and quality.
-    Works on Raspberry Pi OS, Debian, Ubuntu, etc.
+    Return Wi-Fi link speed, signal strength, quality, frequency, channel,
+    channel width, noise floor, SNR.
     """
     info = {
-        "speed": None,        # e.g., "144.4 MBit/s"
-        "signal_dbm": None,   # e.g., -48
-        "quality": None,      # e.g., 70
-        "noise_dbm": None,    # e.g., -256
+        "speed": None,
+        "signal_dbm": None,
+        "quality": None,
+        "noise_dbm": None,
         "frequency": None,
-
+        "channel": None,
+        "width_mhz": None,
+        "snr": None,
     }
 
     # ------------------------------------------------------------
@@ -144,7 +146,7 @@ def get_wifi_info(iface: str) -> dict:
         pass
 
     # ------------------------------------------------------------
-    # 2. Parse `iw dev wlan0 link` for bitrate
+    # 2. Parse `iw dev wlan0 link`
     # ------------------------------------------------------------
     try:
         out = subprocess.check_output(
@@ -154,16 +156,43 @@ def get_wifi_info(iface: str) -> dict:
         )
         for line in out.splitlines():
             line = line.strip()
+
             if line.startswith("tx bitrate:"):
                 info["speed"] = line.split("tx bitrate:")[-1].strip()
+
             if line.startswith("freq:"):
-                # Example: "freq: 5180"
                 freq_mhz = line.split("freq:")[-1].strip()
                 if freq_mhz.isdigit():
                     info["frequency"] = int(freq_mhz)
 
+            if "channel width" in line:
+                # Example: "channel width: 80 MHz"
+                parts = line.split()
+                for p in parts:
+                    if p.isdigit():
+                        info["width_mhz"] = int(p)
+                        break
+
     except Exception:
         pass
+
+    # ------------------------------------------------------------
+    # 3. Compute channel number
+    # ------------------------------------------------------------
+    freq = info["frequency"]
+    if freq:
+        if 2400 <= freq <= 2500:
+            info["channel"] = int((freq - 2407) / 5)
+        elif 5000 <= freq <= 5900:
+            info["channel"] = int((freq - 5000) / 5)
+        elif 5925 <= freq <= 7125:
+            info["channel"] = int((freq - 5950) / 5)
+
+    # ------------------------------------------------------------
+    # 4. Compute SNR
+    # ------------------------------------------------------------
+    if info["signal_dbm"] is not None and info["noise_dbm"] is not None:
+        info["snr"] = info["signal_dbm"] - info["noise_dbm"]
 
     return info
 
@@ -228,50 +257,6 @@ def get_wifi_color_and_band(data):
     freq = data.get("frequency")
     signal = data.get("wifi_signal")
 
-    # Determine band
-    if freq is None:
-        band = None
-        band_label = None
-    elif freq >= 5925:
-        band = "6ghz"
-        band_label = f"6 GHz ({freq} MHz)"
-    elif freq >= 5000:
-        band = "5ghz"
-        band_label = f"5 GHz ({freq} MHz)"
-    else:
-        band = "2.4ghz"
-        band_label = f"2.4 GHz ({freq} MHz)"
-
-    # Determine color
-    if band == "6ghz":
-        color = "#ab47bc"   # purple
-    elif band == "5ghz":
-        color = "#2196f3"   # blue
-    else:
-        # Strength-based colors
-        if signal is None:
-            color = "#999"
-        elif signal > -55:
-            color = "#4caf50"   # green
-        elif signal > -70:
-            color = "#f9a825"   # yellow
-        else:
-            color = "#e53935"   # red
-
-    return {
-        "band": band,
-        "band_label": band_label,
-        "color": color,
-    }
-
-
-# ----------------------------------------------------------------------
-# set the wifi band info with colors
-# ----------------------------------------------------------------------
-def get_wifi_color_and_band(data):
-    freq = data.get("frequency")
-    signal = data.get("wifi_signal")
-
     # Determine band + label
     if freq is None:
         band = None
@@ -292,6 +277,7 @@ def get_wifi_color_and_band(data):
     elif band == "5ghz":
         color = "#2196f3"   # blue
     else:
+        # Strength-based colors for 2.4 GHz
         if signal is None:
             color = "#999"
         elif signal > -55:
@@ -306,6 +292,7 @@ def get_wifi_color_and_band(data):
         "band_label": band_label,
         "color": color,
     }
+
 
 # ----------------------------------------------------------------------
 # Host identity helper
@@ -351,6 +338,9 @@ def get_interfaces_detailed() -> dict:
     result={}
 
     for iface, ip_list in ips.items():
+        wifi = {}   # <-- define it BEFORE the wifi-only block
+
+
         base = f"/sys/class/net/{iface}"
 
         # MAC address
@@ -378,6 +368,7 @@ def get_interfaces_detailed() -> dict:
         # Interface type
         iface_type = detect_interface_type(iface)
 
+
         # Wi-Fi metrics
         wifi_signal = None
         wifi_quality = None
@@ -389,6 +380,34 @@ def get_interfaces_detailed() -> dict:
             wifi_signal = wifi["signal_dbm"]
             wifi_quality = wifi["quality"]
             wifi_freq = wifi.get("frequency")
+
+
+        # Wi-Fi health score
+        score = 0
+
+        # RSSI
+        if wifi_signal is not None:
+            if wifi_signal > -55: score += 40
+            elif wifi_signal > -65: score += 30
+            elif wifi_signal > -75: score += 20
+            else: score += 10
+
+        # SNR
+        if wifi.get("snr") is not None:
+            snr = wifi["snr"]
+            if snr > 30: score += 40
+            elif snr > 20: score += 30
+            elif snr > 10: score += 20
+            else: score += 10
+
+        # Band bonus
+        if wifi_freq:
+            if wifi_freq >= 5925: score += 15
+            elif wifi_freq >= 5000: score += 10
+            else: score += 5
+
+        # Normalize
+        score = min(100, score)
 
         # Build iface_data
         iface_data = {
@@ -402,6 +421,11 @@ def get_interfaces_detailed() -> dict:
             "metric": metrics.get(iface),
             "type": iface_type,
             "frequency": wifi_freq,
+            "channel": wifi.get("channel"),
+            "width_mhz": wifi.get("width_mhz"),
+            "noise_dbm": wifi.get("noise_dbm"),
+            "snr": wifi.get("snr"),
+            "wifi_health": score,
         }
 
         wifi_info = get_wifi_color_and_band(iface_data)

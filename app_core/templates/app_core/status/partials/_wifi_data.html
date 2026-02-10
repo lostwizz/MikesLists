@@ -1,0 +1,28 @@
+{# all the wifi data is here rather than mixed into the other interfaces#}
+{% include "app_core/status/partials/_wifi_band.html" %}
+{% include "app_core/status/partials/_wifi_signal.html" %}
+{% include "app_core/status/partials/_wifi_health.html" %}
+{% if data.channel %}
+    <div class="iface-row">
+        <span class="iface-label">Channel</span>
+        <span class="iface-value">{{ data.channel }}</span>
+    </div>
+{% endif %}
+{% if data.width_mhz %}
+    <div class="iface-row">
+        <span class="iface-label">Width</span>
+        <span class="iface-value">{{ data.width_mhz }} MHz</span>
+    </div>
+{% endif %}
+{% if data.noise_dbm %}
+    <div class="iface-row">
+        <span class="iface-label">Noise</span>
+        <span class="iface-value">{{ data.noise_dbm|floatformat:0 }} dBm</span>
+    </div>
+{% endif %}
+{% if data.snr %}
+    <div class="iface-row">
+        <span class="iface-label">SNR</span>
+        <span class="iface-value">{{ data.snr|floatformat:0 }} dB</span>
+    </div>
+{% endif %}

@@ -1,0 +1,18 @@
+{# _wifi_health.html #}
+{% if data.wifi_health %}
+    <div class="iface-row">
+        <span class="iface-label">Health</span>
+        <span class="iface-value">
+            {% if data.wifi_health >= 90 %}
+                <span class="badge-health badge-health-good">{{ data.wifi_health }}</span>
+            {% elif data.wifi_health >= 70 %}
+                <span class="badge-health badge-health-warn">{{ data.wifi_health }}</span>
+            {% elif data.wifi_health >= 40 %}
+                <span class="badge-health badge-health-mid">{{ data.wifi_health }}</span>
+            {% else %}
+                <span class="badge-health badge-health-bad">{{ data.wifi_health }}</span>
+            {% endif %}
+            / 100
+        </span>
+    </div>
+{% endif %}
