@@ -6,6 +6,10 @@ ip.py
 app_core.utils.ip
 /srv/django/MikesLists_dev/app_core/utils/ip.py
 
+You want:
+• 	 → Who is the client?
+• 	 → Is the network healthy?
+Two different concerns
 
 IP address utility helpers for Django request objects.
 
@@ -17,7 +21,7 @@ and admin‑IP allow‑listing.
 """
 __version__ = "0.0.0.000051-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-09 00:48:59"
+__updated__ = "2026-02-09 19:23:49"
 ###############################################################################
 
 
@@ -119,5 +123,8 @@ def is_private_ip(ip: str | None) -> bool:
         return False
 
 
-# -----------------------------------------------------------------
+
+
+
+
 # -----------------------------------------------------------------

@@ -3,7 +3,7 @@
 # Django run script to make sure all is ready for development
 #
 # ==========================================
-# __version__ = "0.1.0.000051-dev"
+# __version__ = "0.1.0.000050-dev"
 
 echo "--- Starting MikesLists Dev Environment Checks ---"
 

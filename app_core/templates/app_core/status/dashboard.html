@@ -49,6 +49,7 @@
     .badge-ok { background-color: #2e7d32; }
     .badge-warn { background-color: #f9a825; color: #000; }
     .badge-fail { background-color: #c62828; }
+
     .restart-box {
       margin-top: 1rem;
       padding: 0.75rem 1rem;
@@ -77,19 +78,46 @@
     }
   </style>
 </head>
+
 <body>
-    <div style="margin-bottom:1rem;">
-    <a href="/status/" style="color:#90caf9;">Back to dashboard</a>
+
+<div style="margin-bottom:1rem;">
+  <a href="/status/" style="color:#90caf9;">Back to dashboard</a>
 </div>
 
+<h1>
+  Status
+  <span class="badge-env env-{{ env }}">
+    {{ env|upper }}
+  </span>
+</h1>
 
-  <h1>
-    Status
-    <span class="badge-env env-{{ env }}">
-{{ env|upper }}
-    </span>
-  </h1>
+<!-- CHECKS SECTION -->
+<div class="card" style="margin-top:1rem;">
+    <div class="status-line">
+    <div class="name">Client IP</div>
+    <div>{{ client_ip }}</div>
+  </div>
 
+
+
+  <div class="status-line">
+    <div class="name">Remote Client</div>
+    <div>{{ remote_ip }}</div>
+  </div>
+
+  <div class="status-line">
+    <div class="name">Server Hostname</div>
+    <div>{{ host_identity.hostname }}</div>
+  </div>
+
+  <div class="status-line">
+    <div class="name">Server IP</div>
+    <div>{{ host_identity.ip }}</div>
+  </div>
+</div>
+
+{% if checks %}
   {% for c in checks %}
     <div class="card">
       <div class="status-line">
@@ -98,26 +126,65 @@
       </div>
       <div>{{ c.message }}</div>
     </div>
-  {% empty %}
-    <p>No checks defined.</p>
   {% endfor %}
+{% else %}
+  <p>No checks defined.</p>
+{% endif %}
 
-  <div class="restart-box">
-    {% if restart_allowed %}
-      <form method="post">
-        {% csrf_token %}
-        <button type="submit" class="btn-restart">Restart services (DEV only)</button>
-      </form>
-    {% else %}
-      <button class="btn-restart" disabled>Restart disabled for {{ env|upper }}</button>
-    {% endif %}
-
-    {% if restart_status %}
-      <div class="restart-status">
-        Restart result: {{ restart_status }}
-      </div>
-    {% endif %}
+<!-- NETWORK DIAGNOSTICS PANEL -->
+<div class="card mt-4">
+  <div class="card-header">
+    <h4>🌐 Network Diagnostics</h4>
   </div>
-  <a href="/app_accounts/logout/" style="color:#90caf9;">Logout</a>
+  <div class="card-body">
+
+    {% if network %}
+      <table class="table table-sm table-striped">
+        <thead>
+          <tr>
+            <th>Check</th>
+            <th>Status</th>
+            <th>Latency</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for name, item in network.items %}
+          <tr>
+            <td><strong>{{ name }}</strong></td>
+            <td>{{ item.emoji }} {{ item.ok|yesno:"OK,FAIL" }}</td>
+            <td>{{ item.latency_ms }} ms</td>
+            <td><pre class="small">{{ item.details|safe }}</pre></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>No network diagnostics available.</p>
+    {% endif %}
+
+  </div>
+</div>
+
+<!-- RESTART PANEL -->
+<div class="restart-box">
+  {% if restart_allowed %}
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn-restart">Restart services (DEV only)</button>
+    </form>
+  {% else %}
+    <button class="btn-restart" disabled>Restart disabled for {{ env|upper }}</button>
+  {% endif %}
+
+  {% if restart_status %}
+    <div class="restart-status">
+      Restart result: {{ restart_status }}
+    </div>
+  {% endif %}
+</div>
+
+<a href="/app_accounts/logout/" style="color:#90caf9;">Logout</a>
+
 </body>
 </html>

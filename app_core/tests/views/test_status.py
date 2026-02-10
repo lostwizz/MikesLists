@@ -13,7 +13,7 @@ test_status
 """
 __version__ = "0.1.0.000043-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-09 00:52:32"
+__updated__ = "2026-02-09 19:48:44"
 ###############################################################################
 
 
@@ -53,7 +53,7 @@ def nonstaff_user(db):
 # ACCESS CONTROL
 # -------------------------------------------------------------------
 
-@override_settings(STATUS_ALLOWED_IP_PREFIXES=["127.0.0.1"])
+@override_settings(ADMIN_ALLOWED_IP_PREFIXES=["127.0.0.1"])
 def test_status_view_forbidden_ip(rf, staff_user):
     request = rf.get("/status")
     request.user = staff_user
@@ -80,8 +80,8 @@ def test_status_view_anonymous_redirect(client):
 # JSON MODE
 # -------------------------------------------------------------------
 
-@override_settings(STATUS_ALLOWED_IP_PREFIXES=["127.0.0.1"])
-@patch("app_core.views.status.collect_checks")
+@override_settings(ADMIN_ALLOWED_IP_PREFIXES=["127.0.0.1"])
+@patch("app_core.views.status.status_service.collect_checks")
 def test_status_view_json_mode(mock_checks, rf, staff_user):
     mock_checks.return_value = [
         CheckResult("Test", "ok", "All good")
@@ -109,8 +109,8 @@ def test_status_view_json_mode(mock_checks, rf, staff_user):
 # HTML MODE
 # -------------------------------------------------------------------
 
-@override_settings(STATUS_ALLOWED_IP_PREFIXES=["127.0.0.1"])
-@patch("app_core.views.status.collect_checks")
+@override_settings(ADMIN_ALLOWED_IP_PREFIXES=["127.0.0.1"])
+@patch("app_core.views.status.status_service.collect_checks")
 def test_status_view_html_mode(mock_checks, client, staff_user):
     mock_checks.return_value = [
         CheckResult("Test", "ok", "All good")
@@ -128,10 +128,10 @@ def test_status_view_html_mode(mock_checks, client, staff_user):
 # -------------------------------------------------------------------
 
 @override_settings(
-    STATUS_ALLOWED_IP_PREFIXES=["127.0.0.1"],
+    ADMIN_ALLOWED_IP_PREFIXES=["127.0.0.1"],
     STATUS_ALLOW_RESTART=True,
 )
-@patch("app_core.views.status.collect_checks", return_value=[])
+@patch("app_core.views.status.status_service.collect_checks", return_value=[])
 @patch("app_core.views.status.restart_allowed", return_value=True)
 @patch("app_core.views.status.perform_restart")
 def test_status_view_restart_success(mock_restart, mock_allowed, mock_checks, rf, staff_user):
@@ -152,10 +152,10 @@ def test_status_view_restart_success(mock_restart, mock_allowed, mock_checks, rf
 
 
 @override_settings(
-    STATUS_ALLOWED_IP_PREFIXES=["127.0.0.1"],
+    ADMIN_ALLOWED_IP_PREFIXES=["127.0.0.1"],
     STATUS_ALLOW_RESTART=True,
 )
-@patch("app_core.views.status.collect_checks", return_value=[])
+@patch("app_core.views.status.status_service.collect_checks", return_value=[])
 @patch("app_core.views.status.restart_allowed", return_value=True)
 @patch("app_core.views.status.perform_restart")
 def test_status_view_restart_failure(mock_restart, mock_allowed, mock_checks, rf, staff_user):

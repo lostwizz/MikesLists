@@ -11,7 +11,7 @@ app_core.views.status
 """
 __version__ = "0.1.0.000044-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-08 22:41:13"
+__updated__ = "2026-02-09 18:56:15"
 ###############################################################################
 
 
@@ -26,24 +26,35 @@ from django.shortcuts import render
 
 from app_core.utils.auth import is_staff
 from app_core.utils.env import get_env
+# from app_core.utils.ip import get_client_ip
+from app_core.utils import net, ip
 from app_core.utils.security import is_admin_access_allowed
-from app_core.services.status_service import collect_checks
 from app_core.services.restart_service import restart_allowed, perform_restart
 from app_accounts.utils.roles import get_user_role
+
+from app_core.services import status_service
+
+
+
+# ---------------------------------------------------------------------------
+def status(request):
+    return JsonResponse(status_service.get_status())
 
 
 # ---------------------------------------------------------------------------
 @user_passes_test(is_staff)
 def status_view(request: HttpRequest) -> HttpResponse:
-    """
-    Main system status dashboard.
-    Staff-only, and IP-restricted via is_admin_access_allowed().
-    """
 
     if not is_admin_access_allowed(request):
         return HttpResponseForbidden("IP not allowed")
 
-    checks = collect_checks()
+    # FIXED: call through the module
+    checks = status_service.collect_checks()
+    network = status_service.network_diagnostics()
+    remote_ip = request.META.get("REMOTE_ADDR", "unknown")
+    host_identity = net.get_host_identity()
+    client_ip = ip.get_client_ip(request)
+
 
     # JSON API mode
     if (
@@ -57,7 +68,7 @@ def status_view(request: HttpRequest) -> HttpResponse:
             }
         )
 
-    # Restart logic (delegated to restart_service)
+    # Restart logic
     restart_status = None
     if request.method == "POST" and restart_allowed():
         success, msg = perform_restart()
@@ -66,12 +77,15 @@ def status_view(request: HttpRequest) -> HttpResponse:
     context = {
         "env": get_env(),
         "checks": checks,
+        "network": network,
+        "client_ip": client_ip,
+        "remote_ip": remote_ip,
+        "host_identity": host_identity,
         "restart_allowed": restart_allowed(),
         "restart_status": restart_status,
     }
 
     return render(request, "app_core/status/dashboard.html", context)
-
 
 # ---------------------------------------------------------------------------
 def dashboard(request):

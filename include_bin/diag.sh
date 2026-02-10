@@ -2,7 +2,7 @@
 # ==========================================
 # Django Deep Diagnostic Tool v2.1 (verbose)
 # ==========================================
-# __version__="2.2.2.000103"
+# __version__="2.2.2.000102"
 
 #############################################
 # COLORS (ANSI-safe)
@@ -1115,7 +1115,7 @@ check_tests67() {
     local fail=false
 
     echo -e "\n${YELLOW}[2] PY Coverage Testing config file: $LABEL ${RESET}"
-    cat .coveragerc
+    cat /srv/django/MikesLists_dev/.coveragerc
 
 
     echo -e "\n${YELLOW}[2] PY Coverage Testing: $LABEL ${RESET}"
