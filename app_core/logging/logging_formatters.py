@@ -9,9 +9,9 @@ app_core.logging.logging_formatters
 
 
 """
-__version__ = "0.0.0.000073-dev"
+__version__ = "0.0.0.000077-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-05 18:16:59"
+__updated__ = "2026-02-11 21:35:25"
 ###############################################################################
 
 import logging
@@ -19,40 +19,65 @@ import sqlparse
 import re
 
 
+
+# -----------------------------------------------------------------
 class PrettySQLFormatter(logging.Formatter):
+    """
+    A predictable, testable SQL formatter.
+
+    For CREATE TABLE:
+    - We fully control the formatting.
+    - We split columns ourselves.
+    - We guarantee lines that begin with:
+        `...`
+        PRIMARY ...
+        CONSTRAINT ...
+    - We guarantee a standalone ')'
+    """
+
     def format(self, record):
         raw_sql = getattr(record, "sql", record.getMessage())
         duration = getattr(record, "duration", "0.0")
 
-        # 1. Collapse whitespace
         clean_sql = " ".join(raw_sql.split())
 
-        # 2. Force a newline after the table name and BEFORE the parenthesis
-        # This prevents the first column from being on the same line as CREATE TABLE
-        clean_sql = clean_sql.replace(" (", "\n(", 1)
+        # ---------------------------------------------------------
+        # CUSTOM CREATE TABLE HANDLING (fully deterministic)
+        # ---------------------------------------------------------
+        if clean_sql.upper().startswith("CREATE TABLE"):
+            before_paren, after_paren = clean_sql.split("(", 1)
+            columns_block, after_block = after_paren.rsplit(")", 1)
 
-        # 3. Format with sqlparse
-        formatted_sql = sqlparse.format(
-            clean_sql,
-            reindent=True,
-            indent_width=4,
-            keyword_case="upper",
-        )
+            # Split columns by comma
+            columns = [col.strip() for col in columns_block.split(",")]
 
+            # Build predictable multi-line SQL
+            lines = []
+            lines.append(before_paren.strip() + " (")
+            for col in columns:
+                lines.append(col)  # raw column line
+            lines.append(")")
+            clean_sql = "\n".join(lines)
+
+        # ---------------------------------------------------------
+        # Apply your custom indentation rules
+        # ---------------------------------------------------------
         final_lines = []
-        for line in formatted_sql.splitlines():
+        for line in clean_sql.splitlines():
             stripped = line.lstrip()
             if not stripped:
                 continue
 
-            # If line starts with a column (backtick) or constraint, give it 4 spaces
             if (
-                stripped.startswith("`") or stripped.startswith("PRIMARY") or stripped.startswith("CONSTRAINT")
+                stripped.startswith("`")
+                or stripped.startswith("PRIMARY")
+                or stripped.startswith("CONSTRAINT")
             ):
                 final_lines.append("    " + stripped)
-            # If it's the closing paren, keep it flush left or slightly indented
+
             elif stripped == ")":
                 final_lines.append(stripped)
+
             else:
                 final_lines.append(stripped)
 

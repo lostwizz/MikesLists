@@ -1,85 +1,78 @@
-# app_core.tests.test_context_processors
-# /srv/django/MikesLists_dev/app_core/tests/test_context_processors.py
+import types
+from unittest.mock import patch, MagicMock
 
-
-from django.test import TestCase, Client, override_settings, RequestFactory
-from django.urls import reverse
+import pytest
+from django.test import RequestFactory
 
 from app_core.context_processors import export_env_vars, user_info
-from app_accounts.models import Profile
-from django.contrib.auth.models import AnonymousUser, User
-
-# from app_core.urls import *
-
-class TestUserInfo(TestCase):
-    def setUp(self):
-        self.factory = RequestFactory()
-        self.user = User.objects.create_user(username="mike", password="x")
-
-    def test_user_info_anonymous(self):
-        request = self.factory.get("/")
-        request.user = AnonymousUser()
-        result = user_info(request)
-        assert result == {}
-
-    @override_settings(ENV_NAME="dev")
-    def test_user_info_authenticated_remote_addr(self):
-        request = self.factory.get("/", REMOTE_ADDR="123.45.67.89")
-        request.user = self.user
-
-        profile = Profile.objects.get(user=self.user)
-
-        result = user_info(request)
-        assert result["sidebar_username"] == "mike"
-        assert result["sidebar_ip"] == "123.45.67.89"
-        assert result["sidebar_env"] == "dev"
-        assert result["user_profile"] == profile
 
 
+# ----------------------------------------------------------------------
+# export_env_vars
+# ----------------------------------------------------------------------
+@patch("app_core.context_processors.get_env", return_value="dev-env")
+def test_export_env_vars(mock_get_env):
+    req = RequestFactory().get("/")
+    result = export_env_vars(req)
+
+    assert result == {"env": "dev-env"}
+    mock_get_env.assert_called_once()
 
 
+# ----------------------------------------------------------------------
+# user_info — authenticated user
+# ----------------------------------------------------------------------
+@patch("app_core.context_processors.get_env", return_value="prod-env")
+def test_user_info_authenticated_remote_addr(mock_get_env):
+    req = RequestFactory().get("/")
+    req.META["REMOTE_ADDR"] = "10.0.0.5"
 
-    @override_settings(ENV_NAME="live")
-    def test_user_info_authenticated_forwarded_for(self):
-        request = self.factory.get("/", HTTP_X_FORWARDED_FOR="10.0.0.1, 10.0.0.2")
-        request.user = self.user
-        result = user_info(request)
-        assert result["sidebar_ip"] == "10.0.0.1"
-        assert result["sidebar_env"] == "live"
+    # Fake user object
+    user = types.SimpleNamespace(
+        is_authenticated=True,
+        username="mike",
+        profile="PROFILE_OBJ",
+    )
+    req.user = user
 
-    @override_settings(ENV_NAME="dev")
-    def test_user_info_with_profile(self):
-        request = self.factory.get("/", REMOTE_ADDR="1.2.3.4")
-        request.user = self.user
+    result = user_info(req)
 
-        profile = Profile.objects.get(user=self.user)
-
-        result = user_info(request)
-        assert result["user_profile"] == profile
+    assert result["sidebar_username"] == "mike"
+    assert result["sidebar_ip"] == "10.0.0.5"
+    assert result["sidebar_env"] == "prod-env"
+    assert result["user_profile"] == "PROFILE_OBJ"
 
 
+# ----------------------------------------------------------------------
+# user_info — authenticated with X‑Forwarded‑For
+# ----------------------------------------------------------------------
+@patch("app_core.context_processors.get_env", return_value="prod-env")
+def test_user_info_authenticated_xff(mock_get_env):
+    req = RequestFactory().get("/")
+    req.META["HTTP_X_FORWARDED_FOR"] = "1.2.3.4, 5.6.7.8"
+
+    user = types.SimpleNamespace(
+        is_authenticated=True,
+        username="alice",
+        profile=None,
+    )
+    req.user = user
+
+    result = user_info(req)
+
+    assert result["sidebar_username"] == "alice"
+    assert result["sidebar_ip"] == "1.2.3.4"  # first IP extracted
+    assert result["sidebar_env"] == "prod-env"
+    assert result["user_profile"] is None
 
 
+# ----------------------------------------------------------------------
+# user_info — unauthenticated user
+# ----------------------------------------------------------------------
+def test_user_info_unauthenticated():
+    req = RequestFactory().get("/")
+    req.user = types.SimpleNamespace(is_authenticated=False)
 
+    result = user_info(req)
 
-class TestExportEnvVars(TestCase):
-    def setUp(self):
-        self.factory = RequestFactory()
-
-    @override_settings(ENV_NAME="dev")
-    def test_export_env_vars_dev(self):
-        request = self.factory.get("/")
-        result = export_env_vars(request)
-        assert result == {"env": "dev"}
-
-    @override_settings(ENV_NAME="live")
-    def test_export_env_vars_live(self):
-        request = self.factory.get("/")
-        result = export_env_vars(request)
-        assert result == {"env": "live"}
-
-    @override_settings(ENV_NAME="test")
-    def test_export_env_vars_test(self):
-        request = self.factory.get("/")
-        result = export_env_vars(request)
-        assert result == {"env": "test"}
+    assert result == {}  # early return

@@ -16,9 +16,9 @@ To dump all the defined (assuming the base set never change):
 logger.dump_all_loggers()
 
 """
-__version__ = "0.0.0.000037-dev"
+__version__ = "0.0.0.000044-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-05 22:31:56"
+__updated__ = "2026-02-11 21:18:31"
 ###############################################################################
 import logging
 
@@ -93,6 +93,8 @@ class LoggingProxy:
             self.log(num, f"Sample {name} output  - " + data)
 
 
+# -----------------------------------------------------------------
+# -----------------------------------------------------------------
 def add_custom_logging_levels(levels_dict):
     # If the dictionary is empty, the import didn't trigger the add() calls
     if not levels_dict:
@@ -103,29 +105,44 @@ def add_custom_logging_levels(levels_dict):
         levels_dict = const.CUSTOM_LOG_LEVELS
 
     for name, (num, color, prefix) in levels_dict.items():
+        # Register the level name with Python's logging system
         logging.addLevelName(num, name)
 
+        # Proper closure: bind level_num at definition time
         def make_method(level_num):
             def log_method(self, message, *args, **kwargs):
                 if self.isEnabledFor(level_num):
-                    self._log(level_num, message, args, stacklevel=2, **kwargs)
-
+                    # Correct: pass args, kwargs, and stacklevel=2
+                    self._log(
+                        level_num,
+                        message,
+                        args,
+                        stacklevel=2,
+                        **kwargs
+                    )
             return log_method
 
+        # Attach logger.mark(), logger.tracex(), etc.
         setattr(logging.Logger, name.lower(), make_method(num))
 
 
+# -----------------------------------------------------------------
 def patch_builtin_levels():
+    """
+    Patch built‑in logging methods so they always use stacklevel=2,
+    without breaking kwargs or causing double‑stacklevel errors.
+    """
     for method_name in ["debug", "info", "warning", "error", "critical"]:
         original = getattr(logging.Logger, method_name)
 
-        def wrapper(self, message, *args, _orig=original, **kwargs):
-            return _orig(self, message, *args, stacklevel=2, **kwargs)
+        def make_wrapper(orig):
+            def wrapper(self, message, *args, **kwargs):
+                # Remove stacklevel if already present to avoid double‑passing
+                kwargs.pop("stacklevel", None)
+                return orig(self, message, *args, stacklevel=2, **kwargs)
+            return wrapper
 
-        setattr(logging.Logger, method_name, wrapper)
-
-
-# logger = LoggingProxy("app_core")
+        setattr(logging.Logger, method_name, make_wrapper(original))
 
 
 # Now call the function here, where it is defined
