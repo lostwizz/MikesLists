@@ -31,6 +31,11 @@ def test_network_diagnostics(
 # -----------------------------
 # get_status() integration
 # -----------------------------
+
+# @patch("app_core.services.status_service.collect_checks")
+# @patch("app_core.services.status_service.network_diagnostics")
+
+@pytest.mark.django_db
 @patch("app_core.services.status_service.network_diagnostics")
 def test_get_status_includes_network(mock_net):
     mock_net.return_value = {"fake": "data"}

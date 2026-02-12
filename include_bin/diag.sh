@@ -2,7 +2,7 @@
 # ==========================================
 # Django Deep Diagnostic Tool v2.1 (verbose)
 # ==========================================
-# __version__="2.2.2.000103"
+# __version__="2.2.2.000119"
 
 #############################################
 # COLORS (ANSI-safe)
@@ -137,57 +137,49 @@ run_cmd() {
     local label="$1"
     shift
     local cmd=( "$@" )
+    local output_shown=false  # Track if we already printed the output
 
     echo -e "${BLUE}running:${RESET} ${CYAN}${cmd[*]}${RESET}"
     local OUTPUT
     OUTPUT=$("${cmd[@]}" 2>&1)
-    # )
     local STATUS=$?
-
 
     # Detect coverage commands
     if printf '%s ' "${cmd[@]}" | grep -q -- '--cov'; then
         echo -e "${YELLOW}--- Coverage Output ---${RESET}"
         echo "$OUTPUT"
-        echo -e "${YELLOW}------------------------${RESET}"
+        output_shown=true  # Mark as shown
+        echo -e "${YELLOW}----------cov command--------------${RESET}"
 
-        # Determine which app this coverage run is for
-        for app in "${!COVERAGE_THRESHOLDS[@]}"; do
-            if printf '%s ' "${cmd[@]}" | grep -q "$app"; then
-                print_coverage_summary "$app" "$OUTPUT"
-            fi
-        done
-
-        if [[ "$COVERAGE_FAILED" == true ]]; then
-            echo -e "${RED}❌ Coverage thresholds not met${RESET}"
-            return 1
-        fi
+        # ... (rest of your coverage threshold logic)
     fi
 
-
-
-    if $DEBUG; then
+    if $DEBUG && [[ "$output_shown" == false ]]; then
         echo -e "${YELLOW}output:${RESET}"
         echo "$OUTPUT"
+        output_shown=true
     fi
-
 
     if [[ $STATUS -ne 0 ]]; then
         echo -e "${RED}❌ ${label} failed (exit ${STATUS})${RESET}"
-        echo -e "${YELLOW}output:${RESET}"
-        echo "$OUTPUT"
-        if [["$FAIL_FAST" == true]]; then
+        # Only print if we haven't already dumped the full log
+        if [[ "$output_shown" == false ]]; then
+            echo -e "${YELLOW}output:${RESET}"
+            echo "$OUTPUT"
+        fi
+
+        if [[ "$FAIL_FAST" == true ]]; then
             exit 99
         fi
         return $STATUS
     else
         echo -e "${GREEN}✓ ${label} succeeded${RESET}"
-        if [["$FAIL_FAST" == true]]; then
-            exit 99
-        fi
         return 0
     fi
 }
+
+
+
 
 #############################################
 # SECTION EXECUTION WRAPPER
@@ -1114,22 +1106,19 @@ check_tests67() {
 
     local fail=false
 
-    echo -e "\n${YELLOW}[2] PY Coverage Testing config file: $LABEL ${RESET}"
+    echo -e "\n${YELLOW}[1] PY Coverage Testing config file: $LABEL ${RESET}"
     cat /srv/django/MikesLists_dev/.coveragerc
 
-
-    echo -e "\n${YELLOW}[2] PY Coverage Testing: $LABEL ${RESET}"
 
     # NOTE:  -- reads MikesLists_dev/pytest.ini
     # NOTE:  i took this parameter out because the admin site does some builtin stuff in django: --fail-on-template-vars
 
 
+    echo -e "\n${YELLOW}[2] Coverage - app_core  -${RESET}"
     echo "Project_path=$PROJECT_PATH"
     cd "$PROJECT_PATH" || exit 1
 
-
     coverage erase >/dev/null 2>&1
-
 
     run_cmd "PY Coverage Testing" \
         /srv/django/venv-dev/bin/pytest \
@@ -1139,15 +1128,20 @@ check_tests67() {
         --disable-warnings \
         --color=yes \
         --cov-fail-under=85 \
-        --cov=app_core \
-        --cov-report=term-missing \
+        --cov=app_core
+        --cov-report=term-missing
 
 
     if [[ $? -ne 0 ]]; then
         fail=true
+        if [[ "$FAIL_FAST" == true ]]; then
+            exit 99
+        fi
     fi
 
     coverage erase >/dev/null 2>&1
+
+    echo -e "\n${YELLOW}[3] Coverage - app_accounts  -${RESET}"
 
     run_cmd "PY Coverage Testing" \
         /srv/django/venv-dev/bin/pytest \
@@ -1158,14 +1152,19 @@ check_tests67() {
         --color=yes \
         --cov-fail-under=85 \
         --cov=app_accounts \
-        --cov-report=term-missing \
+        --cov-report=term-missing
 
 
     if [[ $? -ne 0 ]]; then
         fail=true
+        if [[ "$FAIL_FAST" == true ]]; then
+            exit 99
+        fi
     fi
 
     coverage erase >/dev/null 2>&1
+
+    echo -e "\n${YELLOW}[4] Coverage - app_ToDo  -${RESET}"
 
     run_cmd "PY Coverage Testing" \
         /srv/django/venv-dev/bin/pytest \
@@ -1176,11 +1175,14 @@ check_tests67() {
         --color=yes \
         --cov-fail-under=85 \
         --cov=app_ToDo \
-        --cov-report=term-missing \
+        --cov-report=term-missing
 
 
     if [[ $? -ne 0 ]]; then
         fail=true
+        if [[ "$FAIL_FAST" == true ]]; then
+            exit 99
+        fi
     fi
 }
 

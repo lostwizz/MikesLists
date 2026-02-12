@@ -9,9 +9,9 @@ app_core.views.status
 
 
 """
-__version__ = "0.1.0.000048-dev"
+__version__ = "0.1.0.000057-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-09 21:54:16"
+__updated__ = "2026-02-11 19:01:05"
 ###############################################################################
 
 
@@ -34,7 +34,8 @@ from app_accounts.utils.roles import get_user_role
 
 from app_core.services import status_service
 
-
+import logging
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 def status(request):
@@ -44,7 +45,6 @@ def status(request):
 # ---------------------------------------------------------------------------
 @user_passes_test(is_staff)
 def status_view(request: HttpRequest) -> HttpResponse:
-
     if not is_admin_access_allowed(request):
         return HttpResponseForbidden("IP not allowed")
 
@@ -55,10 +55,15 @@ def status_view(request: HttpRequest) -> HttpResponse:
         request.headers.get("Accept") == "application/json"
         or request.GET.get("format") == "json"
     ):
+        # Extract list from dict to avoid NameError
+        checks_list = status_data.get("checks", [])
         return JsonResponse(
             {
                 "env": get_env(),
-                "checks": [c.__dict__ for c in checks],
+                "checks": [
+                    c.__dict__ if hasattr(c, "__dict__") else c
+                    for c in checks_list
+                ],
             }
         )
 
@@ -68,7 +73,14 @@ def status_view(request: HttpRequest) -> HttpResponse:
         success, msg = perform_restart()
         restart_status = msg
 
-    return render(request, "app_core/status/dashboard.html", status_data)
+    # Final Context for HTML
+    context = {
+        **status_data,
+        "message": restart_status
+    }
+
+    return render(request, "app_core/status/dashboard.html", context)
+
 
 
 # ---------------------------------------------------------------------------

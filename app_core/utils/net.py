@@ -25,9 +25,9 @@ use with : from app_core.utils import net
 
 
 
-__version__ = "0.0.0.000078-dev"
+__version__ = "0.0.0.000083-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-10 01:30:47"
+__updated__ = "2026-02-11 01:16:06"
 """
 ###############################################################################
 
@@ -36,6 +36,39 @@ from __future__ import annotations
 import os
 import socket
 import subprocess
+import psutil
+import time
+# import requests
+
+
+
+# ----------------------------------------------------------------------
+# ping_host - check that a host is there
+# ----------------------------------------------------------------------
+def ping_host(host, timeout=1.0):
+    """Return True if host resolves and accepts a TCP connection on port 80."""
+    try:
+        start = time.time()
+        socket.gethostbyname(host)
+        latency = (time.time() - start) * 1000
+        return {"ok": True, "latency_ms": latency}
+    except Exception:
+        return {"ok": False, "latency_ms": None}
+
+
+# ----------------------------------------------------------------------
+# get_ip_addresses -
+# ----------------------------------------------------------------------
+def get_ip_addresses():
+    """Return dict of interface → list of IPs."""
+    try:
+        result = {}
+        for iface, addrs in psutil.net_if_addrs().items():
+            ips = [a.address for a in addrs if a.family == socket.AF_INET]
+            result[iface] = ips
+        return result
+    except Exception:
+        return {}
 
 
 # ----------------------------------------------------------------------

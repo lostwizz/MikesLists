@@ -8,9 +8,9 @@ accounts.models.signals
 
 
 """
-__version__ = "0.0.0.000014-dev"
+__version__ = "0.0.0.000016-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-07 22:34:01"
+__updated__ = "2026-02-11 18:09:55"
 ###############################################################################
 
 import logging
@@ -53,7 +53,7 @@ def create_user_profile(sender, instance, created, **kwargs):
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
 
-    logging.debug(f"instance: {instance}")
+    logging.debug(f"save_user_profile: instance: {instance}")
     # This ensures the profile is saved whenever the user is saved
     if hasattr(instance, "profile"):
 
@@ -63,4 +63,4 @@ def save_user_profile(sender, instance, **kwargs):
 
         instance.profile.save()
     else:
-        logging.debug("profile not saved")
+        logging.debug(f"profile not saved  {instance=}")
