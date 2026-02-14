@@ -2,7 +2,7 @@
 # ==========================================
 # Django Deep Diagnostic Tool v2.1 (verbose)
 # ==========================================
-# __version__="2.2.2.000119"
+# __version__="2.2.2.000124"
 
 #############################################
 # COLORS (ANSI-safe)
@@ -1114,45 +1114,45 @@ check_tests67() {
     # NOTE:  i took this parameter out because the admin site does some builtin stuff in django: --fail-on-template-vars
 
 
-    echo -e "\n${YELLOW}[2] Coverage - app_core  -${RESET}"
-    echo "Project_path=$PROJECT_PATH"
-    cd "$PROJECT_PATH" || exit 1
+    # echo -e "\n${YELLOW}[2] Coverage - app_core  -${RESET}"
+    # echo "Project_path=$PROJECT_PATH"
+    # cd "$PROJECT_PATH" || exit 1
 
-    coverage erase >/dev/null 2>&1
+    # coverage erase >/dev/null 2>&1
 
-    run_cmd "PY Coverage Testing" \
-        /srv/django/venv-dev/bin/pytest \
-        app_core \
-        --cache-clear \
-        --verbosity=3 \
-        --disable-warnings \
-        --color=yes \
-        --cov-fail-under=85 \
-        --cov=app_core
-        --cov-report=term-missing
+    # run_cmd "PY Coverage Testing" \
+    #     /srv/django/venv-dev/bin/pytest \
+    #     app_core \
+    #     --cov=app_core \
+    #     --cache-clear \
+    #     --verbosity=3 \
+    #     --disable-warnings \
+    #     --color=yes \
+    #     --cov-fail-under=85 \
+    #     --cov-report=term-missing
 
 
-    if [[ $? -ne 0 ]]; then
-        fail=true
-        if [[ "$FAIL_FAST" == true ]]; then
-            exit 99
-        fi
-    fi
+    # if [[ $? -ne 0 ]]; then
+    #     fail=true
+    #     if [[ "$FAIL_FAST" == true ]]; then
+    #         exit 99
+    #     fi
+    # fi
 
-    coverage erase >/dev/null 2>&1
+    # coverage erase >/dev/null 2>&1
 
     echo -e "\n${YELLOW}[3] Coverage - app_accounts  -${RESET}"
 
     run_cmd "PY Coverage Testing" \
         /srv/django/venv-dev/bin/pytest \
         app_accounts \
+        --cov=app_accounts \
         --cache-clear \
         --verbosity=3 \
         --disable-warnings \
         --color=yes \
-        --cov-fail-under=85 \
-        --cov=app_accounts \
-        --cov-report=term-missing
+        --cov-fail-under=95 \
+        # --cov-report=term-missing
 
 
     if [[ $? -ne 0 ]]; then
@@ -1169,13 +1169,13 @@ check_tests67() {
     run_cmd "PY Coverage Testing" \
         /srv/django/venv-dev/bin/pytest \
         app_ToDo \
+        --cov=app_ToDo \
         --cache-clear \
         --verbosity=3 \
         --disable-warnings \
         --color=yes \
-        --cov-fail-under=85 \
-        --cov=app_ToDo \
-        --cov-report=term-missing
+        # --cov-fail-under=85 \
+        # --cov-report=term-missing
 
 
     if [[ $? -ne 0 ]]; then

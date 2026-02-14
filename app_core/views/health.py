@@ -16,9 +16,9 @@ app_core.views.health
 
 
 """
-__version__ = "0.0.0.000062-dev"
+__version__ = "0.0.0.000063-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-09 00:10:48"
+__updated__ = "2026-02-12 22:25:13"
 ###############################################################################
 
 import time
@@ -63,9 +63,9 @@ def health(request):
     #         logger.error(f"Problematic data: {asdict(result)}")
 
     # Determine overall status
-    if False:
-        is_healthy = all(c.status == "ok" for c in checks.values())
-        logger.tracet(f"{is_healthy=}")
+    # if False:
+    #     is_healthy = all(c.status == "ok" for c in checks.values())
+    #     logger.tracet(f"{is_healthy=}")
 
     # Compute overall status
     overall_status = "ok"

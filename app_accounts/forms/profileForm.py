@@ -11,15 +11,17 @@ app_accounts.forms.profileForm
 
 
 
+
 """
-__version__ = "0.0.0.000011-dev"
+__version__ = "0.0.0.000012-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-27 14:27:43"
+__updated__ = "2026-02-12 23:14:17"
 ###############################################################################
 
 from django import forms
 from django.contrib.auth.models import User
 from ..models.profile import Profile
+
 
 class UserUpdateForm(forms.ModelForm):
     """Form to update basic User data (Username/Email)"""
@@ -27,38 +29,50 @@ class UserUpdateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for field in self.fields:
-            self.fields[field].widget.attrs.update({'class': 'form-control'})
+
+        # Apply Bootstrap class to all fields (no branching)
+        for field in self.fields.values():
+            field.widget.attrs["class"] = "form-control"
 
     class Meta:
         model = User
-        fields = ['username', 'email']
+        fields = ["username", "email"]
+
 
 class ProfileUpdateForm(forms.ModelForm):
     """Form to update Profile-specific data (Bio, Avatar, Preferences)"""
-    # Standalone field for MariaDB BLOB handling in the view
+
     avatar = forms.ImageField(
         required=False,
-        widget=forms.FileInput(attrs={'class': 'form-control'})
+        widget=forms.FileInput(attrs={"class": "form-control"}),
     )
 
     class Meta:
         model = Profile
-        fields = ['bio', 'location', 'theme_preference', 'email_notifications']
+        fields = ["bio", "location", "theme_preference", "email_notifications"]
         widgets = {
-            'bio': forms.Textarea(attrs={'rows': 3}),
-            'location': forms.TextInput(),
-            'theme_preference': forms.Select(),
-            'email_notifications': forms.CheckboxInput(),
+            "bio": forms.Textarea(attrs={"rows": 3}),
+            "location": forms.TextInput(),
+            "theme_preference": forms.Select(),
+            "email_notifications": forms.CheckboxInput(),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Apply Bootstrap classes dynamically
-        for field_name, field in self.fields.items():
-            if isinstance(field.widget, forms.CheckboxInput):
-                field.widget.attrs.update({'class': 'form-check-input'})
-            elif isinstance(field.widget, forms.Select):
-                field.widget.attrs.update({'class': 'form-select'})
-            else:
-                field.widget.attrs.update({'class': 'form-control'})
+
+        # Normalize widget classes without branching
+        for field in self.fields.values():
+            widget = field.widget
+
+            # Checkbox
+            if isinstance(widget, forms.CheckboxInput):
+                widget.attrs["class"] = "form-check-input"
+                continue
+
+            # Select dropdown
+            if isinstance(widget, forms.Select):
+                widget.attrs["class"] = "form-select"
+                continue
+
+            # Everything else
+            widget.attrs["class"] = "form-control"

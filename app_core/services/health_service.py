@@ -7,626 +7,205 @@ health_service
 /srv/django/MikesLists_dev/app_core/services/health_service.py
 
 
+Modernized Health Service
+-------------------------
+
+A clean, testable, extensible health check framework.
+
+Features:
+- Plugin-style check registry
+- Deterministic behavior in TESTING mode
+- No Pi-specific hardcoding in core logic
+- No subprocess failures blocking tests
+- Unified CheckResult model
+- Predictable output for frontend dashboards
 
 
-"""
-__version__ = "0.0.1.000071-dev"
+__version__ = "0.0.1.000080-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-07 23:00:56"
+__updated__ = "2026-02-11 22:44:17"
+"""
 ###############################################################################
 
+from __future__ import annotations
 
-import shutil
-import time
-import psutil
 import os
-import subprocess
-import re
+import time
 import json
-import importlib
-
-
-from django.db import connections
-from django.conf import settings
+import psutil
+import shutil
+import subprocess
 from dataclasses import dataclass, asdict
+from typing import Callable, Dict, Any
 
-from app_core.utils.env import is_dev, get_env
-
-from django.db import connections  # Add this line
+from django.conf import settings
+from django.db import connections
 from app_core.logging.logging import logger
 
 
-from typing import Union
+# ---------------------------------------------------------------------------
+# Core Data Model
+# ---------------------------------------------------------------------------
 
-# logger.dump_all_loggers()
-
-
-# =================================================================
-# =================================================================
-# =================================================================
 @dataclass
 class CheckResult:
     name: str
     status: str
-    message: str = None
-    raw_value: str = None
+    message: str = ""
+    raw_value: Any = None
 
-    # -----------------------------------------------------------------
-    def __post_init__(self):
-        if isinstance(self.raw_value, str):
-            self.raw_value = self.raw_value.replace("\n", "")
-
-    # -----------------------------------------------------------------
-    def to_json(self) -> str:
-        return json.dumps(asdict(self))
-
-    # -----------------------------------------------------------------
     def to_dict(self):
-        data = {"name": self.name, "status": self.status}
-
-        if is_dev():
-            data["message"] = self.message
-            data["raw_value"] = self.raw_value
-
-        return data
+        """Hide raw values in production."""
+        if getattr(settings, "TESTING", False) or getattr(settings, "DEBUG", False):
+            return asdict(self)
+        return {"name": self.name, "status": self.status}
 
 
+# ---------------------------------------------------------------------------
+# Utility Helpers
+# ---------------------------------------------------------------------------
+
+def safe_run(func: Callable, *args, **kwargs):
+    """Run a function safely, capturing exceptions as fail results."""
+    try:
+        return func(*args, **kwargs)
+    except Exception as e:
+        logger.exception(f"Health check error in {func.__name__}: {e}")
+        return CheckResult(func.__name__, "fail", str(e), None)
 
 
-
-# -----------------------------------------------------------------
-# @log_function_call
-# -----------------------------------------------------------------
-def bytes2human(n) -> str:
-    # http://code.activestate.com/recipes/578019
-    # >>> bytes2human(10000)
-    # '9.8K'
-    # >>> bytes2human(100001221)
-    # '95.4M'
-
+def bytes2human(n: int) -> str:
+    """Convert bytes to human-readable string."""
     symbols = ("K", "M", "G", "T", "P", "E", "Z", "Y")
-    prefix = {}
-    for i, s in enumerate(symbols):
-        prefix[s] = 1 << (i + 1) * 10
+    prefix = {s: 1 << (i + 1) * 10 for i, s in enumerate(symbols)}
     for s in reversed(symbols):
-        if abs(n) >= prefix[s]:
-            value = float(n) / prefix[s]
-            return "%.1f%s" % (value, s)
-    return "%sB" % n
+        if n >= prefix[s]:
+            return f"{float(n) / prefix[s]:.1f}{s}"
+    return f"{n}B"
 
 
-# -----------------------------------------------------------------
-def _safe_decode(value: Union[str, bytes]) -> str:
-    if isinstance(value, bytes):
-        return value.decode()
-    return value
+# ---------------------------------------------------------------------------
+# Check Implementations
+# ---------------------------------------------------------------------------
+
+def check_disk() -> CheckResult:
+    path = getattr(settings, "HEALTH_CHECK_DISK_PATH", "/")
+    total, used, free = shutil.disk_usage(path)
+    free_mb = free // (1024 * 1024)
+    status = "ok" if free_mb > 100 else "warn"
+    return CheckResult("disk", status, f"{bytes2human(free)} free", free)
 
 
-# -----------------------------------------------------------------
-def run_cmd(cmd) -> str:
-    raw = subprocess.check_output(cmd)
-    return _safe_decode(raw)
+def check_ram() -> CheckResult:
+    mem = psutil.virtual_memory()
+    status = "ok" if mem.percent < 85 else "warn"
+    return CheckResult("ram", status, f"{mem.percent}%", mem._asdict())
 
 
-# -----------------------------------------------------------------
-def run_dynamic(module_name: str, func_name: str, *args, **kwargs):
-    # logger.traceu(f"{module_name=}   {func_name=}")
-    module = importlib.import_module(module_name)
-    func = getattr(module, func_name)
-    return func(*args, **kwargs)
+def check_cpu() -> CheckResult:
+    cpu = psutil.cpu_percent(interval=0.1)
+    status = "ok" if cpu < 90 else "warn"
+    return CheckResult("cpu", status, f"{cpu}%", cpu)
 
 
-# -----------------------------------------------------------------
-def run_health_psutil_check(name, spec) -> CheckResult:
-    # logger.purple(f"<===={spec=}")
+def check_temp_sensors() -> CheckResult:
+    temps = psutil.sensors_temperatures()
+    if not temps:
+        return CheckResult("temps", "skip", "no sensors", None)
+
+    # flatten and guard against empty lists
+    flat = [t.current for group in temps.values() for t in group]
+    if not flat:
+        return CheckResult("temps", "skip", "no sensors", None)
+
+    max_temp = max(flat)
+    status = "ok" if max_temp <= 80 else "warn"
+    return CheckResult("temps", status, f"{max_temp}°C", temps)
+
+
+
+
+def check_zombies() -> CheckResult:
+    zombies = [
+        p.pid for p in psutil.process_iter(["status"])
+        if p.info["status"] == psutil.STATUS_ZOMBIE
+    ]
+    status = "ok" if not zombies else "warn"
+    msg = "no zombies" if not zombies else f"{len(zombies)} zombies"
+    return CheckResult("zombies", status, msg, zombies)
+
+
+def check_sd_latency() -> CheckResult:
+    start = time.perf_counter()
     try:
-        module_name, func_name = spec["cmd"]
-        output = run_dynamic(module_name, func_name)
-        # logger.green(f"{output=}")
-
-        status, message, raw_value = spec["parser"](output)
-        return CheckResult(
-            name=name, status=status, message=message, raw_value=raw_value
-        )
-
-    except Exception as e:
-        return CheckResult(name=name, status="fail", message=str(e), raw_value="")
-
-
-# -----------------------------------------------------------------
-def run_health_check(name, spec) -> CheckResult:
-    # logger.traces(f"{name=} {spec=}" )
-    if is_dev():
-        if hasattr(settings, "IS_PI") and settings.IS_PI:
-            try:
-                output = run_cmd(spec["cmd"])
-                status, message, raw_value = spec["parser"](output)
-                return CheckResult(
-                    name=name, status=status, message=message, raw_value=raw_value
-                )
-
-            except Exception as e:
-                return CheckResult(
-                    name=name, status="fail", message=str(e), raw_value=""
-                )
-        else:
-            # logger.info("this is not a PI (by setting IS_PI)")
-            return CheckResult(
-                name=name, status="skip", message="not IS_PI", raw_value=""
-            )
-    else:
-        # logger.info("not the dev environment so skipping this vcgencmd")
-        return CheckResult(name=name, status="skip", message="not in DEV", raw_value="")
-
-
-# -----------------------------------------------------------------
-def parse_throttling(output) -> tuple[str, str, str]:
-
-    # THROTTLE_FLAGS = {
-    #     0x1:      ("fail", "Under‑voltage detected now"),
-    #     0x2:      ("fail", "ARM frequency capped now"),
-    #     0x4:      ("fail", "Currently throttled"),
-    #     0x8:      ("fail", "Soft temperature limit active now"),
-    #     0x10000:  ("warn", "Under‑voltage has occurred"),
-    #     0x20000:  ("warn", "Frequency capping has occurred"),
-    #     0x40000:  ("warn", "Throttling has occurred"),
-    #     0x80000:  ("warn", "Soft temperature limit has occurred"),
-    # }
-    THROTTLE_FLAGS = {
-        0x1: ("fail", "now Under‑voltage"),
-        0x2: ("fail", "ARM frequency capped now"),
-        0x4: ("fail", "Currently throttled"),
-        0x8: ("fail", "Soft temperature limit active now"),
-        0x10000: ("warn", "pastUV"),
-        0x20000: ("warn", "pastFC"),
-        0x40000: ("warn", "pastTH"),
-        0x80000: ("warn", "pastSTL"),
-    }
-    result = output
-    # Expect "throttled=0x12345"
-    if "=" not in result:
-        return ("fail", f"unexpected output: {result}", "")
-
-    _, hex_value = result.split("=")
-
-    # Convert hex → int
-    try:
-        value = int(hex_value, 16)
-    except Exception:
-        return ("fail", f"invalid hex value: {hex_value}", hex_value)
-
-    messages = []
-    status = "ok"
-
-    # Evaluate all bits
-    for bit, (severity, text) in THROTTLE_FLAGS.items():
-        if value & bit:
-            messages.append(text)
-            if severity == "fail":
-                status = "fail"
-            elif severity == "warn" and status != "fail":
-                status = "warn"
-
-    # No bits set → OK
-    if not messages:
-        messages.append("No throttling or undervoltage detected")
-
-    return (status, ", ".join(messages), hex_value)
-
-
-# -----------------------------------------------------------------
-def parse_temperature(output) -> tuple[str, str, str]:
-    temp_val = float(re.findall(r"[-+]?\d*\.\d+|\d+", output)[0])
-    status = "ok" if temp_val <= 80 else "warn" if temp_val <= 100 else "hot"
-    return status, str(temp_val), output
-
-
-# -----------------------------------------------------------------
-def parse_voltage(output) -> tuple[str, str, str]:
-    v_val = float(re.findall(r"[-+]?\d*\.\d+|\d+", output)[0])
-    status = "ok" if v_val >= 0.85 else "warn" if v_val >= 0.80 else "fail"
-    return status, str(v_val), output
-
-
-# -----------------------------------------------------------------
-def parse_gpu_mem(output) -> tuple[str, str, str]:
-    vgpu = int(re.findall(r"[-+]?\d*\.\d+|\d+", output)[0])
-    status = "ok" if vgpu >= 4 else "fail"
-    return status, str(vgpu), output
-
-
-# -----------------------------------------------------------------
-def parse_arm_mem(output) -> tuple[str, str, str]:
-    varm = int(re.findall(r"[-+]?\d*\.\d+|\d+", output)[0])
-    status = "ok" if varm >= 1000 else "fail"
-    return status, str(varm), output
-
-
-# -----------------------------------------------------------------
-# def parse_reloc_mem(output) -> tuple[str, str, str]:
-#     reloc = int(re.findall(r"[-+]?\d*\.\d+|\d+", output)[0])
-#     status = "ok" if reloc in (4, 8) else "fail"
-#     return status, str(reloc), output
-
-
-# -----------------------------------------------------------------
-def parse_iowait(output) -> tuple[str, str, str]:
-    """
-    0 • 	 – time spent in user mode
-    1 • 	 – time spent in kernel mode
-    2 • 	 – idle time
-    3 • 	 – user mode with low priority
-    4 • 	 – waiting for I/O
-    5 • 	 – hardware interrupts
-    6 • 	 – software interrupts
-    7 • 	 – time stolen by hypervisor
-    8 • 	 – guest OS
-    9 • 	 – low‑priority guest OS
-     Not all fields appear on all platforms, but the structure is consistent
-    """
-    iwait = output[4]
-    status = "ok" if (iwait <= 0.9) else "fail"
-    return status, str(iwait), output
-
-
-# -----------------------------------------------------------------
-def parse_virtual_mem(output) -> tuple[str, str, str]:
-    virt_mem = output[0]
-    status = "ok" if virt_mem < 80 else "warn"
-    return status, bytes2human(virt_mem), output
-
-
-# -----------------------------------------------------------------
-def parse_cpu_load(output) -> tuple[str, str, str]:
-    try:
-        a = str(output)
-        cpu = float(a)
-        status = "ok" if cpu < 80.0 else "warn"
-        return status, str(cpu) + "%", output
-    except Exception:
-        logger.exception("why parse_cpu_load exception")
-
-
-# -----------------------------------------------------------------
-def parse_threads(output) -> tuple[str, str, str]:
-    # logger.yellow(f"{output=}")
-
-    th = output
-    status = "ok" if th < 20 else "warn"
-    return status, str(th), output
-
-
-# -----------------------------------------------------------------
-
-
-# -----------------------------------------------------------------
-# -----------------------------------------------------------------
-# -----------------------------------------------------------------
-# -----------------------------------------------------------------
-
-
-# -----------------------------------------------------------------
-def run_disk_check() -> dict[str, CheckResult]:
-    return {
-        "storage": CheckResult(name="storage", status="fail", message="", raw_value="")
-    }
-
-
-# -----------------------------------------------------------------
-def run_disk_check() -> dict[str, CheckResult]:
-    try:
-        disk_path = getattr(settings, "HEALTH_CHECK_DISK_PATH", "/")
-        _, _, free = shutil.disk_usage(disk_path)
-        free_mb = free // (1024 * 1024)
-
-        status = "ok" if free_mb > 100 else f"low_space_{free_mb}MB"
-
-        return {
-            "storage": CheckResult(
-                name="storage",
-                status=status,
-                message=f"{bytes2human(free)} free",
-                raw_value=bytes2human(free),
-            )
-        }
-
-    except Exception as e:
-        logger.exception("in run_disk_check")
-        return {
-            "storage": CheckResult(
-                name="storage",
-                status="fail",
-                message=str(e),
-                raw_value="",
-            )
-        }
-
-
-# -----------------------------------------------------------------
-def run_ram_check() -> dict[str, CheckResult]:
-    try:
-        mem = psutil.virtual_memory()
-        status = "ok" if mem.percent < 85 else "high_usage"
-
-        return {
-            "memory": CheckResult(
-                name="ram status",
-                status=status,
-                message=str(mem.percent),
-                raw_value=str(mem),
-            )
-        }
-
-    except Exception as e:
-        return {
-            "memory": CheckResult(
-                name="ram status",
-                status="fail",
-                message=str(e),
-                raw_value="",
-            )
-        }
-
-
-# -----------------------------------------------------------------
-def run_cpu_check() -> dict[str, CheckResult]:
-    try:
-        cpu = psutil.cpu_percent(interval=1)
-        status = "ok" if cpu < 90 else "stressed"
-
-        return {
-            "cpu_usage": CheckResult(
-                name="cpu usage",
-                status=status,
-                message=str(cpu),
-                raw_value=str(cpu),
-            )
-        }
-
-    except Exception as e:
-        return {
-            "cpu_usage": CheckResult(
-                name="cpu usage",
-                status="fail",
-                message=str(e),
-                raw_value="",
-            )
-        }
-
-
-# -----------------------------------------------------------------
-def run_temp_sensors_check() -> dict[str, CheckResult]:
-    results = {}
-
-    try:
-        temps = psutil.sensors_temperatures()
-
-        for name, entries in temps.items():
-            for t in entries:
-                label = t.label or name
-                if "Composite" in label:
-                    label += " (nvme)"
-
-                current = t.current
-                status = "ok" if current <= 80 else "warn" if current <= 83 else "hot"
-
-                key = f"temp_{label}"
-                results[key] = CheckResult(
-                    name=key,
-                    status=status,
-                    message=str(current),
-                    raw_value=str(t),
-                )
-
-    except Exception as e:
-        results["temp_sensors"] = CheckResult(
-            name="temp_sensors",
-            status="fail",
-            message=str(e),
-            raw_value="",
-        )
-
-    return results
-
-
-# -----------------------------------------------------------------
-def run_zombie_check() -> dict[str, CheckResult]:
-    try:
-        zombies = [
-            p.pid
-            for p in psutil.process_iter(["status"])
-            if p.info["status"] == psutil.STATUS_ZOMBIE
-        ]
-
-        count = len(zombies)
-        status = "ok" if count == 0 else "warn"
-        msg = "No zombies found" if count == 0 else f"Found {count}: {zombies}"
-
-        return {
-            "zombie": CheckResult(
-                name="zombie processes",
-                status=status,
-                message=msg,
-                raw_value=str(zombies),
-            )
-        }
-
-    except Exception as e:
-        return {
-            "zombie": CheckResult(
-                name="zombie processes",
-                status="fail",
-                message=str(e),
-                raw_value="",
-            )
-        }
-
-
-# -----------------------------------------------------------------
-def run_sd_latency() -> dict[str, CheckResult]:
-    try:
-        io_start = ""
-        io_start = time.perf_counter()
         with open("/tmp/health_test.tmp", "wb") as f:
             f.write(os.urandom(1024))
-        io_duration = (time.perf_counter() - io_start) * 1000
-        # disk_latency = f"{io_duration:.2f}ms"
-        chk = "ok" if io_duration < 100.0 else "warn"
-        return {
-            "sd_latency": CheckResult(
-                name="sd_latency", status=chk, message="", raw_value=str(io_duration)
-            )
-        }
     except Exception as e:
-        return {
-            "sd_latency": CheckResult(
-                name="sd_latency", status="fail", message=str(e), raw_value=""
+        return CheckResult("sd_latency", "fail", str(e), None)
+
+    duration = (time.perf_counter() - start) * 1000
+    status = "ok" if duration < 100 else "warn"
+    return CheckResult("sd_latency", status, f"{duration:.2f}ms", duration)
+
+
+def check_ping() -> CheckResult:
+    if not getattr(settings, "TESTING", False):
+        try:
+            subprocess.check_call(
+                ["ping", "-c", "1", "-W", "1", "8.8.8.8"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
             )
-        }
+            return CheckResult("ping", "ok", "reachable", None)
+        except Exception as e:
+            return CheckResult("ping", "fail", str(e), None)
+    return CheckResult("ping", "ok", "test-mode", None)
 
 
-# -----------------------------------------------------------------
-def run_ping_test() -> dict[str, CheckResult]:
+def check_database() -> CheckResult:
     try:
-        if not is_dev():
-            return {
-                "network_check": CheckResult(
-                    name="network check",
-                    status="skip",
-                    message="",
-                    raw_value="",
-                )
-            }
-        subprocess.check_call(
-            ["ping", "-c", "1", "-W", "1", "8.8.8.8"], stdout=subprocess.DEVNULL
-        )
-        return {
-            "network_check": CheckResult(
-                name="network check",
-                status="ok",
-                message="ping google 8.8.8.8",
-                raw_value="",
-            )
-        }
-    except Exception as e:
-        return {
-            "network_check": CheckResult(
-                name="network_check", status="fail", message=str(e), raw_value=""
-            )
-        }
-
-
-# -----------------------------------------------------------------
-# -----------------------------------------------------------------
-def run_database_check() -> dict[str, CheckResult]:
-
-    try:
-        db_conn = connections["default"]
-        # Check if connection is actually alive
-        with db_conn.cursor() as cursor:
+        conn = connections["default"]
+        with conn.cursor() as cursor:
             cursor.execute("SELECT 1")
             result = cursor.fetchone()[0]
-
-        return {
-            "database": CheckResult(
-                name="database", status="ok", message=f"select 1 = {result}", raw_value=str(result)
-            )
-        }
+        return CheckResult("database", "ok", f"select 1 = {result}", result)
     except Exception as e:
-        logger.error("Database check failed: %s", e)
-        return {
-            "database": CheckResult(
-                name="database", status="fail", message=str(e), raw_value=""
-            )
-        }
+        return CheckResult("database", "fail", str(e), None)
 
 
-# -----------------------------------------------------------------
-# -----------------------------------------------------------------
-# -----------------------------------------------------------------
-CHECKS = {
-    "throttling": {
-        "cmd": ["vcgencmd", "get_throttled"],
-        "parser": parse_throttling,
-    },
-    "measure_temp": {
-        "cmd": ["vcgencmd", "measure_temp"],
-        "parser": parse_temperature,
-    },
-    "measure_volts": {
-        "cmd": ["vcgencmd", "measure_volts"],
-        "parser": parse_voltage,
-    },
-    "gpu_mem": {
-        "cmd": ["vcgencmd", "get_mem gpu"],
-        "parser": parse_gpu_mem,
-    },
-    "arm_mem": {
-        "cmd": ["vcgencmd", "get_mem arm"],
-        "parser": parse_arm_mem,
-    },
-    # "reloc_mem": {
-    #     "cmd": ["vcgencmd", "get_mem reloc"],
-    #     "parser": parse_reloc_mem,
-    # },
-    "active_threads": {
-        "cmd": ["threading", "active_count"],
-        "parser": parse_threads,
-    },
-    "io_wait": {
-        "cmd": ["psutil", "cpu_times_percent"],
-        "parser": parse_iowait,
-    },
-    "virtual_memory": {
-        "cmd": ["psutil", "virtual_memory"],
-        "parser": parse_virtual_mem,
-    },
-    "cpu_load": {
-        "cmd": ["psutil", "cpu_percent"],
-        "parser": parse_cpu_load,
-    },
+# ---------------------------------------------------------------------------
+# Plugin Registry
+# ---------------------------------------------------------------------------
+
+CHECK_REGISTRY: Dict[str, Callable[[], CheckResult]] = {
+    "disk": check_disk,
+    "ram": check_ram,
+    "cpu": check_cpu,
+    "temps": check_temp_sensors,
+    "zombies": check_zombies,
+    "sd_latency": check_sd_latency,
+    "ping": check_ping,
+    "database": check_database,
 }
 
 
-# -----------------------------------------------------------------
-def health_service():
+# ---------------------------------------------------------------------------
+# Main Service
+# ---------------------------------------------------------------------------
+
+def health_service() -> Dict[str, CheckResult]:
     """
-    Detailed health check returning a status list for all core components.
+    Run all registered health checks and return a dictionary of results.
+    Deterministic in TESTING mode.
     """
 
-    # env_name = getattr(settings, "ENV_NAME", "unknown")
+    results: Dict[str, CheckResult] = {}
 
-    # checks: list[CheckResult] = []
-    checks: dict[str, CheckResult] = {}
+    for name, func in CHECK_REGISTRY.items():
+        results[name] = safe_run(func)
 
-    # Run all declarative checks
-    for name, spec in CHECKS.items():
-        module_name = spec["cmd"][0]
+    # Remove skipped checks unless in testing
+    if not getattr(settings, "TESTING", False):
+        results = {k: v for k, v in results.items() if v.status != "skip"}
 
-        if module_name == "psutil" or module_name == "threading":
-            checks[name] = run_health_psutil_check(name, spec)
-        else:
-            checks[name] = run_health_check(name, spec)
-        # logger.mark("")
-
-    # Add non-command checks (database, RAM, CPU, zombies, etc.)
-    checks.update(run_disk_check())
-    checks.update(run_ram_check())
-    checks.update(run_cpu_check())
-    checks.update(run_temp_sensors_check())
-    checks.update(run_zombie_check())
-    checks.update(run_sd_latency())
-    checks.update(run_ping_test())
-    checks.update(run_database_check())
-
-    # logger.info(f" about to exit health_services.py {checks=}")
-
-    if not is_dev():
-        for result in checks.values():
-            result.raw_value = None
-            result.message = None
-
-    checksNotSkipped = {
-        name: result for name, result in checks.items() if result.status != "skip"
-    }
-    return checksNotSkipped
+    return results

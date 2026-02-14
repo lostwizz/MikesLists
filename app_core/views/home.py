@@ -8,9 +8,9 @@ app_core.home
 
 
 """
-__version__ = "0.0.0.000005-dev"
+__version__ = "0.0.0.000006-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-05 21:39:23"
+__updated__ = "2026-02-12 22:31:05"
 ###############################################################################
 
 from django.conf import settings
@@ -39,4 +39,4 @@ def catchall_redirect(request, path=None):
 
 
 def home(request):
-    return render(request, "app_core.home.html", {"env": get_env()})
+    return render(request, "app_core/home.html", {"env": get_env()})

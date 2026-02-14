@@ -13,9 +13,9 @@ Environment-based view access decorators.
 # Optional: Custom permission/group decorators
 
 
-__version__ = "0.0.0.000031-dev"
+__version__ = "0.0.0.000032-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-09 00:12:03"
+__updated__ = "2026-02-11 23:24:21"
 """
 ###############################################################################
 from __future__ import annotations
@@ -48,22 +48,24 @@ def require_env(*allowed_envs: AppEnv):
 
 # -----------------------------------------------------------------
 # Convenience decorators
-def dev_only(view_func):
+# def dev_only(view_func):
+def require_dev_env(view_func):
     return require_env(AppEnv.DEV)(view_func)
 
 
 # -----------------------------------------------------------------
-def test_only(view_func):
+def require_test_env(view_func):
     return require_env(AppEnv.TEST)(view_func)
 
 
 # -----------------------------------------------------------------
-def live_only(view_func):
+# def live_only(view_func):
+def require_live_env(view_func):
     return require_env(AppEnv.LIVE)(view_func)
 
 
 # -----------------------------------------------------------------
-def non_dev_only(view_func):
+def require_non_dev_only(view_func):
     """Allow only TEST or LIVE."""
     return require_env(AppEnv.TEST, AppEnv.LIVE)(view_func)
 

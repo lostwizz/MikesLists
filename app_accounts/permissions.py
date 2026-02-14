@@ -46,25 +46,20 @@ Use groups in your signals (you already do this
 
 
 """
-__version__ = "0.0.0.000015-dev"
+__version__ = "0.0.0.000024-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-07 22:30:47"
+__updated__ = "2026-02-13 23:23:14"
 ###############################################################################
 
 import logging
-
-
-from django.contrib.auth.models import Group, Permission
-
-
 logger = logging.getLogger(__name__)
-
 
 from django.contrib.auth.models import Group, Permission
 from django.apps import apps
 from django.db.models import Q
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
+
 
 GROUPS = {
     "Admins": {
@@ -145,15 +140,29 @@ def assign_permissions():
                 print(f"[WARNING] Permission '{perm_codename}' not found")
 
 
+# In app_accounts/permissions.py
 def has_permissions(user, perm_list, any_perm=False):
-    """
-    Checks if a user has a list of permissions.
-    :param any_perm: If True, returns True if user has AT LEAST ONE in the list.
-    """
+    if user.is_superuser:
+        return True
+
     if any_perm:
-        return any(user.has_perm(perm) for perm in perm_list)
-    return user.has_perms(perm_list)
+        # Line 149 (Start of block)
+        results = []
+        for perm in perm_list:
+            results.append(user.has_perm(perm))
+        # Line 153
+        return any(results)
+
+    return all(user.has_perm(perm) for perm in perm_list)
+
+
+
 
 def get_user_permissions_list(user):
     """Returns a readable list of all permission codenames for a user."""
-    return user.get_all_permissions()
+    # Converting to a list forces the generator to run immediately and fully.
+    # has_any = [user.has_perm(perm) for perm in perm_list]
+    # return any(has_any)
+
+    """Returns a readable list of all permission codenames for a user."""
+    return list(user.get_all_permissions())

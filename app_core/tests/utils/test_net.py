@@ -3,9 +3,15 @@ import socket
 import types
 from unittest.mock import patch, MagicMock, mock_open
 
+
+import pytest
 import psutil
 
-from app_core.utils import net
+# from app_core.utils import net
+# import app_core.utils as net
+import app_core.utils.net as net
+
+
 
 
 # ----------------------------------------------------------------------
@@ -447,3 +453,88 @@ def test_get_interfaces_detailed_wifi_and_eth(
     assert eth["noise_dbm"] is None
     assert eth["snr"] is None
     assert eth["wifi_health"] == 0
+
+
+@patch("app_core.utils.net.subprocess.check_output")
+def test_wifi_freq_non_digit(mock_run):
+    mock_run.return_value = "freq: abc\n"
+    info = net.get_wifi_info("wlan0")
+    # assert "frequency" not in info
+    assert info["frequency"] is None
+
+
+
+
+@patch("app_core.utils.net.subprocess.check_output")
+def test_wifi_freq_empty(mock_run):
+    mock_run.return_value = "freq:\n"
+    info = net.get_wifi_info("wlan0")
+    # assert "frequency" not in info
+    assert info["frequency"] is None
+
+
+
+@patch("app_core.utils.net.subprocess.check_output")
+def test_wifi_channel_width_no_digits(mock_run):
+    mock_run.return_value = "channel width: eighty MHz\n"
+    info = net.get_wifi_info("wlan0")
+    # assert "width_mhz" not in info
+    assert info["width_mhz"] is None
+
+
+
+@patch("app_core.utils.net.subprocess.check_output")
+def test_wifi_channel_width_empty(mock_run):
+    mock_run.return_value = "channel width:\n"
+    info = net.get_wifi_info("wlan0")
+    # assert "width_mhz" not in info
+    assert info["width_mhz"] is None
+
+
+
+@patch("app_core.utils.net.subprocess.check_output")
+def test_wifi_channel_width_weird(mock_run):
+    mock_run.return_value = "channel width: foo bar baz\n"
+    info = net.get_wifi_info("wlan0")
+    # assert "width_mhz" not in info
+    assert info["width_mhz"] is None
+
+
+
+
+@patch("app_core.utils.net.subprocess.check_output")
+def test_wifi_no_freq_no_width(mock_run):
+    mock_run.return_value = "some unrelated line\n"
+    info = net.get_wifi_info("wlan0")
+    # assert "frequency" not in info
+    assert info["frequency"] is None
+    # assert "width_mhz" not in info
+    assert info["width_mhz"] is None
+
+
+
+
+@patch("app_core.utils.net.subprocess.check_output", side_effect=Exception("boom"))
+def test_wifi_iw_exception(mock_run):
+    info = net.get_wifi_info("wlan0")
+    # Should not crash, should return empty info dict
+    assert isinstance(info, dict)
+
+
+@patch("app_core.utils.net.subprocess.check_output")
+def test_wifi_channel_calc_24ghz(mock_run):
+    mock_run.return_value = "freq: 2412\n"
+    info = net.get_wifi_info("wlan0")
+    assert info["channel"] == int((2412 - 2407) / 5)
+
+@patch("app_core.utils.net.subprocess.check_output")
+def test_wifi_channel_calc_6ghz(mock_run):
+    mock_run.return_value = "freq: 5955\n"
+    info = net.get_wifi_info("wlan0")
+    assert info["channel"] == int((5955 - 5950) / 5)
+
+@patch("app_core.utils.net.subprocess.check_output")
+def test_wifi_channel_calc_out_of_range(mock_run):
+    mock_run.return_value = "freq: 3000\n"
+    info = net.get_wifi_info("wlan0")
+    assert info.get("channel") is None

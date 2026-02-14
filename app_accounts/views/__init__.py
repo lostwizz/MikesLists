@@ -22,16 +22,16 @@ UserLifecycleService.promote_user(target_user, "Manager")
 
 
 """
-__version__ = "0.0.0.000011-dev"
+__version__ = "0.0.0.000012-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-23 01:03:57"
+__updated__ = "2026-02-14 01:33:14"
 ###############################################################################
 
 from django.contrib.auth import logout
 
 
 from .login import *
-from .profile import *
+# from .profile import *
 from .register import *
 # from .permissions import *
 # from .group_manager import *

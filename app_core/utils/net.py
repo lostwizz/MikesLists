@@ -25,9 +25,9 @@ use with : from app_core.utils import net
 
 
 
-__version__ = "0.0.0.000084-dev"
+__version__ = "0.0.0.000085-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-11 20:08:29"
+__updated__ = "2026-02-12 01:07:54"
 """
 ###############################################################################
 
@@ -269,6 +269,9 @@ def detect_interface_type(iface: str) -> str:
     if iface.startswith("eth") or iface.startswith("en"):
         return "ethernet"
     return "other"
+
+
+
 
 
 # ----------------------------------------------------------------------

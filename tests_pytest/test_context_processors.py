@@ -36,20 +36,20 @@ def test_user_info_authenticated(rf):
     assert ctx["user_profile"] == profile
 
 
-def test_profile_str(self):
+def test_profile_str():
     p = Profile.objects.create(user=self.user)
     assert str(p) == "mike"
 
-def test_profile_has_avatar(self):
+def test_profile_has_avatar():
     p = Profile.objects.create(user=self.user, avatar_blob=b"123")
     assert p.has_avatar is True
 
-def test_editor_cannot_delete_profile(self):
+def test_editor_cannot_delete_profile():
     self.client.force_login(self.editor)
     response = self.client.post("/accounts/delete/1/")
     assert response.status_code == 403
 
-def test_profile_detail_view(self):
+def test_profile_detail_view():
     self.client.force_login(self.user)
     response = self.client.get(f"/accounts/profile/{self.user.id}/")
     assert response.status_code == 200

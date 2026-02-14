@@ -9,9 +9,9 @@ accounts.tests.test_signals
 
 
 """
-__version__ = "0.0.0.000017-dev"
+__version__ = "0.0.0.000018-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-26 23:03:19"
+__updated__ = "2026-02-14 00:25:08"
 ###############################################################################
 # /srv/django/venv-dev/bin/python /srv/django/MikesLists_dev/manage.py test app_accounts.tests --settings=MikesLists.settings.dev --noinput -v 3 --debug-mode --traceback --force-color --shuffle
 # python manage.py test app_accounts.tests --settings=MikesLists.settings.dev --noinput -v 3 --debug-mode --traceback --force-color --shuffle

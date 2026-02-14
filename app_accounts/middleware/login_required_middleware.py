@@ -9,15 +9,15 @@ login_required_middleware
 
 
 """
-__version__ = "0.0.0.000013-dev"
+__version__ = "0.0.0.000014-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-27 13:30:06"
+__updated__ = "2026-02-13 22:24:21"
 ###############################################################################
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
 from app_accounts.models.profile import Profile
-
+from django.contrib.auth.models import AnonymousUser
 
 EXEMPT_NAMES = {
     "accounts:login",

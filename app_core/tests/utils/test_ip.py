@@ -37,9 +37,9 @@ def test_is_ip_in_list_cidr_match():
     assert iputils.is_ip_in_list("192.168.1.10", ["192.168.1.0/24"]) is True
 
 
-def test_is_ip_in_list_cidr_invalid():
-    # invalid CIDR should be ignored, not crash
-    assert iputils.is_ip_in_list("1.2.3.4", ["not-a-cidr"]) is False
+def test_is_ip_in_list_cidr_malformed_with_slash():
+    # Contains "/" so it enters the CIDR block, but is invalid → triggers ValueError
+    assert iputils.is_ip_in_list("1.2.3.4", ["10.0.0.0/banana"]) is False
 
 
 def test_is_ip_in_list_no_match():
@@ -71,3 +71,14 @@ def test_is_private_ip():
     assert iputils.is_private_ip("192.168.1.1") is True
     assert iputils.is_private_ip("8.8.8.8") is False
     assert iputils.is_private_ip("not-an-ip") is False
+
+
+
+def test_is_ip_in_list_cidr_malformed_with_slash():
+    # Contains "/" so it enters the CIDR block, but is invalid → triggers ValueError
+    assert iputils.is_ip_in_list("1.2.3.4", ["10.0.0.0/banana"]) is False
+
+
+def test_is_ip_in_list_cidr_valid_but_nonmatching_then_prefix_matches():
+    # CIDR is valid but does NOT match the IP → falls through to prefix match
+    assert iputils.is_ip_in_list("10.1.2.3", ["10.0.0.0/24", "10."]) is True
