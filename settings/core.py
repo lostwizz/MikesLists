@@ -9,9 +9,9 @@ app_core.settings.core
 
 
 """
-__version__ = "0.0.0.000121-dev"
+__version__ = "0.0.0.000122-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-08 01:00:51"
+__updated__ = "2026-02-14 22:48:14"
 ###############################################################################
 
 
@@ -130,7 +130,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "app_accounts.middleware.login_required_middleware.LoginRequiredMiddleware",
-    "app_accounts.middleware.login_required_middleware.ActiveUserMiddleware",
+    # "app_accounts.middleware.login_required_middleware.ActiveUserMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # "app_accounts.middleware.admin_logout.ForceAdminLogoutMiddleware"

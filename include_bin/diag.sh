@@ -2,7 +2,7 @@
 # ==========================================
 # Django Deep Diagnostic Tool v2.1 (verbose)
 # ==========================================
-# __version__="2.2.2.000124"
+# __version__="2.2.2.000152"
 
 #############################################
 # COLORS (ANSI-safe)
@@ -37,6 +37,10 @@ DEBUG=false
 RUN_ALL=true
 declare -A RUN_SECTION
 
+declare -A SUB_SECTION
+
+SUB_SECTION="ALL"
+
 # Per‑app minimum coverage thresholds
 declare -A COVERAGE_THRESHOLDS=(
     ["app_core"]=85
@@ -51,7 +55,7 @@ show_help() {
     echo -e "${CYAN}Django Deep Diagnostic Tool v2.1 (verbose)${RESET}"
     echo
     echo "Usage:"
-    echo "  diag.sh [environment] [options]"
+    echo "  diag.sh [environment] [options] [subfunc]"
     echo
     echo "Environments:"
     echo "  dev (default), test, live"
@@ -82,6 +86,10 @@ show_help() {
     echo "  --packages         Only check Python packages"
     echo "  --help             Show this help and exit"
     echo
+    echo "  --sub_core"
+    echo "  --sub_accounts"
+    echo "  --sub_todo"
+    echo
 }
 
 #############################################
@@ -105,6 +113,9 @@ for arg in "$@"; do
         --ruff|--flake|--lint|--static)
             RUN_ALL=false
             RUN_SECTION["$arg"]=true
+            ;;
+        --sub_core|--sub_accounts|--sub_todo)
+            SUB_SECTION=${arg#*--sub_}
             ;;
         --help)
             show_help
@@ -1016,19 +1027,23 @@ check_tests() {
             TARGET_CMD="$TARGET"
         fi
 
-        echo -e "\n${YELLOW}[$count] Testing: $LABEL ${RESET}"
+        APP_NAME=${TARGET#app_}
+        APP_NAME=${APP_NAME%.tests}
 
-        run_cmd "test_$LABEL" "$VENV_PATH/bin/python" "manage.py" test $TARGET_CMD \
-            --settings=settings.dev \
-            --noinput -v 3 --debug-mode --traceback --force-color --shuffle
+        if [[ "$SUB_SECTION" == 'ALL' ||  "$SUB_SECTION" == "$APP_NAME" ]]; then
+            echo -e "\n${YELLOW}[$count] Testing: $LABEL ${RESET}    ($APP_NAME)"
 
-        if [[ $? -ne 0 ]]; then
-            fail=true
-        else
-            # First test passed → stop running the rest
-            break
+            run_cmd "test_$LABEL" "$VENV_PATH/bin/python" "manage.py" test $TARGET_CMD \
+                --settings=settings.dev \
+                --noinput -v 3 --debug-mode --traceback --force-color --shuffle
+
+            if [[ $? -ne 0 ]]; then
+                fail=true
+            else
+                # First test passed → stop running the rest
+                break
+            fi
         fi
-
 
         ((count++))
 
@@ -1114,74 +1129,86 @@ check_tests67() {
     # NOTE:  i took this parameter out because the admin site does some builtin stuff in django: --fail-on-template-vars
 
 
-    # echo -e "\n${YELLOW}[2] Coverage - app_core  -${RESET}"
-    # echo "Project_path=$PROJECT_PATH"
-    # cd "$PROJECT_PATH" || exit 1
-
-    # coverage erase >/dev/null 2>&1
-
-    # run_cmd "PY Coverage Testing" \
-    #     /srv/django/venv-dev/bin/pytest \
-    #     app_core \
-    #     --cov=app_core \
-    #     --cache-clear \
-    #     --verbosity=3 \
-    #     --disable-warnings \
-    #     --color=yes \
-    #     --cov-fail-under=85 \
-    #     --cov-report=term-missing
-
-
-    # if [[ $? -ne 0 ]]; then
-    #     fail=true
-    #     if [[ "$FAIL_FAST" == true ]]; then
-    #         exit 99
-    #     fi
+    echo -e "\n${YELLOW}[2] Coverage - app_core  -${RESET}"
+    # if false; then
+    # else
+    #     echo -e "  ${MAGENTA} skipping this test temporarily ${RESET}"
     # fi
 
-    # coverage erase >/dev/null 2>&1
 
-    echo -e "\n${YELLOW}[3] Coverage - app_accounts  -${RESET}"
+    echo "Project_path=$PROJECT_PATH"
+    cd "$PROJECT_PATH" || exit 1
 
-    run_cmd "PY Coverage Testing" \
-        /srv/django/venv-dev/bin/pytest \
-        app_accounts \
-        --cov=app_accounts \
-        --cache-clear \
-        --verbosity=3 \
-        --disable-warnings \
-        --color=yes \
-        --cov-fail-under=95 \
-        # --cov-report=term-missing
+    if [[ $SUB_SECTION == "core" || $SUB_SECTION == "ALL" ]]; then
+
+        coverage erase >/dev/null 2>&1
+
+        run_cmd "PY Coverage Testing" \
+            /srv/django/venv-dev/bin/pytest \
+            app_core \
+            --cov=app_core \
+            --cache-clear \
+            --verbosity=3 \
+            --disable-warnings \
+            --color=yes \
+            --cov-fail-under=85 \
+            --cov-report=term-missing
 
 
-    if [[ $? -ne 0 ]]; then
-        fail=true
-        if [[ "$FAIL_FAST" == true ]]; then
-            exit 99
+        if [[ $? -ne 0 ]]; then
+            fail=true
+            if [[ "$FAIL_FAST" == true ]]; then
+                exit 99
+            fi
         fi
     fi
 
-    coverage erase >/dev/null 2>&1
+    if [[ $SUB_SECTION == "accounts" || $SUB_SECTION == "ALL" ]]; then
+        coverage erase >/dev/null 2>&1
+        echo -e "\n${YELLOW}[3] Coverage - app_accounts  -${RESET}"
 
-    echo -e "\n${YELLOW}[4] Coverage - app_ToDo  -${RESET}"
-
-    run_cmd "PY Coverage Testing" \
-        /srv/django/venv-dev/bin/pytest \
-        app_ToDo \
-        --cov=app_ToDo \
-        --cache-clear \
-        --verbosity=3 \
-        --disable-warnings \
-        --color=yes \
-        # --cov-fail-under=85 \
-        # --cov-report=term-missing
+        run_cmd "PY Coverage Testing" \
+            /srv/django/venv-dev/bin/pytest \
+            app_accounts \
+            --cov=app_accounts \
+            --cache-clear \
+            --verbosity=3 \
+            --disable-warnings \
+            --color=yes \
+            --cov-fail-under=95 \
+            # --cov-report=term-missing
 
 
-    if [[ $? -ne 0 ]]; then
-        fail=true
-        if [[ "$FAIL_FAST" == true ]]; then
-            exit 99
+        if [[ $? -ne 0 ]]; then
+            fail=true
+            if [[ "$FAIL_FAST" == true ]]; then
+                exit 99
+            fi
+        fi
+    fi
+
+    if [[ $SUB_SECTION == "todo" || $SUB_SECTION == "ALL" ]]; then
+        coverage erase >/dev/null 2>&1
+
+        echo -e "\n${YELLOW}[4] Coverage - app_ToDo  -${RESET}"
+
+        run_cmd "PY Coverage Testing" \
+            /srv/django/venv-dev/bin/pytest \
+            app_ToDo \
+            --cov=app_ToDo \
+            --cache-clear \
+            --verbosity=3 \
+            --disable-warnings \
+            --color=yes \
+            # --cov-fail-under=85 \
+            # --cov-report=term-missing
+
+
+        if [[ $? -ne 0 ]]; then
+            fail=true
+            if [[ "$FAIL_FAST" == true ]]; then
+                exit 99
+            fi
         fi
     fi
 }

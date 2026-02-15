@@ -9,7 +9,9 @@ Tests for UserUpdateForm and ProfileUpdateForm
 
 import pytest
 from django.contrib.auth.models import User
-from app_accounts.forms.profileForm import UserUpdateForm, ProfileUpdateForm
+# from forms.profile_form import UserUpdateForm, ProfileUpdateForm
+from app_accounts.forms.profile_form import UserUpdateForm, ProfileUpdateForm
+
 
 
 @pytest.mark.django_db

@@ -8,6 +8,7 @@ import pytest
 from django.contrib.auth.models import User, Group, Permission
 
 from app_accounts.templatetags.auth_extras import has_group, get_user_role
+# from app_accounts.templatetags.auth_extras import get_user_role
 from app_accounts.permissions import has_permissions, get_user_permissions_list
 
 

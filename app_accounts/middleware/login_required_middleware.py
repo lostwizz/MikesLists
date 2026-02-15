@@ -9,9 +9,9 @@ login_required_middleware
 
 
 """
-__version__ = "0.0.0.000014-dev"
+__version__ = "0.0.0.000015-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-13 22:24:21"
+__updated__ = "2026-02-14 22:22:32"
 ###############################################################################
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -84,27 +84,27 @@ class LoginRequiredMiddleware:
 
 
 
-class UpdateLastActivityMiddleware:
-    """Updates the 'last_seen' timestamp on every request."""
-    def __init__(self, get_response):
-        self.get_response = get_response
+# class UpdateLastActivityMiddleware:
+#     """Updates the 'last_seen' timestamp on every request."""
+#     def __init__(self, get_response):
+#         self.get_response = get_response
 
-    def __call__(self, request):
-        if request.user.is_authenticated:
-            # Update profile timestamp without triggering signals
-            Profile.objects.filter(user=request.user).update(last_seen=timezone.now())
+#     def __call__(self, request):
+#         if request.user.is_authenticated:
+#             # Update profile timestamp without triggering signals
+#             Profile.objects.filter(user=request.user).update(last_seen=timezone.now())
 
-        return self.get_response(request)
+#         return self.get_response(request)
 
 
-class ActiveUserMiddleware:
-    def __init__(self, get_response):
-        self.get_response = get_response
+# class ActiveUserMiddleware:
+#     def __init__(self, get_response):
+#         self.get_response = get_response
 
-    def __call__(self, request):
-        if request.user.is_authenticated:
-            # We use .update() because it's faster and doesn't trigger signals
-            Profile.objects.filter(user=request.user).update(last_seen=timezone.now())
+#     def __call__(self, request):
+#         if request.user.is_authenticated:
+#             # We use .update() because it's faster and doesn't trigger signals
+#             Profile.objects.filter(user=request.user).update(last_seen=timezone.now())
 
-        response = self.get_response(request)
-        return response
+#         response = self.get_response(request)
+#         return response

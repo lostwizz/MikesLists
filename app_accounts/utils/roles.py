@@ -9,9 +9,9 @@ roles
 # Existing: Group/Role definitions and logic
 
 """
-__version__ = "0.0.0.000014-dev"
+__version__ = "0.0.0.000015-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-27 12:16:33"
+__updated__ = "2026-02-15 00:32:08"
 ###############################################################################
 
 
@@ -82,6 +82,9 @@ def sync_group_permissions(group_name, permissions_dict):
     # .set() replaces all existing perms with this new list
     group.permissions.set(perms)
     return group
+
+
+
 def assign_role_to_user(user, role_name, clear_existing=False):
     """
     Assigns a group-based role to a user.

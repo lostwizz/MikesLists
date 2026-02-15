@@ -11,9 +11,9 @@ app_accounts.models.profile
 
 
 """
-__version__ = "0.0.0.000011-dev"
+__version__ = "0.0.0.000012-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-23 01:01:16"
+__updated__ = "2026-02-14 20:24:37"
 ###############################################################################
 from django.db import models
 from django.contrib.auth.models import User
@@ -68,6 +68,8 @@ class Profile(models.Model):
 
     class Meta:
         permissions = [
-            ("view_my_profile", "Can view own profile"),
-            ("edit_my_profile", "Can edit own profile"),
+            # ("view_my_profile", "Can view own profile"),
+            # ("edit_my_profile", "Can edit own profile"),
+            ("view_own_profile", "Can view own profile"),
+            ("edit_own_profile", "Can edit own profile"),
         ]

@@ -9,14 +9,15 @@ app_accounts.management.commands.assign_permissions
 
 
 """
-__version__ = "0.0.0.000011-dev"
+__version__ = "0.0.0.000012-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-23 01:00:28"
+__updated__ = "2026-02-14 22:15:32"
 ###############################################################################
 
+
 from django.core.management.base import BaseCommand
-from django.contrib.auth.models import Group, Permission
 from app_accounts.permissions import assign_permissions
+
 
 class Command(BaseCommand):
     help = "Assign permissions to groups"

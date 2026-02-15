@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 from django.contrib.auth.models import User, Group
 
 # from app_accounts.forms.CustomUserChangeForm import CustomUserChangeForm
-from app_accounts.forms.CustomUserChangeForm import CustomUserChangeForm
+from app_accounts.forms.custom_user_change_form import CustomUserChangeForm
 
 
 @pytest.mark.django_db

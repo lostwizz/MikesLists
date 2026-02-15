@@ -3,16 +3,17 @@
 ###############################################################################
 r"""
 permissions.py
-permissions
+app_accounts.utils.permissions
 /srv/django/MikesLists_dev/app_accounts/utils/permissions.py
+
 
 
 # New: logic for checking/syncing permissions
 
 """
-__version__ = "0.0.0.000018-dev"
+__version__ = "0.0.0.000024-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-27 11:09:33"
+__updated__ = "2026-02-14 20:28:39"
 ###############################################################################
 
 from django.contrib.auth.models import Permission
@@ -29,3 +30,17 @@ def check_user_perms(user, perm_list, logic='all'):
     if logic == 'any':
         return any(user.has_perm(p) for p in perm_list)
     return user.has_perms(perm_list)
+
+
+
+def get_custom_permissions():
+    """Returns custom permissions if they exist."""
+    try:
+        return {
+            "view_own_profile": Permission.objects.get(
+                codename="view_own_profile",
+                name="Can view own profile",
+            )
+        }
+    except Permission.DoesNotExist:
+        return {}

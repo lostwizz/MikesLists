@@ -9,20 +9,13 @@ auth_extras
 
 
 """
-__version__ = "0.0.0.000019-dev"
+__version__ = "0.0.0.000021-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-14 00:00:04"
+__updated__ = "2026-02-14 23:38:36"
 ###############################################################################
 
 from django import template
 from django.contrib.auth.models import Group
-
-register = template.Library()
-
-
-# @register.filter(name='has_group')
-# def has_group(user, group_name):
-#     return user.groups.filter(name=group_name).exists() or user.is_superuser
 
 
 register = template.Library()

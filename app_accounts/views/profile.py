@@ -8,9 +8,9 @@ app_accounts.views.profile
 
 
 """
-__version__ = "0.0.0.000011-dev"
+__version__ = "0.0.0.000013-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-23 01:05:48"
+__updated__ = "2026-02-14 22:34:41"
 ###############################################################################
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
@@ -19,8 +19,8 @@ from io import BytesIO
 from PIL import Image  # CRITICAL: Needed for the resizing logic
 
 # Import both forms from your forms package
-from ..forms.CustomUserChangeForm import CustomUserChangeForm
-from ..forms.profileForm import ProfileUpdateForm, UserUpdateForm
+from ..forms.custom_user_change_form import CustomUserChangeForm
+from ..forms.profile_form import ProfileUpdateForm, UserUpdateForm
 
 
 @login_required

@@ -12,9 +12,9 @@ Comprehensive test suite for Django middleware components:
 These middleware classes work together to secure the application and
 track user engagement.
 """
-__version__ = "0.0.0.000037-dev"
+__version__ = "0.0.0.000045-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-13 23:18:13"
+__updated__ = "2026-02-14 23:44:41"
 ###############################################################################
 import pytest
 from django.test import RequestFactory
@@ -24,8 +24,8 @@ from unittest.mock import Mock, patch
 
 from app_accounts.middleware.login_required_middleware import (
     LoginRequiredMiddleware,
-    UpdateLastActivityMiddleware,
-    ActiveUserMiddleware,
+    # UpdateLastActivityMiddleware,
+    # ActiveUserMiddleware,
 )
 
 
@@ -34,53 +34,53 @@ from app_accounts.middleware.login_required_middleware import (
 ###############################################################################
 
 
-@pytest.mark.django_db
-def test_update_last_activity_updates_timestamp_for_authenticated_user():
-    """
-    Verify that UpdateLastActivityMiddleware updates the profile's last_seen
-    timestamp when an authenticated user makes a request.
-    """
-    rf = RequestFactory()
-    user = User.objects.create_user(username="mike", password="x")
-    profile = user.profile
+# @pytest.mark.django_db
+# def test_update_last_activity_updates_timestamp_for_authenticated_user():
+#     """
+#     Verify that UpdateLastActivityMiddleware updates the profile's last_seen
+#     timestamp when an authenticated user makes a request.
+#     """
+#     rf = RequestFactory()
+#     user = User.objects.create_user(username="mike", password="x")
+#     profile = user.profile
 
-    request = rf.get("/some/path/")
-    request.user = user
+#     request = rf.get("/some/path/")
+#     request.user = user
 
-    mock_response = Mock()
-    get_response = Mock(return_value=mock_response)
+#     mock_response = Mock()
+#     get_response = Mock(return_value=mock_response)
 
-    middleware = UpdateLastActivityMiddleware(get_response)
-    middleware(request)
+#     middleware = UpdateLastActivityMiddleware(get_response)
+#     middleware(request)
 
-    # Verify the timestamp was updated
-    profile.refresh_from_db()
-    assert profile.last_seen is not None
+#     # Verify the timestamp was updated
+#     profile.refresh_from_db()
+#     assert profile.last_seen is not None
 
-    # Verify the response is passed through correctly
-    assert middleware(request) is mock_response
+#     # Verify the response is passed through correctly
+#     assert middleware(request) is mock_response
 
 
-@pytest.mark.django_db
-def test_update_last_activity_skips_for_anonymous_user():
-    """
-    Verify that UpdateLastActivityMiddleware does not attempt to update
-    the profile for anonymous (unauthenticated) users.
-    """
-    rf = RequestFactory()
-    request = rf.get("/some/path/")
-    request.user = AnonymousUser()
+# @pytest.mark.django_db
+# def test_update_last_activity_skips_for_anonymous_user():
+#     """
+#     Verify that UpdateLastActivityMiddleware does not attempt to update
+#     the profile for anonymous (unauthenticated) users.
+#     """
+#     rf = RequestFactory()
+#     request = rf.get("/some/path/")
+#     request.user = AnonymousUser()
 
-    mock_response = Mock()
-    get_response = Mock(return_value=mock_response)
+#     mock_response = Mock()
+#     get_response = Mock(return_value=mock_response)
 
-    middleware = UpdateLastActivityMiddleware(get_response)
+#     middleware = UpdateLastActivityMiddleware(get_response)
 
-    # Mock the Profile query to verify it's never called for anonymous users
-    with patch("app_accounts.middleware.login_required_middleware.Profile.objects.filter") as mock_filter:
-        response = middleware(request)
-        mock_filter.assert_not_called()
-        assert response is mock_response
+#     # Mock the Profile query to verify it's never called for anonymous users
+#     with patch("app_accounts.middleware.login_required_middleware.Profile.objects.filter") as mock_filter:
+#         response = middleware(request)
+#         mock_filter.assert_not_called()
+#         assert response is mock_response
 
 
 ###############################################################################
@@ -88,47 +88,47 @@ def test_update_last_activity_skips_for_anonymous_user():
 ###############################################################################
 
 
-@pytest.mark.django_db
-def test_active_user_middleware_updates_last_seen():
-    """
-    Verify that ActiveUserMiddleware updates last_seen for authenticated users.
-    This middleware is functionally similar to UpdateLastActivityMiddleware.
-    """
-    rf = RequestFactory()
-    user = User.objects.create_user(username="activetest", password="x")
+# @pytest.mark.django_db
+# def test_active_user_middleware_updates_last_seen():
+#     """
+#     Verify that ActiveUserMiddleware updates last_seen for authenticated users.
+#     This middleware is functionally similar to UpdateLastActivityMiddleware.
+#     """
+#     rf = RequestFactory()
+#     user = User.objects.create_user(username="activetest", password="x")
 
-    request = rf.get("/some/path/")
-    request.user = user
+#     request = rf.get("/some/path/")
+#     request.user = user
 
-    mock_response = Mock()
-    get_response = Mock(return_value=mock_response)
+#     mock_response = Mock()
+#     get_response = Mock(return_value=mock_response)
 
-    middleware = ActiveUserMiddleware(get_response)
-    response = middleware(request)
+#     middleware = ActiveUserMiddleware(get_response)
+#     response = middleware(request)
 
-    # Verify timestamp was updated
-    user.profile.refresh_from_db()
-    assert user.profile.last_seen is not None
-    assert response is mock_response
+#     # Verify timestamp was updated
+#     user.profile.refresh_from_db()
+#     assert user.profile.last_seen is not None
+#     assert response is mock_response
 
 
-@pytest.mark.django_db
-def test_active_user_middleware_skips_anonymous():
-    """
-    Verify that ActiveUserMiddleware gracefully handles anonymous users
-    without attempting database updates.
-    """
-    rf = RequestFactory()
-    request = rf.get("/some/path/")
-    request.user = AnonymousUser()
+# @pytest.mark.django_db
+# def test_active_user_middleware_skips_anonymous():
+#     """
+#     Verify that ActiveUserMiddleware gracefully handles anonymous users
+#     without attempting database updates.
+#     """
+#     rf = RequestFactory()
+#     request = rf.get("/some/path/")
+#     request.user = AnonymousUser()
 
-    mock_response = Mock()
-    get_response = Mock(return_value=mock_response)
+#     mock_response = Mock()
+#     get_response = Mock(return_value=mock_response)
 
-    middleware = ActiveUserMiddleware(get_response)
-    response = middleware(request)
+#     middleware = ActiveUserMiddleware(get_response)
+#     response = middleware(request)
 
-    assert response is mock_response
+#     assert response is mock_response
 
 
 ###############################################################################

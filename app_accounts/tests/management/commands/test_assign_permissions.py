@@ -10,20 +10,15 @@ app_accounts.tests.management.commands.test_assign_permissions
 
 
 """
-__version__ = "0.0.0.000020-dev"
+__version__ = "0.0.0.000022-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-26 23:09:49"
+__updated__ = "2026-02-14 22:16:44"
 ###############################################################################
 
-
 from django.test import TestCase
-# from django.contrib.auth.models import Group, Permission
 from django.contrib.auth.models import Group
-# from app_accounts.permissions import assign_permissions
-# from app_accounts.management.commands import assign_permissions
 from app_accounts.management.commands import assign_permissions as assign_perms_command
-from app_accounts.models import Profile
-from app_accounts.permissions import assign_permissions
+
 
 class AssignPermissionsTestCase(TestCase):
     def setUp(self):
@@ -31,30 +26,26 @@ class AssignPermissionsTestCase(TestCase):
         self.users_group = Group.objects.create(name="Users")
 
     def test_assign_permissions(self):
+        # Run the management command
         assign_perms_command.Command().handle()
 
+        # Admins should have the new permissions
         self.assertTrue(
-            self.admins_group.permissions.filter(codename="view_my_profile").exists()
+            self.admins_group.permissions.filter(
+                codename="view_own_profile"
+            ).exists()
         )
 
         self.assertTrue(
             self.admins_group.permissions.filter(
-                codename="view_my_profile", name="Can view own profile"
+                codename="view_own_profile",
+                name="Can view own profile"
             ).exists()
         )
 
-        self.assertFalse(
-            self.users_group.permissions.filter(codename="view_my_profile").exists()
-        )
-
+        # Users group should NOT have the permission
         self.assertFalse(
             self.users_group.permissions.filter(
-                codename="view_my_profile", name="Can view my profile"
+                codename="view_own_profile"
             ).exists()
         )
-
-
-
-    # def test_user_count():
-    #     from django.contrib.auth.models import User
-    #     assert User.objects.count() == 0

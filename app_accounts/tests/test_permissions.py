@@ -81,24 +81,22 @@ def test_has_permissions_superuser():
 ###############################################################################
 # ensure_groups_and_permissions() Tests
 ###############################################################################
-
 @pytest.mark.django_db
 def test_ensure_groups_and_permissions_missing_permission():
     """
-    Test that ensure_groups_and_permissions prints a warning when a
-    permission referenced in the groups dictionary doesn't exist.
+    Ensure a warning is printed when a referenced permission does not exist.
     """
-    # Delete a permission that the function actually looks for
-    Permission.objects.filter(codename="view_my_profile").delete()
+    # Delete a permission the function actually looks for
+    Permission.objects.filter(codename="view_own_profile").delete()
 
     with patch("builtins.print") as mock_print:
         ensure_groups_and_permissions()
 
-    # Verify warning was printed
     assert any(
         "[WARNING] Permission" in str(call.args[0])
         for call in mock_print.call_args_list
     )
+
 
 
 ###############################################################################
@@ -157,3 +155,21 @@ def test_assign_permissions_creates_groups_successfully():
     assert Group.objects.filter(name="Admins").exists()
     assert Group.objects.filter(name="Editors").exists()
     assert Group.objects.filter(name="Read Only").exists()
+
+
+
+
+@pytest.mark.django_db
+def test_ensure_groups_and_permissions_executes_assignment():
+    """
+    Ensures the permission assignment loop runs, covering lines 99–100.
+    """
+    # Make sure at least one permission exists in the DB
+    assert Permission.objects.exists()
+
+    # Call the function — this will execute the missing lines
+    ensure_groups_and_permissions()
+
+    # Verify that at least one group has at least one permission assigned
+    admins = Group.objects.get(name="Admins")
+    assert admins.permissions.exists()
