@@ -1676,10 +1676,90 @@ check_permissions() {
 #############################################
 # SECTION 10 — Python Package Drift
 #############################################
+
+# -----------------------------------------------------------------------------------
+# Function to get installed packages from pip freeze
+get_installed_packages() {
+    pip freeze | awk -F '==' '{print $1}'
+}
+
+# -----------------------------------------------------------------------------------
+# Function to get package version from pip freeze
+get_package_version() {
+    package=$1
+    version=$(pip freeze | grep -i "^$package==" | cut -d= -f3)
+    echo "$version"
+}
+
+# -----------------------------------------------------------------------------------
+# Function to get package summary (description) using pip show
+get_package_summary() {
+    package=$1
+    summary=$(pip show "$package" | grep -i "Summary:" | sed 's/Summary: //')
+    if [[ -z "$summary" ]]; then
+        summary="No description available"
+    fi
+    echo "$summary"
+}
+
+# -----------------------------------------------------------------------------------
+# /srv/django/MikesLists_dev/requirements.txt
+# /srv/django/MikesLists_dev/requirements-dev.txt
+# Function to check if a package is listed in either requirements.txt or requirements-dev.txt
+is_package_in_requirements() {
+    package=$1
+    # Check both requirements.txt and requirements-dev.txt
+    grep -i -E "^$package==" /srv/django/MikesLists_dev/requirements.txt /srv/django/MikesLists_dev/requirements-dev.txt > /dev/null
+    return $?
+}
+
+# -----------------------------------------------------------------------------------
+# Function to check missing packages
+check_missing_packages() {
+    # Array to store missing packages with their version and description
+    missing_packages=()
+
+    # Check against requirements.txt and requirements-dev.txt
+    for req_file in "requirements.txt" "requirements-dev.txt"; do
+        if [[ -f "$req_file" ]]; then
+            while IFS= read -r line; do
+                # Skip empty lines or comments
+                [[ -z "$line" || "$line" == \#* ]] && continue
+                package_name=$(echo "$line" | cut -d= -f1)
+
+                # If package is not in the installed packages, consider it missing
+                if ! echo "$installed_packages" | grep -q -w "$package_name"; then
+                    # Get version from pip freeze
+                    package_version=$(pip freeze | grep -i "^$package_name==" | cut -d= -f2)
+                    # Get the package summary (description)
+                    package_summary=$(get_package_summary "$package_name")
+                    missing_packages+=("$package_name==$package_version: $package_summary")
+                fi
+            done < "$req_file"
+        else
+            echo "$req_file does not exist!"
+        fi
+    done
+
+    echo "+++++++++++++++"
+
+    # Print the missing packages if any
+    if [[ ${#missing_packages[@]} -gt 0 ]]; then
+        for missing in "${missing_packages[@]}"; do
+            echo "$missing"
+        done
+    else
+        echo "No missing packages found."
+    fi
+}
+
+# -----------------------------------------------------------------------------------
 check_packages() {
     echo "========================================"
     echo "   10 - Python Package Drift"
     echo "========================================"
+
+    # region 10.1
 
     echo -e "${CYAN}checking python package consistency${RESET}"
 
@@ -1699,7 +1779,8 @@ check_packages() {
     fi
 
     echo -e "${GREEN}✓ requirements.txt found${RESET}"
-
+    # endregion
+    # region 10.2
     #############################################
     # 2. Get installed packages
     #############################################
@@ -1713,7 +1794,8 @@ check_packages() {
         echo "$INSTALLED"
         return 1
     fi
-
+    # endregion
+    # region 10.3
     #############################################
     # 3. Missing packages
     #############################################
@@ -1721,22 +1803,21 @@ check_packages() {
 
     MISSING=0
     while IFS= read -r req; do
+        # Skip empty lines and comments
         [[ -z "$req" || "$req" =~ ^# ]] && continue
 
-        pkg=$(echo "$req" | cut -d'=' -f1 | cut -d'<' -f1 | cut -d'>' -f1)
+        # Extract package name (handles ==, >=, <=, <, >)
+        pkg=$(echo "$req" | sed -E 's/[=<>!@].*//')
 
-        if ! echo "$INSTALLED" | grep -qi "^${pkg}=="; then
+        # Check against installed list
+        # We use -F for fixed string and -x to match the whole line (before the version)
+        if ! echo "$INSTALLED" | grep -Ei "^${pkg}([=<>!@]| $)" > /dev/null; then
             echo -e "${RED}❌ missing:${RESET} $req"
             MISSING=$((MISSING + 1))
         fi
     done < "$REQUIREMENTS_FILE"
-
-    if (( MISSING == 0 )); then
-        echo -e "${GREEN}✓ no missing packages${RESET}"
-    else
-        fail=true
-    fi
-
+    # endregion
+    # region 10.4
     #############################################
     # 4. Version mismatches
     #############################################
@@ -1760,7 +1841,8 @@ check_packages() {
     if (( MISMATCH == 0 )); then
         echo -e "${GREEN}✓ no version mismatches${RESET}"
     fi
-
+    # endregion
+    # region 10.5
     #############################################
     # 5. Extra packages
     #############################################
@@ -1796,6 +1878,113 @@ check_packages() {
     if (( EXTRA == 0 )); then
         echo -e "${GREEN}✓ no extra packages${RESET}"
     fi
+
+    # endregion
+    # region 10.6
+    #############################################
+    # 6. missing packages
+    #############################################
+    echo ' use "pip list" to show packages installed'
+
+
+    # 1. Get a clean list of all installed package names (no versions)
+    # We use sed to strip everything after ==, >=, etc.
+    INSTALLED_NAMES=$(echo "$INSTALLED" | sed -E 's/[=<>!@].*//')
+
+    # 2. Combine all allowed requirements into one temporary lookup string
+    # This makes searching much faster than opening files repeatedly
+    ALLOWED_PACKAGES=$(cat "$REQUIREMENTS_FILE" "$REQUIREMENTS_DEV_FILE" 2>/dev/null | sed -E 's/[=<>!@].*//' | grep -v '^#')
+
+    # echo "xxxxx"
+    # echo $ALLOWED_PACKAGES
+    # echo "xxxxx"
+
+
+    echo -e "\n${YELLOW}Checking for unlisted packages (installed but not in requirements)...${RESET}"
+
+    UNLISTED_COUNT=0
+    while read -r pkg; do
+        [[ -z "$pkg" ]] && continue
+
+        # Check if the installed package exists in the ALLOWED_PACKAGES list
+        # -i for case-insensitive, -w for whole-word match
+        if ! echo "$ALLOWED_PACKAGES" | grep -iqw "$pkg"; then
+            echo -e "${RED}⚠️  Unlisted package found:${RESET} $pkg"
+            UNLISTED_COUNT=$((UNLISTED_COUNT + 1))
+        fi
+    done <<< "$INSTALLED_NAMES"
+
+    if (( UNLISTED_COUNT == 0 )); then
+        echo -e "${GREEN}✓ All installed packages are documented.${RESET}"
+    fi
+
+    #endregion
+    # region 10.7
+    echo "#############################################"
+    echo "# 7. packages not in requierments and not in requirments-dev.txt"
+    echo "#############################################"
+
+
+    # Get all installed packages (no versions)
+    installed_packages=$(get_installed_packages)
+    # echo "+++ installed_packages=$installed_packages"
+    # echo "@@@"
+
+    # Store missing packages with their version and description
+    missing_packages=()
+
+    # Check each installed package
+    for package in $installed_packages; do
+        # echo "+++ package=$package"
+        # If the package is NOT listed in either requirements.txt or requirements-dev.txt
+        if ! is_package_in_requirements "$package"; then
+            # echo "      +++ not found in requirements"
+            # Get the package version from pip freeze
+            package_version=$(get_package_version "$package")
+
+            # Get the package summary
+            package_summary=$(get_package_summary "$package")
+
+            # Format the missing package output
+            # missing_packages+=("$(printf "%-35s" "$package")==${package_version}: $package_summary")
+            # missing_packages+=("${package}==${package_version}$(printf "%-30s" ": $package_summary")")
+            missing_packages+=("$(printf "%-35s" "${package}==${package_version}") : $package_summary")
+        # else
+        #     echo "      +++ found in requirements"
+        fi
+    done
+
+    # echo -e "++++++++====+====++=+====+++==\n"
+    # echo "+++ missing_packages=$missing_packages"
+    # echo -e "++++++++====+====++=+====+++==\n"
+
+    # Display the missing packages
+    if [[ ${#missing_packages[@]} -gt 0 ]]; then
+        for missing in "${missing_packages[@]}"; do
+            echo "$missing"
+        done
+    else
+        echo "No missing packages found."
+    fi
+
+    echo "***************************************************"
+    # endregion
+
+    # region - simple show summary for all packages
+    if false; then
+# show summary for all packages installed
+    $VENV_PATH/bin/python3 - << 'EOF'
+from importlib.metadata import distributions
+
+for dist in distributions():
+    name = dist.metadata["Name"]
+    version = dist.version
+    summary = dist.metadata.get("Summary", "No description available")
+    print(f"{name}=={version}  -  {summary}")
+EOF
+    fi
+
+    #endregion
 
 
 
