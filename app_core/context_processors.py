@@ -10,7 +10,7 @@ app_core.context_processors
 """
 __version__ = "0.0.0.000009-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-15 01:32:02"
+__updated__ = "2026-02-15 23:34:57"
 ###############################################################################
 
 # MikesLists/context_processors.py
@@ -45,27 +45,3 @@ def user_info(request):
             "user_profile": getattr(request.user, "profile", None),
         }
     return {}
-
-
-
-import pytest
-from django.test import Client
-from django.contrib.auth.models import User
-from app_accounts.models import Profile
-
-pytestmark = pytest.mark.django_db
-
-
-# @pytest.fixture
-# def user():
-#     return User.objects.create_user(username="mike", password="x")
-
-
-# @pytest.fixture
-# def editor():
-#     return User.objects.create_user(username="editor", password="x", is_staff=False)
-
-
-# @pytest.fixture
-# def client():
-#     return Client()
