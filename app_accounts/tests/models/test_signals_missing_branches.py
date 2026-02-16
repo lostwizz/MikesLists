@@ -35,6 +35,7 @@ def test_create_user_profile_missing_group_sends_email():
     with patch("app_accounts.models.signals.send_mail") as mock_send_mail:
         # Create a new user (should trigger the email since group is missing)
         user = User.objects.create_user(username="testuser", password="x")
+        assert user
 
         # Verify email was sent
         assert mock_send_mail.called
@@ -52,6 +53,7 @@ def test_save_user_profile_no_profile_triggers_debug_branch(caplog):
     """
     pass
 
+
 @pytest.mark.django_db
 def test_create_user_profile_missing_group_no_admins_skips_email():
     """
@@ -68,6 +70,7 @@ def test_create_user_profile_missing_group_no_admins_skips_email():
     with patch("app_accounts.models.signals.send_mail") as mock_send_mail:
         # Create a new user
         user = User.objects.create_user(username="testuser", password="x")
+        assert user
 
         # Email should not be sent since there are no admins
         assert not mock_send_mail.called
@@ -83,7 +86,7 @@ def test_create_user_profile_created_false_does_nothing():
     user = User.objects.create_user(username="u1", password="x")
 
     # Ensure profile exists
-    assert hasattr(user, 'profile')
+    assert hasattr(user, "profile")
     profile_id = user.profile.id
 
     # Now save the user again (should trigger signal with created=False)
@@ -95,9 +98,10 @@ def test_create_user_profile_created_false_does_nothing():
     assert user.profile.id == profile_id
 
 
-
 @pytest.mark.django_db
-def test_save_user_profile_no_profile_triggers_debug_branch(caplog):  # ← Add caplog here
+def test_save_user_profile_no_profile_triggers_debug_branch(
+    caplog,
+):  # ← Add caplog here
     """
     Test that the save_user_profile signal handler logs a debug message
     when attempting to save a user without a profile.

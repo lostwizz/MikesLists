@@ -34,7 +34,7 @@ Adding decorators to the path function:
 """
 __version__ = "0.0.0.000027-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-08 22:58:16"
+__updated__ = "2026-02-15 20:09:43"
 ###############################################################################
 
 """
@@ -75,7 +75,7 @@ from app_core.views.home import (
 
 from app_core.utils.auth import is_staff
 
-
+from django.conf import settings
 # NOTE  - Becarfull of the traling slash - it is important
 
 urlpatterns = [
@@ -100,6 +100,9 @@ urlpatterns = [
 
     # ToDo
     path("todo/", include("app_ToDo.urls")),
+
+    # Pet
+    path("pet/", include("app_pet.urls")),
 
     # System / Core
     path("status", status_view, name="status_dashboard"),
@@ -132,7 +135,7 @@ urlpatterns = [
 
 
 # Catch‑all only in LIVE environment
-if True:   # not settings.DEBUG:
+if not settings.DEBUG:
     urlpatterns += [
         path("<path:path>", catchall_redirect, name="catchall"),
     ]

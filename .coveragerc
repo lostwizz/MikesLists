@@ -9,6 +9,11 @@ omit =
     */migrations/*
     */tests/*
     */__init__.py
+    */conftest.py
+    manage.py
+    settings/live.py
+    settings/test.py
+
 
 [report]
 show_missing = True

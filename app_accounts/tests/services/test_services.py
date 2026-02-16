@@ -25,6 +25,7 @@ from app_accounts.models.profile import Profile
 # UserRegistrationService Tests
 ###############################################################################
 
+
 @pytest.mark.django_db
 @patch("app_accounts.services.user_registration_service.assign_role_to_user")
 def test_register_new_user(mock_assign_role):
@@ -40,7 +41,7 @@ def test_register_new_user(mock_assign_role):
     assert user.username == "mike"
     assert user.email == "mike@example.com"
 
-    assert hasattr(user, 'profile')
+    assert hasattr(user, "profile")
     user.profile.refresh_from_db()
     assert user.profile.bio == "Hello world"
 
@@ -54,10 +55,7 @@ def test_lifecycle_register_user():
     This covers lines 54-57 in UserLifecycleService.register_user()
     """
     user = UserLifecycleService.register_user(
-        username="john",
-        email="john@example.com",
-        password="secret123",
-        role="Viewer"
+        username="john", email="john@example.com", password="secret123", role="Viewer"
     )
 
     assert User.objects.filter(username="john").exists()
@@ -78,7 +76,7 @@ def test_lifecycle_register_user_custom_role():
         username="admin_user",
         email="admin@example.com",
         password="adminpass",
-        role="Admins"
+        role="Admins",
     )
 
     assert User.objects.filter(username="admin_user").exists()
@@ -88,6 +86,7 @@ def test_lifecycle_register_user_custom_role():
 ###############################################################################
 # UserLifecycleService.delete_user_safely() Tests
 ###############################################################################
+
 
 @pytest.mark.django_db
 def test_delete_user_safely():
@@ -177,7 +176,6 @@ def test_delete_user_safely_with_multiple_users():
 #     assert mock_assign_role.call_args[1]['clear_existing'] is True
 
 
-
 @pytest.mark.django_db
 @patch("app_accounts.services.user_lifecycle_service.assign_role_to_user")
 def test_promote_user(mock_assign_role):
@@ -185,6 +183,7 @@ def test_promote_user(mock_assign_role):
     mock_assign_role.return_value = True
 
     result = UserLifecycleService.promote_user(user, "Admins")
+    assert result
 
     mock_assign_role.assert_called_once_with(user, "Admins", clear_existing=True)
 

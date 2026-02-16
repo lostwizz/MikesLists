@@ -25,9 +25,9 @@ use with : from app_core.utils import net
 
 
 
-__version__ = "0.0.0.000085-dev"
+__version__ = "0.0.0.000086-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-12 01:07:54"
+__updated__ = "2026-02-15 00:43:54"
 """
 ###############################################################################
 
@@ -38,8 +38,8 @@ import socket
 import subprocess
 import psutil
 import time
-# import requests
 
+# import requests
 
 
 # ----------------------------------------------------------------------
@@ -98,8 +98,19 @@ def check_http(url: str, timeout: float = 3.0) -> dict:
     """
     try:
         out = subprocess.check_output(
-            ["curl", "-I", "-m", str(timeout), "-s", "-o", "/dev/null", "-w", "%{http_code}", url],
-            text=True
+            [
+                "curl",
+                "-I",
+                "-m",
+                str(timeout),
+                "-s",
+                "-o",
+                "/dev/null",
+                "-w",
+                "%{http_code}",
+                url,
+            ],
+            text=True,
         )
         status = int(out.strip())
         return {"ok": 200 <= status < 400, "status": status, "error": None}
@@ -130,10 +141,7 @@ def get_interface_ips() -> dict:
     """
     result = {}
     try:
-        out = subprocess.check_output(
-            ["ip", "-o", "-4", "addr", "show"],
-            text=True
-        )
+        out = subprocess.check_output(["ip", "-o", "-4", "addr", "show"], text=True)
         for line in out.splitlines():
             parts = line.split()
             iface = parts[1]
@@ -271,9 +279,6 @@ def detect_interface_type(iface: str) -> str:
     return "other"
 
 
-
-
-
 # ----------------------------------------------------------------------
 # Read sysfs helper
 # ----------------------------------------------------------------------
@@ -283,7 +288,6 @@ def _read_sysfs(path: str):
             return f.read().strip()
     except Exception:
         return None
-
 
 
 # ----------------------------------------------------------------------
@@ -309,19 +313,19 @@ def get_wifi_color_and_band(data):
 
     # Determine color
     if band == "6ghz":
-        color = "#ab47bc"   # purple
+        color = "#ab47bc"  # purple
     elif band == "5ghz":
-        color = "#2196f3"   # blue
+        color = "#2196f3"  # blue
     else:
         # Strength-based colors for 2.4 GHz
         if signal is None:
             color = "#999"
         elif signal > -55:
-            color = "#4caf50"   # green
+            color = "#4caf50"  # green
         elif signal > -70:
-            color = "#f9a825"   # yellow
+            color = "#f9a825"  # yellow
         else:
-            color = "#e53935"   # red
+            color = "#e53935"  # red
 
     return {
         "band": band,
@@ -346,9 +350,6 @@ def get_host_identity() -> dict:
     return {"hostname": hostname, "ip": ip}
 
 
-
-
-
 # ----------------------------------------------------------------------
 # Main: Detailed interface info
 # ----------------------------------------------------------------------
@@ -371,11 +372,10 @@ def get_interfaces_detailed() -> dict:
     """
     ips = get_interface_ips()
     metrics = get_route_metrics()
-    result={}
+    result = {}
 
     for iface, ip_list in ips.items():
-        wifi = {}   # <-- define it BEFORE the wifi-only block
-
+        wifi = {}  # <-- define it BEFORE the wifi-only block
 
         base = f"/sys/class/net/{iface}"
 
@@ -404,7 +404,6 @@ def get_interfaces_detailed() -> dict:
         # Interface type
         iface_type = detect_interface_type(iface)
 
-
         # Wi-Fi metrics
         wifi_signal = None
         wifi_quality = None
@@ -417,30 +416,40 @@ def get_interfaces_detailed() -> dict:
             wifi_quality = wifi["quality"]
             wifi_freq = wifi.get("frequency")
 
-
         # Wi-Fi health score
         score = 0
 
         # RSSI
         if wifi_signal is not None:
-            if wifi_signal > -55: score += 40
-            elif wifi_signal > -65: score += 30
-            elif wifi_signal > -75: score += 20
-            else: score += 10
+            if wifi_signal > -55:
+                score += 40
+            elif wifi_signal > -65:
+                score += 30
+            elif wifi_signal > -75:
+                score += 20
+            else:
+                score += 10
 
         # SNR
         if wifi.get("snr") is not None:
             snr = wifi["snr"]
-            if snr > 30: score += 40
-            elif snr > 20: score += 30
-            elif snr > 10: score += 20
-            else: score += 10
+            if snr > 30:
+                score += 40
+            elif snr > 20:
+                score += 30
+            elif snr > 10:
+                score += 20
+            else:
+                score += 10
 
         # Band bonus
         if wifi_freq:
-            if wifi_freq >= 5925: score += 15
-            elif wifi_freq >= 5000: score += 10
-            else: score += 5
+            if wifi_freq >= 5925:
+                score += 15
+            elif wifi_freq >= 5000:
+                score += 10
+            else:
+                score += 5
 
         # Normalize
         score = min(100, score)
@@ -470,7 +479,6 @@ def get_interfaces_detailed() -> dict:
         iface_data["wifi_color"] = wifi_info["color"]
 
         result[iface] = iface_data
-
 
     # Sort: lo → eth0 → wlan0 → everything else
     return dict(sorted(result.items(), key=lambda x: (x[0] != "lo", x[0])))

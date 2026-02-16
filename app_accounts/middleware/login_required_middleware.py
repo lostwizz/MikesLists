@@ -11,7 +11,7 @@ login_required_middleware
 """
 __version__ = "0.0.0.000015-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-14 22:22:32"
+__updated__ = "2026-02-15 19:51:01"
 ###############################################################################
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -36,7 +36,8 @@ EXEMPT_PATH_PREFIXES = (
     # Note: reverse() calls here might fail if URLs aren't loaded yet.
     # Hardcoded strings or moving these inside process_view is safer.
     "/health/",
-    "/health"
+    "/health",
+    "/pet/",
 )
 
 class LoginRequiredMiddleware:

@@ -2,7 +2,7 @@
 # ==========================================
 #  Script for Finding and Updating Version Numbers
 # ==========================================
-# __version__ = "0.0.1.000053-dev"
+# __version__ = "0.0.1.000052-dev"
 
 # Configuration
 SEARCH_DIR="${1:-.}"

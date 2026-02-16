@@ -22,6 +22,7 @@ from app_accounts.models.profile import Profile
 # edit_profile View Tests
 ###############################################################################
 
+
 @pytest.mark.django_db
 def test_edit_profile_get(client, django_user_model):
     """
@@ -31,6 +32,8 @@ def test_edit_profile_get(client, django_user_model):
     user = django_user_model.objects.create_user(
         username="bob", password="x", email="bob@example.com"
     )
+    assert user
+
     # Profile auto-created by signal
 
     client.login(username="bob", password="x")
@@ -39,8 +42,8 @@ def test_edit_profile_get(client, django_user_model):
 
     assert response.status_code == 200
     assert "app_accounts/edit_profile.html" in [t.name for t in response.templates]
-    assert 'u_form' in response.context
-    assert 'p_form' in response.context
+    assert "u_form" in response.context
+    assert "p_form" in response.context
 
 
 @pytest.mark.django_db
@@ -76,7 +79,7 @@ def test_edit_profile_post_valid_no_image(client, django_user_model):
 
     # Should redirect to profile_detail
     assert response.status_code == 200
-    assert response.redirect_chain[-1][0] == reverse('accounts:profile_detail')
+    assert response.redirect_chain[-1][0] == reverse("accounts:profile_detail")
 
     # Verify profile was updated
     user.refresh_from_db()
@@ -87,8 +90,8 @@ def test_edit_profile_post_valid_no_image(client, django_user_model):
     assert user.first_name == "Robert"
 
     # Verify success message
-    messages = list(response.context['messages'])
-    assert any('profile has been updated' in str(m) for m in messages)
+    messages = list(response.context["messages"])
+    assert any("profile has been updated" in str(m) for m in messages)
 
 
 @pytest.mark.django_db
@@ -111,9 +114,7 @@ def test_edit_profile_post_with_jpeg_image(client, django_user_model):
     buffer.seek(0)
 
     uploaded = SimpleUploadedFile(
-        "avatar.jpg",
-        buffer.getvalue(),
-        content_type="image/jpeg"
+        "avatar.jpg", buffer.getvalue(), content_type="image/jpeg"
     )
 
     url = reverse("accounts:edit_profile")
@@ -162,9 +163,7 @@ def test_edit_profile_post_with_png_image(client, django_user_model):
     buffer.seek(0)
 
     uploaded = SimpleUploadedFile(
-        "avatar.png",
-        buffer.getvalue(),
-        content_type="image/png"
+        "avatar.png", buffer.getvalue(), content_type="image/png"
     )
 
     url = reverse("accounts:edit_profile")
@@ -215,9 +214,7 @@ def test_edit_profile_post_with_palette_mode_image(client, django_user_model):
     buffer.seek(0)
 
     uploaded = SimpleUploadedFile(
-        "avatar_palette.png",
-        buffer.getvalue(),
-        content_type="image/png"
+        "avatar_palette.png", buffer.getvalue(), content_type="image/png"
     )
 
     url = reverse("accounts:edit_profile")
@@ -253,6 +250,7 @@ def test_edit_profile_post_invalid_form(client, django_user_model):
     user = django_user_model.objects.create_user(
         username="bob", password="x", email="bob@example.com"
     )
+    assert user
 
     client.login(username="bob", password="x")
 
@@ -264,8 +262,8 @@ def test_edit_profile_post_invalid_form(client, django_user_model):
     # Should re-render form, not redirect
     assert response.status_code == 200
     assert "app_accounts/edit_profile.html" in [t.name for t in response.templates]
-    assert 'u_form' in response.context
-    assert 'p_form' in response.context
+    assert "u_form" in response.context
+    assert "p_form" in response.context
 
 
 @pytest.mark.django_db
@@ -279,12 +277,13 @@ def test_edit_profile_requires_login(client):
 
     # Should redirect to login
     assert response.status_code == 302
-    assert '/accounts/login/' in response.url
+    assert "/accounts/login/" in response.url
 
 
 ###############################################################################
 # profile_view Tests
 ###############################################################################
+
 
 @pytest.mark.django_db
 def test_profile_view(client, django_user_model):
@@ -303,7 +302,7 @@ def test_profile_view(client, django_user_model):
 
     assert response.status_code == 200
     assert "app_accounts/profile_detail.html" in [t.name for t in response.templates]
-    assert response.context['user'] == user
+    assert response.context["user"] == user
 
 
 @pytest.mark.django_db
@@ -316,4 +315,4 @@ def test_profile_view_requires_login(client):
 
     # Should redirect to login
     assert response.status_code == 302
-    assert '/accounts/login/' in response.url
+    assert "/accounts/login/" in response.url

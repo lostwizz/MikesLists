@@ -11,6 +11,7 @@ def test_todo_list_view_renders(client):
     """
     # Create and log in a user
     user = User.objects.create_user(username="bob", password="x")
+    assert user
     client.login(username="bob", password="x")
 
     url = reverse("todo:list")

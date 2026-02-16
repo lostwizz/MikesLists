@@ -8,10 +8,11 @@ app_ToDo.models.markstyle
 
 
 
+
 """
 __version__ = "0.0.1.000002-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-01-23 01:17:28"
+__updated__ = "2026-02-15 17:42:55"
 ###############################################################################
 
 from django.db import models

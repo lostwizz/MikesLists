@@ -11,7 +11,7 @@ app_core.settings.core
 """
 __version__ = "0.0.0.000122-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-14 22:48:14"
+__updated__ = "2026-02-15 18:26:31"
 ###############################################################################
 
 
@@ -114,6 +114,7 @@ INSTALLED_APPS = [
     "app_ToDo",
     "widget_tweaks",
     # "guardian",
+    'app_pet.apps.AppPetConfig',
 ]
 
 

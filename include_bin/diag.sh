@@ -2,7 +2,7 @@
 # ==========================================
 # Django Deep Diagnostic Tool v2.1 (verbose)
 # ==========================================
-# __version__="2.2.2.000152"
+# __version__="2.2.2.000153"
 
 #############################################
 # COLORS (ANSI-safe)
@@ -89,6 +89,8 @@ show_help() {
     echo "  --sub_core"
     echo "  --sub_accounts"
     echo "  --sub_todo"
+    echo "  --sub_pet"
+    echo "  --sub_x            (this might be all test or ones not in dev/test/live)"
     echo
 }
 
@@ -114,7 +116,7 @@ for arg in "$@"; do
             RUN_ALL=false
             RUN_SECTION["$arg"]=true
             ;;
-        --sub_core|--sub_accounts|--sub_todo)
+        --sub_core|--sub_accounts|--sub_todo|--sub_pet|--sub_x)
             SUB_SECTION=${arg#*--sub_}
             ;;
         --help)
@@ -1022,13 +1024,14 @@ check_tests() {
         if [[ -z "$TARGET" ]]; then
             LABEL="FULL_PROJECT_INTEGRATION"
             TARGET_CMD=""
+            APP_NAME="x"
         else
             LABEL=${TARGET%.tests}
             TARGET_CMD="$TARGET"
+            APP_NAME=${TARGET#app_}
+            APP_NAME=${APP_NAME%.tests}
         fi
 
-        APP_NAME=${TARGET#app_}
-        APP_NAME=${APP_NAME%.tests}
 
         if [[ "$SUB_SECTION" == 'ALL' ||  "$SUB_SECTION" == "$APP_NAME" ]]; then
             echo -e "\n${YELLOW}[$count] Testing: $LABEL ${RESET}    ($APP_NAME)"
@@ -1121,15 +1124,19 @@ check_tests67() {
 
     local fail=false
 
-    echo -e "\n${YELLOW}[1] PY Coverage Testing config file: $LABEL ${RESET}"
+    echo -e "\n${YELLOW}[1] PY Coverage Testing config file:.coveragerc ${RESET}"
     cat /srv/django/MikesLists_dev/.coveragerc
+    echo -e "+++++++++++++++++++++++++"
+    echo -e "\n${YELLOW}[2] PY Coverage Testing config file: pytest.ini ${RESET}"
+    cat /srv/django/MikesLists_dev/pytest.ini
+    echo -e "+++++++++++++++++++++++++"
 
 
     # NOTE:  -- reads MikesLists_dev/pytest.ini
     # NOTE:  i took this parameter out because the admin site does some builtin stuff in django: --fail-on-template-vars
 
 
-    echo -e "\n${YELLOW}[2] Coverage - app_core  -${RESET}"
+    echo -e "\n${YELLOW}[3] Coverage - app_core  -${RESET}"
     # if false; then
     # else
     #     echo -e "  ${MAGENTA} skipping this test temporarily ${RESET}"
@@ -1139,7 +1146,34 @@ check_tests67() {
     echo "Project_path=$PROJECT_PATH"
     cd "$PROJECT_PATH" || exit 1
 
+
+    if [[ $SUB_SECTION == "x" || $SUB_SECTION == "ALL" ]]; then
+        echo -e "\n${YELLOW}[4] Coverage - (blank)  -${RESET}"
+
+        coverage erase >/dev/null 2>&1
+
+        run_cmd "PY Coverage Testing" \
+            /srv/django/venv-dev/bin/pytest \
+            --cov \
+            --cache-clear \
+            --verbosity=3 \
+            --disable-warnings \
+            --color=yes \
+            --cov-fail-under=85 \
+            --cov-report=term-missing
+
+
+        if [[ $? -ne 0 ]]; then
+            fail=true
+            if [[ "$FAIL_FAST" == true ]]; then
+                exit 99
+            fi
+        fi
+    fi
+
+
     if [[ $SUB_SECTION == "core" || $SUB_SECTION == "ALL" ]]; then
+        echo -e "\n${YELLOW}[5] Coverage - app_core  -${RESET}"
 
         coverage erase >/dev/null 2>&1
 
@@ -1164,8 +1198,8 @@ check_tests67() {
     fi
 
     if [[ $SUB_SECTION == "accounts" || $SUB_SECTION == "ALL" ]]; then
+        echo -e "\n${YELLOW}[6] Coverage - app_accounts  -${RESET}"
         coverage erase >/dev/null 2>&1
-        echo -e "\n${YELLOW}[3] Coverage - app_accounts  -${RESET}"
 
         run_cmd "PY Coverage Testing" \
             /srv/django/venv-dev/bin/pytest \
@@ -1190,7 +1224,7 @@ check_tests67() {
     if [[ $SUB_SECTION == "todo" || $SUB_SECTION == "ALL" ]]; then
         coverage erase >/dev/null 2>&1
 
-        echo -e "\n${YELLOW}[4] Coverage - app_ToDo  -${RESET}"
+        echo -e "\n${YELLOW}[7] Coverage - app_ToDo  -${RESET}"
 
         run_cmd "PY Coverage Testing" \
             /srv/django/venv-dev/bin/pytest \
@@ -1211,6 +1245,32 @@ check_tests67() {
             fi
         fi
     fi
+
+    if [[ $SUB_SECTION == "pet" || $SUB_SECTION == "ALL" ]]; then
+        coverage erase >/dev/null 2>&1
+
+        echo -e "\n${YELLOW}[7] Coverage - app_ToDo  -${RESET}"
+
+        run_cmd "PY Coverage Testing" \
+            /srv/django/venv-dev/bin/pytest \
+            app_pet \
+            --cov=app_pet \
+            --cache-clear \
+            --verbosity=3 \
+            --disable-warnings \
+            --color=yes \
+            # --cov-fail-under=85 \
+            # --cov-report=term-missing
+
+
+        if [[ $? -ne 0 ]]; then
+            fail=true
+            if [[ "$FAIL_FAST" == true ]]; then
+                exit 99
+            fi
+        fi
+    fi
+
 }
 
 

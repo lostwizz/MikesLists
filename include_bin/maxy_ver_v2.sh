@@ -2,7 +2,7 @@
 # ==========================================
 #  Script for Finding and Updating Version Numbers (with highest numbers in folder)
 # ==========================================
-# __version__ = "0.0.1.000049-dev"
+# __version__ = "0.0.1.000048-dev"
 
 
 

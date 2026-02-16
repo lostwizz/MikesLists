@@ -8,15 +8,16 @@ app_core.context_processors
 
 
 """
-__version__ = "0.0.0.000007-dev"
+__version__ = "0.0.0.000009-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-07 18:25:56"
+__updated__ = "2026-02-15 01:32:02"
 ###############################################################################
 
 # MikesLists/context_processors.py
 from django.conf import settings
 
 from app_core.utils.env import is_dev, get_env
+
 
 def export_env_vars(request):
     # X = getattr(settings, "ENV_NAME", "dev")
@@ -41,6 +42,30 @@ def user_info(request):
             "sidebar_username": username,
             "sidebar_ip": ip,
             "sidebar_env": get_env(),
-            'user_profile': getattr(request.user, 'profile', None),
+            "user_profile": getattr(request.user, "profile", None),
         }
     return {}
+
+
+
+import pytest
+from django.test import Client
+from django.contrib.auth.models import User
+from app_accounts.models import Profile
+
+pytestmark = pytest.mark.django_db
+
+
+# @pytest.fixture
+# def user():
+#     return User.objects.create_user(username="mike", password="x")
+
+
+# @pytest.fixture
+# def editor():
+#     return User.objects.create_user(username="editor", password="x", is_staff=False)
+
+
+# @pytest.fixture
+# def client():
+#     return Client()

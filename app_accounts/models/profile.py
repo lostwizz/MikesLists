@@ -11,9 +11,9 @@ app_accounts.models.profile
 
 
 """
-__version__ = "0.0.0.000012-dev"
+__version__ = "0.0.0.000013-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-14 20:24:37"
+__updated__ = "2026-02-15 01:10:17"
 ###############################################################################
 from django.db import models
 from django.contrib.auth.models import User
@@ -60,6 +60,10 @@ class Profile(models.Model):
             return f"data:{self.avatar_mimetype};base64,{base64_data}"
         except Exception:
             return None
+
+    @property
+    def has_avatar(self):
+        return bool(self.avatar_blob)
 
     # Simplified save - no need to resize here if you do it in the view/form
     def save(self, *args, **kwargs):

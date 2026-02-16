@@ -1,7 +1,7 @@
 #!/bin/bash
 # ==========================================
 # Django Health Check - Unified Edition
-# __version__="0.2.0.000011-dev"
+# __version__="0.2.0.000010-dev"
 # ==========================================
 
 ENVS=("dev" "test" "live")

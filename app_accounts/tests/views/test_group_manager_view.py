@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 import logging
 
+
 @pytest.fixture
 def admin_user(db):
     user = User.objects.create_user(username="admin", password="x")
@@ -32,7 +33,9 @@ def test_group_manager_post_assign_success(client, admin_user):
     target = User.objects.create_user(username="bob", password="x")
     url = reverse("accounts:group_manager")
 
-    with patch("app_accounts.views.group_manager.assign_role_to_user", return_value=True):
+    with patch(
+        "app_accounts.views.group_manager.assign_role_to_user", return_value=True
+    ):
         response = client.post(
             url,
             {
@@ -54,7 +57,9 @@ def test_group_manager_post_assign_failure(client, admin_user):
     target = User.objects.create_user(username="bob", password="x")
     url = reverse("accounts:group_manager")
 
-    with patch("app_accounts.views.group_manager.assign_role_to_user", return_value=False):
+    with patch(
+        "app_accounts.views.group_manager.assign_role_to_user", return_value=False
+    ):
         response = client.post(
             url,
             {
@@ -83,15 +88,15 @@ def test_group_manager_post_clear_all(client, admin_user):
         url,
         {
             "user_id": target.id,
-            "role_name": "",      # <-- include this
+            "role_name": "",  # <-- include this
             "action": "clear_all",
         },
         follow=True,
     )
 
+    assert response
     target.refresh_from_db()
     assert target.groups.count() == 0
-
 
 
 @pytest.mark.django_db
@@ -105,7 +110,7 @@ def test_group_manager_post_assign_exception(client, admin_user):
     with patch.object(logging.getLogger("django.request"), "error"):
         with patch(
             "app_accounts.views.group_manager.assign_role_to_user",
-            side_effect=Exception("boom")
+            side_effect=Exception("boom"),
         ):
             with pytest.raises(Exception):
                 client.post(
@@ -117,8 +122,6 @@ def test_group_manager_post_assign_exception(client, admin_user):
                     },
                     follow=True,
                 )
-
-
 
 
 @pytest.mark.django_db

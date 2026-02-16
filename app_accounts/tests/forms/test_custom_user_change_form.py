@@ -20,7 +20,12 @@ def test_custom_user_change_form_non_superuser_filters_groups():
     form = CustomUserChangeForm(
         request=request,
         instance=user,
-        data={"first_name": "A", "last_name": "B", "email": "x@test.com", "username": "normal"}
+        data={
+            "first_name": "A",
+            "last_name": "B",
+            "email": "x@test.com",
+            "username": "normal",
+        },
     )
 
     # The queryset should be filtered to ONLY the user's groups
@@ -33,6 +38,8 @@ def test_custom_user_change_form_superuser_sees_all_groups():
     # Create two groups
     g1 = Group.objects.create(name="G1")
     g2 = Group.objects.create(name="G2")
+    assert g1
+    assert g2
 
     user = User.objects.create(username="admin")
 
@@ -43,7 +50,12 @@ def test_custom_user_change_form_superuser_sees_all_groups():
     form = CustomUserChangeForm(
         request=request,
         instance=user,
-        data={"first_name": "A", "last_name": "B", "email": "x@test.com", "username": "admin"}
+        data={
+            "first_name": "A",
+            "last_name": "B",
+            "email": "x@test.com",
+            "username": "admin",
+        },
     )
 
     # Superuser should see ALL groups
