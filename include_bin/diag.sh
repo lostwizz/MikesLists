@@ -411,7 +411,7 @@ check_django() {
 
 
 
-    echo -e "\n${YELLOW}[4.0.2] python syntax scan${RESET}"
+    echo -e "\n${YELLOW}[4.0.2a] python syntax scan${RESET}"
     SYNTAX_ERRORS=0
     while IFS= read -r -d '' file; do
         echo -e "${BLUE}compiling:${RESET} $file"
@@ -499,6 +499,12 @@ check_django() {
     check_templates "4.0.6F" "/srv/django/MikesLists_dev/app_accounts/templates/registration" \
         "logged_out.html" "password_change_done.html" "password_change_form.html" \
         "register.html"
+
+
+    # 4.6G. Accounts Templates registration
+    check_templates "4.0.6G" "/srv/django/MikesLists_dev/app_pet/templates/app_pet" \
+        "dashboard.html"
+
 
     #  "login.html", "password_reset_complete.html" "password_reset_confirm.html" "password_reset_done.html" "password_reset_form.html" \
 
@@ -1160,7 +1166,8 @@ check_tests67() {
             --disable-warnings \
             --color=yes \
             --cov-fail-under=85 \
-            --cov-report=term-missing
+            --cov-report=term-missing \
+            --cov-report=html
 
 
         if [[ $? -ne 0 ]]; then

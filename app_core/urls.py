@@ -34,7 +34,7 @@ Adding decorators to the path function:
 """
 __version__ = "0.0.0.000027-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-15 20:09:43"
+__updated__ = "2026-02-15 20:30:04"
 ###############################################################################
 
 """
@@ -135,7 +135,7 @@ urlpatterns = [
 
 
 # Catch‑all only in LIVE environment
-if not settings.DEBUG:
+if True:       # not settings.DEBUG:
     urlpatterns += [
         path("<path:path>", catchall_redirect, name="catchall"),
     ]

@@ -13,7 +13,7 @@ app_accounts.models.profile
 """
 __version__ = "0.0.0.000013-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-15 01:10:17"
+__updated__ = "2026-02-15 20:17:47"
 ###############################################################################
 from django.db import models
 from django.contrib.auth.models import User
@@ -42,6 +42,10 @@ class Profile(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
+
+
+    # GitHub integration for digital pet
+    github_username = models.CharField(max_length=100, blank=True, default='')
 
     @property
     def email(self):
