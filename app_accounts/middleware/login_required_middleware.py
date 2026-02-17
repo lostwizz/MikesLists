@@ -11,7 +11,7 @@ login_required_middleware
 """
 __version__ = "0.0.0.000015-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-15 19:51:01"
+__updated__ = "2026-02-16 22:23:26"
 ###############################################################################
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -78,11 +78,9 @@ class LoginRequiredMiddleware:
 
         # 4. Enforce login
         if not request.user.is_authenticated:
-            return redirect(reverse("accounts:login"))
-
+            login_url = reverse("accounts:login")
+            return redirect(f"{login_url}?next={request.path}")
         return None
-
-
 
 
 # class UpdateLastActivityMiddleware:

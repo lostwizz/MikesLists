@@ -1,11 +1,11 @@
 #!/bin/bash
-# diag_config.sh - Configuration for Django Deep Diagnostic Tool
-# Source this file from the main diagnostic script
+# diag_config.sh v2.3.1 - Fully Parameterized Configuration
+# All app definitions centralized here - single source of truth
 
 #############################################
 # VERSION
 #############################################
-DIAG_VERSION="2.3.0"
+DIAG_VERSION="2.3.1"
 
 #############################################
 # ENVIRONMENT DEFAULTS
@@ -15,9 +15,26 @@ DEFAULT_PROJECT_BASE="/srv/django"
 DEFAULT_VENV_BASE="/srv/django"
 
 #############################################
-# COVERAGE THRESHOLDS (per app)
+# APP DEFINITIONS (SINGLE SOURCE OF TRUTH)
 #############################################
-declare -gA COVERAGE_THRESHOLDS=(
+# List of all Django apps in the project
+declare -a DJANGO_APPS=(
+    "app_core"
+    "app_accounts"
+    "app_ToDo"
+    "app_pet"
+)
+
+# App display names
+declare -A APP_DISPLAY_NAMES=(
+    ["app_core"]="Core"
+    ["app_accounts"]="Accounts"
+    ["app_ToDo"]="ToDo"
+    ["app_pet"]="Pet"
+)
+
+# Coverage thresholds per app
+declare -A COVERAGE_THRESHOLDS=(
     ["app_core"]=85
     ["app_accounts"]=95
     ["app_ToDo"]=75
@@ -44,8 +61,6 @@ REQUIRED_ENV_VARS=(
 #############################################
 # LINT IGNORE CODES
 #############################################
-# Error codes: https://pycodestyle.pycqa.org/en/latest/intro.html#error-codes
-# Flake8 codes: https://flake8.pycqa.org/en/latest/user/error-codes.html
 LINT_IGNORE_CODES="E302,E303,E402,E501,E231,E222,E251,E265,W292,F401,F811,F405,F403,W503,W504"
 
 #############################################
@@ -64,54 +79,19 @@ HTTP_PORTS=(8000 9000 80)
 NGINX_UPSTREAM_PORT=8000
 
 #############################################
-# TEMPLATE CHECKS
-#############################################
-declare -gA TEMPLATE_PATHS=(
-    ["core_base"]="/srv/django/MikesLists_dev/app_core/templates/app_core"
-    ["core_partials"]="/srv/django/MikesLists_dev/app_core/templates/app_core/partials"
-    ["core_dashboard"]="/srv/django/MikesLists_dev/app_core/templates/app_core/dashboard"
-    ["core_status"]="/srv/django/MikesLists_dev/app_core/templates/app_core/status"
-    ["accounts"]="/srv/django/MikesLists_dev/app_accounts/templates/app_accounts"
-    ["registration"]="/srv/django/MikesLists_dev/app_accounts/templates/registration"
-    ["pet"]="/srv/django/MikesLists_dev/app_pet/templates/app_pet"
-)
-
-declare -gA TEMPLATE_FILES=(
-    ["core_base"]="base.html home.html _wifi_band.html restart_panel.html checks_panel.html"
-    ["core_partials"]="head.html navbar.html footer.html messages.html sidebar.html"
-    ["core_dashboard"]="admin.html editor.html readonly.html"
-    ["core_status"]="dashboard.html"
-    ["accounts"]="dashboard_stats.html dashboard.html edit_profile.html group_manager.html profile_detail.html"
-    ["registration"]="logged_out.html password_change_done.html password_change_form.html register.html"
-    ["pet"]="dashboard.html"
-)
-
-#############################################
 # TEST CONFIGURATIONS
 #############################################
-TEST_TARGETS=("" "tests" "app_ToDo.tests" "app_accounts.tests" "app_core.tests" "app_pet.tests")
 PYTEST_BASE_ARGS="--cache-clear --verbosity=3 --disable-warnings --color=yes"
+DJANGO_TEST_ARGS="--noinput -v 3 --debug-mode --traceback --force-color --shuffle"
 
 #############################################
-# GIT EXCLUDE PATTERNS
+# GIT/PACKAGE/LOG CONFIGURATIONS
 #############################################
 GIT_IGNORE_PATTERNS="__pycache__|.pytest_cache|.mypy_cache|.ruff_cache|runserver.log"
-
-#############################################
-# PACKAGE CHECK PATHS
-#############################################
 REQUIREMENTS_FILES=("requirements.txt" "requirements-dev.txt")
-
-#############################################
-# LOG INSPECTION
-#############################################
 SERVICE_NAME="mikeslists-dev.service"
 LOG_LOOKBACK_SECONDS=30
 NGINX_LOG_LINES=50
-
-#############################################
-# HEALTH CHECK ENDPOINTS
-#############################################
 HEALTH_CHECK_URL="http://127.0.0.1:8000/health/"
 
 #############################################
@@ -133,7 +113,7 @@ export B_BLUE=$'\033[1;34m'
 export B_MAGENTA=$'\033[1;35m'
 
 #############################################
-# COMPUTED PATHS (based on ENV)
+# COMPUTED PATHS
 #############################################
 compute_paths() {
     local env="$1"
@@ -143,4 +123,55 @@ compute_paths() {
     export ENV_FILE="$PROJECT_PATH/.env"
     export STATIC_DIR="$PROJECT_PATH/staticfiles_collected"
     export MEDIA_DIR="$PROJECT_PATH/media"
+}
+
+#############################################
+# APP HELPER FUNCTIONS
+#############################################
+
+# Get list of apps based on SUB_SECTION filter
+get_filtered_apps() {
+    local sub_section="$1"
+
+    case "$sub_section" in
+        ALL|all|"")
+            echo "${DJANGO_APPS[@]}"
+            ;;
+        core)
+            echo "app_core"
+            ;;
+        accounts)
+            echo "app_accounts"
+            ;;
+        todo)
+            echo "app_ToDo"
+            ;;
+        pet)
+            echo "app_pet"
+            ;;
+        x)
+            echo "tests"
+            ;;
+        *)
+            echo "${DJANGO_APPS[@]}"
+            ;;
+    esac
+}
+
+# Get app short name (without 'app_' prefix)
+get_app_short_name() {
+    local app="$1"
+    echo "${app#app_}"
+}
+
+# Get coverage threshold for app
+get_app_threshold() {
+    local app="$1"
+    echo "${COVERAGE_THRESHOLDS[$app]:-80}"
+}
+
+# Get display name for app
+get_app_display_name() {
+    local app="$1"
+    echo "${APP_DISPLAY_NAMES[$app]:-$app}"
 }

@@ -14,16 +14,14 @@ app_core.services.status_service
 """
 __version__ = "0.1.0.000039-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-09 22:03:01"
+__updated__ = "2026-02-16 00:14:57"
 ###############################################################################
 
 
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 import sys
 import time
-import subprocess
 import django
-import socket
 
 from django.db import connections
 from django.db.utils import OperationalError
@@ -32,7 +30,7 @@ from app_core.utils.shell import run
 from app_core.utils.env import get_env
 # from app_core.utils import get_client_ip
 
-from app_core.utils import net, ip
+from app_core.utils import net, ip, env
 
 
 # ##############################################################################
@@ -42,7 +40,6 @@ class CheckResult:
     name: str
     status: str
     message: str
-
 
 
 
@@ -100,13 +97,14 @@ def collect_checks() -> list[CheckResult]:
     else:
         checks.append(CheckResult("Migrations", "fail", result.stderr.strip()))
 
-    # Disk usage
-    disk = run(["df", "-h", "/"])
-    if disk.returncode == 0:
-        line = disk.stdout.splitlines()[1]
-        used = line.split()[4]
-        free = line.split()[3]
-        checks.append(CheckResult("Disk on /", "ok", f"{used} used ({free} free)"))
+    if env.is_dev():
+        # Disk usage
+        disk = run(["df", "-h", "/"])
+        if disk.returncode == 0:
+            line = disk.stdout.splitlines()[1]
+            used = line.split()[4]
+            free = line.split()[3]
+            checks.append(CheckResult("Disk on /", "ok", f"{used} used ({free} free)"))
 
     # Load average
     load = run(["cut", "-d", " ", "-f1-3", "/proc/loadavg"])

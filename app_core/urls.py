@@ -34,7 +34,7 @@ Adding decorators to the path function:
 """
 __version__ = "0.0.0.000027-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-15 20:30:04"
+__updated__ = "2026-02-16 22:27:53"
 ###############################################################################
 
 """
@@ -102,6 +102,7 @@ urlpatterns = [
     path("todo/", include("app_ToDo.urls")),
 
     # Pet
+    path("pet", include("app_pet.urls")),
     path("pet/", include("app_pet.urls")),
 
     # System / Core

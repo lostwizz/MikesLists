@@ -6,16 +6,26 @@
 # This is a refactored, parameterized version that sources configuration
 # and utility functions from separate files for better maintainability.
 
-set -euo pipefail
-
 #############################################
 # SCRIPT DIRECTORY & SOURCING
 #############################################
+# Get the directory where this script lives
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Source configuration and utilities
-source "${SCRIPT_DIR}/diag_config.sh"
-source "${SCRIPT_DIR}/diag_utils.sh"
+if [[ -f "${SCRIPT_DIR}/diag_config.sh" ]]; then
+    source "${SCRIPT_DIR}/diag_config.sh"
+else
+    echo "ERROR: Cannot find diag_config.sh in ${SCRIPT_DIR}"
+    exit 1
+fi
+
+if [[ -f "${SCRIPT_DIR}/diag_utils.sh" ]]; then
+    source "${SCRIPT_DIR}/diag_utils.sh"
+else
+    echo "ERROR: Cannot find diag_utils.sh in ${SCRIPT_DIR}"
+    exit 1
+fi
 
 #############################################
 # DEFAULTS
@@ -23,6 +33,7 @@ source "${SCRIPT_DIR}/diag_utils.sh"
 ENV="${DEFAULT_ENV}"
 FAIL_FAST=false
 DEBUG=false
+VERBOSE=false
 RUN_ALL=true
 declare -A RUN_SECTION
 SUB_SECTION="ALL"
@@ -44,6 +55,7 @@ Options:
   --all              Run all diagnostics (default)
   --fail-fast, --ff  Stop on first failure
   --debug            Show command output
+  --verbose, -v      Enable verbose output (show_urls, permissions, models)
 
 Section Filters:
   --environment      Environment validation only
@@ -91,6 +103,9 @@ parse_arguments() {
                 ;;
             --debug)
                 DEBUG=true
+                ;;
+            --verbose|-v)
+                VERBOSE=true
                 ;;
             --all)
                 RUN_ALL=true
@@ -196,14 +211,52 @@ check_django() {
     echo -e "\n${YELLOW}[4.2] Django check --deploy${RESET}"
     run_cmd "manage.py check --deploy" $MANAGE check --deploy || fail=true
 
-    echo -e "\n${YELLOW}[4.3] Migration status${RESET}"
+    echo -e "\n${YELLOW}[4.3] Python syntax compilation${RESET}"
+    run_cmd "Python compileall" \
+        $VENV_PATH/bin/python -m compileall "$PROJECT_PATH" -q || fail=true
+
+    echo -e "\n${YELLOW}[4.4] Migration status${RESET}"
     check_migrations "$MANAGE" || fail=true
 
-    echo -e "\n${YELLOW}[4.4] Static files${RESET}"
+    echo -e "\n${YELLOW}[4.5] Static files${RESET}"
     check_path_exists "directory" "$STATIC_DIR" "staticfiles_collected" || \
         echo -e "${YELLOW}⚠ Run collectstatic${RESET}"
 
+    echo -e "\n${YELLOW}[4.6] Recent error log check (last ${LOG_LOOKBACK_SECONDS}s)${RESET}"
+    check_recent_errors || fail=true
+
+    echo -e "\n${YELLOW}[4.7] Template validation${RESET}"
+    check_django_templates || fail=true
+
+    # Verbose mode: Additional diagnostics
+    if [[ "$VERBOSE" == true ]]; then
+        echo -e "\n${B_CYAN}=== VERBOSE MODE: Additional Django Diagnostics ===${RESET}"
+
+        echo -e "\n${YELLOW}[4.8-V] URL Patterns${RESET}"
+        run_verbose_command "show_urls" $MANAGE show_urls --format verbose
+
+        echo -e "\n${YELLOW}[4.9-V] Model Information${RESET}"
+        run_verbose_command "list_model_info" $MANAGE list_model_info
+
+        echo -e "\n${YELLOW}[4.10-V] Permissions${RESET}"
+        run_verbose_command "show_permissions" $MANAGE show_permissions --all
+
+        echo -e "\n${YELLOW}[4.11-V] Template Validation${RESET}"
+        run_verbose_command "validate_templates" $MANAGE validate_templates
+    fi
+
     $fail && return 1 || return 0
+}
+
+#############################################
+# SECTION 4.5 — URL Audit
+#############################################
+check_url_audit() {
+    echo "========================================
+   4.5 - URL & View Consistency Audit
+========================================"
+
+    check_url_consistency
 }
 
 #############################################
@@ -214,7 +267,7 @@ check_git() {
    5 - Git Inspection
 ========================================"
 
-    check_git_status "$PROJECT_PATH"
+    check_git_comprehensive
 }
 
 #############################################
@@ -262,23 +315,17 @@ check_tests67() {
     local fail=false
     cd "$PROJECT_PATH" || exit 1
 
-    # Define test targets based on SUB_SECTION
-    local test_apps=()
-    case "$SUB_SECTION" in
-        ALL)
-            test_apps=("app_core" "app_accounts" "app_ToDo" "app_pet")
-            ;;
-        core|accounts|todo|pet)
-            test_apps=("app_${SUB_SECTION}")
-            ;;
-        *)
-            test_apps=("app_core" "app_accounts" "app_ToDo" "app_pet")
-            ;;
-    esac
+    # Get filtered apps based on SUB_SECTION
+    local test_apps_str=$(get_filtered_apps "$SUB_SECTION")
+    local test_apps=($test_apps_str)
+
+    echo -e "${CYAN}Testing apps: ${test_apps[*]}${RESET}"
 
     for app in "${test_apps[@]}"; do
-        echo -e "\n${YELLOW}Testing: $app${RESET}"
-        local threshold=${COVERAGE_THRESHOLDS[$app]:-80}
+        local display_name=$(get_app_display_name "$app")
+        local threshold=$(get_app_threshold "$app")
+
+        echo -e "\n${YELLOW}Testing: $app ($display_name) - threshold: ${threshold}%${RESET}"
 
         coverage erase >/dev/null 2>&1
 
@@ -371,6 +418,9 @@ main() {
 
     run_section "django" check_django
     record_summary "4-django" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+
+    run_section "url_audit" check_url_audit
+    record_summary "4.5-url_audit" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
 
     run_section "git" check_git
     record_summary "5-git" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)

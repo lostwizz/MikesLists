@@ -4,8 +4,8 @@
 #############################################
 # STATUS TRACKING
 #############################################
-declare -gA SUMMARY_STATUS
-declare -ga SUMMARY_ORDER
+declare -A SUMMARY_STATUS
+declare -a SUMMARY_ORDER
 
 record_summary() {
     local section="$1"
@@ -89,6 +89,40 @@ run_cmd() {
         echo -e "${GREEN}✓ ${label} succeeded${RESET}"
         return 0
     fi
+}
+
+# Run command in verbose mode - always shows output
+run_verbose_command() {
+    local label="$1"
+    shift
+    local cmd=( "$@" )
+
+    echo -e "${BLUE}running:${RESET} ${CYAN}${cmd[*]}${RESET}"
+
+    # Try to preserve colors without mangling output
+    local line_count=0
+    local max_lines=100
+
+    # Direct execution with line limiting
+    "${cmd[@]}" 2>&1 | while IFS= read -r line; do
+        if (( line_count < max_lines )); then
+            echo "$line"
+            ((line_count++))
+        elif (( line_count == max_lines )); then
+            echo -e "${YELLOW}... (output truncated at $max_lines lines)${RESET}"
+            ((line_count++))
+        fi
+    done
+
+    local status=${PIPESTATUS[0]}
+
+    if [[ $status -ne 0 ]]; then
+        echo -e "${YELLOW}⚠ ${label} completed with warnings${RESET}"
+    else
+        echo -e "${GREEN}✓ ${label} completed${RESET}"
+    fi
+
+    return 0  # Don't fail on verbose commands
 }
 
 #############################################
@@ -205,7 +239,7 @@ check_http_endpoint() {
     local label="$2"
 
     echo -e "${BLUE}testing HTTP:${RESET} $url"
-    local http_code=$(curl -s -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "000")
+    local http_code=$(curl -s -L -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "000")
     echo -e "${BLUE}status:${RESET} ${CYAN}$http_code${RESET}"
 
     if [[ "$http_code" == "200" || "$http_code" == "301" || "$http_code" == "302" ]]; then
@@ -224,12 +258,12 @@ check_usage() {
     local filename="$1"
     echo -e "          ${B_CYAN}Searching references to: $filename...${RESET}"
 
-    local results=$(grep -rl "$filename" /srv/django/MikesLists_dev/ \
-        --exclude-dir={venv,.git,staticfiles_collected,__pycache__} \
+    local results=$(grep -rl "$filename" "$PROJECT_PATH" \
+        --exclude-dir={venv,venv-dev,venv-test,venv-live,.git,staticfiles_collected,__pycache__,coverage_html} \
         --include=\*.{py,html})
 
     if [ -z "$results" ]; then
-        echo -e "            ${B_YELLOW}  ⚠️  No references found!${RESET}"
+        echo -e "            ${B_YELLOW}  ⚠️  No references found! This template may be unused.${RESET}"
     else
         echo -e "            ${B_GREEN}  ✓  Used in:${RESET}"
         echo "$results" | sed 's/^/                 /'
@@ -326,6 +360,184 @@ check_git_status() {
     return 0
 }
 
+check_git_comprehensive() {
+    echo -e "${CYAN}Comprehensive Git diagnostics${RESET}"
+    local fail=false
+
+    # 1. Repository check
+    if [[ ! -d "$PROJECT_PATH/.git" ]]; then
+        echo -e "${YELLOW}⚠ No git repository found${RESET}"
+        return 0
+    fi
+
+    # 2. Current branch
+    echo -e "\n${YELLOW}[1] Current Branch${RESET}"
+    local branch=$(git -C "$PROJECT_PATH" rev-parse --abbrev-ref HEAD 2>&1)
+    if [[ $? -ne 0 ]]; then
+        echo -e "${RED}❌ Cannot determine branch${RESET}"
+        fail=true
+    else
+        echo -e "${GREEN}✓ Branch:${RESET} ${CYAN}$branch${RESET}"
+    fi
+
+    # 3. Working tree status
+    echo -e "\n${YELLOW}[2] Working Tree Status${RESET}"
+    local changes=$(git -C "$PROJECT_PATH" status --porcelain)
+    if [[ -z "$changes" ]]; then
+        echo -e "${GREEN}✓ Working tree clean${RESET}"
+    else
+        echo -e "${YELLOW}⚠ Working tree has changes:${RESET}"
+        echo "$changes" | head -20
+        local change_count=$(echo "$changes" | wc -l)
+        if (( change_count > 20 )); then
+            echo -e "${YELLOW}... and $((change_count - 20)) more${RESET}"
+        fi
+    fi
+
+    # 4. Untracked files
+    echo -e "\n${YELLOW}[3] Untracked Files${RESET}"
+    local untracked=$(git -C "$PROJECT_PATH" ls-files --others --exclude-standard)
+    if [[ -z "$untracked" ]]; then
+        echo -e "${GREEN}✓ No untracked files${RESET}"
+    else
+        local untracked_count=$(echo "$untracked" | wc -l)
+        echo -e "${YELLOW}⚠ $untracked_count untracked files${RESET}"
+        echo "$untracked" | head -10
+        if (( untracked_count > 10 )); then
+            echo -e "${YELLOW}... and $((untracked_count - 10)) more${RESET}"
+        fi
+    fi
+
+    # 5. Staged changes
+    echo -e "\n${YELLOW}[4] Staged Changes${RESET}"
+    local staged=$(git -C "$PROJECT_PATH" diff --cached --name-only)
+    if [[ -z "$staged" ]]; then
+        echo -e "${GREEN}✓ No staged changes${RESET}"
+    else
+        echo -e "${YELLOW}⚠ Staged but uncommitted:${RESET}"
+        echo "$staged"
+    fi
+
+    # 6. Last commit
+    echo -e "\n${YELLOW}[5] Last Commit${RESET}"
+    local hash=$(git -C "$PROJECT_PATH" rev-parse HEAD 2>/dev/null)
+    if [[ -z "$hash" ]]; then
+        echo -e "${RED}❌ Cannot read last commit${RESET}"
+        fail=true
+    else
+        local author=$(git -C "$PROJECT_PATH" log -1 --pretty='%an')
+        local date=$(git -C "$PROJECT_PATH" log -1 --pretty='%ad' --date=local)
+        local msg=$(git -C "$PROJECT_PATH" log -1 --pretty='%B')
+
+        echo -e "${GREEN}✓ Commit:${RESET} ${CYAN}${hash:0:8}${RESET}"
+        echo -e "  Author: ${CYAN}$author${RESET}"
+        echo -e "  Date:   ${CYAN}$date${RESET}"
+        echo -e "  Message: ${CYAN}$msg${RESET}"
+    fi
+
+    # 7. Detached HEAD check
+    echo -e "\n${YELLOW}[6] HEAD State${RESET}"
+    local detached=$(git -C "$PROJECT_PATH" symbolic-ref --short -q HEAD 2>/dev/null || echo "DETACHED")
+    if [[ "$detached" == "DETACHED" ]]; then
+        echo -e "${YELLOW}⚠ Detached HEAD state${RESET}"
+    else
+        echo -e "${GREEN}✓ Normal HEAD state${RESET}"
+    fi
+
+    # 8. Upstream tracking
+    echo -e "\n${YELLOW}[7] Remote Tracking${RESET}"
+    local upstream=$(git -C "$PROJECT_PATH" rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null)
+    if [[ -z "$upstream" ]]; then
+        echo -e "${YELLOW}⚠ No upstream tracking branch${RESET}"
+    else
+        echo -e "${GREEN}✓ Tracking:${RESET} ${CYAN}$upstream${RESET}"
+
+        # Ahead/behind
+        local ahead=$(git -C "$PROJECT_PATH" rev-list --left-right --count "$upstream"...HEAD 2>/dev/null | awk '{print $2}')
+        local behind=$(git -C "$PROJECT_PATH" rev-list --left-right --count "$upstream"...HEAD 2>/dev/null | awk '{print $1}')
+
+        if [[ -n "$ahead" && -n "$behind" ]]; then
+            if (( ahead > 0 )); then
+                echo -e "  ${YELLOW}↑ $ahead commits ahead${RESET}"
+            fi
+            if (( behind > 0 )); then
+                echo -e "  ${YELLOW}↓ $behind commits behind${RESET}"
+            fi
+            if (( ahead == 0 && behind == 0 )); then
+                echo -e "  ${GREEN}✓ In sync with remote${RESET}"
+            fi
+        fi
+    fi
+
+    # 9. Merge conflicts
+    echo -e "\n${YELLOW}[8] Merge Conflicts${RESET}"
+    local conflicts=$(git -C "$PROJECT_PATH" diff --name-only --diff-filter=U 2>/dev/null)
+    if [[ -n "$conflicts" ]]; then
+        echo -e "${RED}❌ Unresolved merge conflicts:${RESET}"
+        echo "$conflicts"
+        fail=true
+    else
+        echo -e "${GREEN}✓ No merge conflicts${RESET}"
+    fi
+
+    # 10. Ignored but modified files
+    echo -e "\n${YELLOW}[9] Ignored Files${RESET}"
+    local ignored=$(git -C "$PROJECT_PATH" ls-files -i -o -m --exclude-standard 2>/dev/null | \
+        grep -v -E "__pycache__|\.pytest_cache|\.mypy_cache|\.ruff_cache|runserver\.log")
+
+    if [[ -n "$ignored" ]]; then
+        echo -e "${YELLOW}⚠ Modified ignored files:${RESET}"
+        echo "$ignored" | head -10
+    else
+        echo -e "${GREEN}✓ No modified ignored files${RESET}"
+    fi
+
+    # 11. Submodules
+    echo -e "\n${YELLOW}[10] Submodules${RESET}"
+    if [[ -f "$PROJECT_PATH/.gitmodules" ]]; then
+        git -C "$PROJECT_PATH" submodule status
+    else
+        echo -e "${GREEN}✓ No submodules${RESET}"
+    fi
+
+    # 12. Remote info
+    echo -e "\n${YELLOW}[11] Remote${RESET}"
+    local remote_url=$(git -C "$PROJECT_PATH" remote get-url origin 2>/dev/null)
+    if [[ -n "$remote_url" ]]; then
+        echo -e "${GREEN}✓ Origin:${RESET} ${CYAN}$remote_url${RESET}"
+    else
+        echo -e "${YELLOW}⚠ No remote configured${RESET}"
+    fi
+
+    # 13. Recent commits
+    echo -e "\n${YELLOW}[12] Recent Commits${RESET}"
+    git -C "$PROJECT_PATH" log -5 --pretty=format:"  ${CYAN}%h${RESET} %ad ${GREEN}%an${RESET} %s" --date=short 2>/dev/null
+    echo ""
+
+    # 14. Unpushed commits
+    if [[ -n "$upstream" ]]; then
+        echo -e "\n${YELLOW}[13] Local Commits (not pushed)${RESET}"
+        local unpushed=$(git -C "$PROJECT_PATH" log "$upstream"..HEAD --oneline 2>/dev/null)
+        if [[ -z "$unpushed" ]]; then
+            echo -e "${GREEN}✓ All commits pushed${RESET}"
+        else
+            echo -e "${YELLOW}⚠ Unpushed commits:${RESET}"
+            echo "$unpushed" | head -10
+        fi
+
+        echo -e "\n${YELLOW}[14] Remote Commits (not pulled)${RESET}"
+        local unpulled=$(git -C "$PROJECT_PATH" log HEAD.."$upstream" --oneline 2>/dev/null)
+        if [[ -z "$unpulled" ]]; then
+            echo -e "${GREEN}✓ Up to date with remote${RESET}"
+        else
+            echo -e "${YELLOW}⚠ Commits to pull:${RESET}"
+            echo "$unpulled" | head -10
+        fi
+    fi
+
+    $fail && return 1 || return 0
+}
+
 #############################################
 # COVERAGE EXTRACTION
 #############################################
@@ -401,4 +613,332 @@ check_migrations() {
         echo -e "${GREEN}✓ all migrations applied${RESET}"
         return 0
     fi
+}
+
+#############################################
+# ERROR LOG CHECKS
+#############################################
+check_recent_errors() {
+    local lookback="${LOG_LOOKBACK_SECONDS:-30} seconds ago"
+
+    echo -e "${BLUE}checking for errors in last $lookback${RESET}"
+
+    local errors=$(journalctl -u "$SERVICE_NAME" --since "$lookback" --no-pager 2>/dev/null | \
+        grep -i -E "AttributeError|ImportError|ModuleNotFoundError|NameError|TypeError|KeyError")
+
+    if [[ -n "$errors" ]]; then
+        echo -e "${RED}❌ Recent errors detected:${RESET}"
+        echo "$errors" | head -10 | sed 's/^/  /'
+
+        # Check for specific common errors
+        if echo "$errors" | grep -q "AttributeError.*context_processors"; then
+            echo -e "${YELLOW}⚠ Context processor error detected${RESET}"
+        fi
+        if echo "$errors" | grep -q "NoReverseMatch"; then
+            echo -e "${YELLOW}⚠ URL routing error detected${RESET}"
+        fi
+        if echo "$errors" | grep -q "TemplateDoesNotExist"; then
+            echo -e "${YELLOW}⚠ Missing template detected${RESET}"
+        fi
+
+        return 1
+    else
+        echo -e "${GREEN}✓ No Python errors in recent logs${RESET}"
+        return 0
+    fi
+}
+
+#############################################
+# URL AUDIT FUNCTIONS
+#############################################
+
+# Audit URL patterns to ensure views exist
+audit_url_patterns_to_views() {
+    echo -e "\n${YELLOW}[1] Auditing URL Patterns → Views${RESET}"
+    local fail=false
+    local warn=false
+
+    # Get all URL patterns
+    cd "$PROJECT_PATH" || return 1
+    $MANAGE show_urls 2>/dev/null | sort -u | while read -r line; do
+        local url_pattern=$(echo "$line" | awk '{print $1}')
+        local view_path=$(echo "$line" | awk '{print $NF}')
+
+        # Skip empty lines
+        [[ -z "$url_pattern" ]] && continue
+
+        # Check if it's a Django internal view
+        if [[ "$view_path" == *"django."* ]] || \
+           [[ "$view_path" == *":"* ]] || \
+           [[ "$view_path" =~ ^(password_|login|logout|reset) ]]; then
+            echo -e "    ${B_GREEN}✓${RESET} $url_pattern → ${CYAN}$view_path${RESET} (Django internal)"
+            continue
+        fi
+
+        # Extract clean view name (handle Class-Based Views)
+        local clean_name=$(echo "$view_path" | rev | cut -d. -f1 | rev | sed 's/.as_view//g')
+
+        # Search for view definition
+        local file_loc=$(grep -rlE --include="*.py" "(def|class) $clean_name" "$PROJECT_PATH" \
+            --exclude-dir={venv,venv-dev,venv-test,__pycache__,static,media,.git,staticfiles_collected,tests,coverage_html} \
+            --exclude="urls.py" 2>/dev/null | head -1)
+
+        if [[ -n "$file_loc" ]]; then
+            local short_loc=$(echo "$file_loc" | sed "s|$PROJECT_PATH/||g")
+            echo -e "    ${B_GREEN}✓${RESET} $url_pattern → ${CYAN}$clean_name${RESET} in $short_loc"
+        else
+            # Fallback: check if referenced anywhere in views
+            local fallback=$(grep -rl "$clean_name" "$PROJECT_PATH" \
+                --include="*views*.py" \
+                --exclude-dir={venv,venv-dev,__pycache__,tests} 2>/dev/null | head -1)
+
+            if [[ -n "$fallback" ]]; then
+                local short_loc=$(echo "$fallback" | sed "s|$PROJECT_PATH/||g")
+                echo -e "    ${B_YELLOW}⚠${RESET} $url_pattern → ${CYAN}$clean_name${RESET} referenced in $short_loc"
+            else
+                echo -e "    ${B_YELLOW}⚠${RESET} $url_pattern → ${RED}$clean_name NOT FOUND${RESET}"
+            fi
+        fi
+    done
+}
+
+# Audit views to ensure they have URL patterns
+audit_views_to_url_patterns() {
+    echo -e "\n${YELLOW}[2] Auditing Views → URL Patterns (Reverse Check)${RESET}"
+
+    cd "$PROJECT_PATH" || return 1
+
+    # Use Python to check for orphaned views
+    $VENV_PATH/bin/python3 << 'PYEOF'
+import os
+import sys
+import re
+
+# Setup Django
+project_path = os.getcwd()
+if project_path not in sys.path:
+    sys.path.insert(0, project_path)
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings.dev')
+
+try:
+    import django
+    django.setup()
+    from django.urls import get_resolver
+    from django.urls.resolvers import URLPattern, URLResolver
+
+    # Get all URL names
+    def get_all_url_names(resolver, namespace=''):
+        url_names = set()
+        for pattern in resolver.url_patterns:
+            if isinstance(pattern, URLResolver):
+                new_namespace = f"{namespace}{pattern.namespace}:" if pattern.namespace else namespace
+                url_names.update(get_all_url_names(pattern, new_namespace))
+            elif isinstance(pattern, URLPattern):
+                if pattern.name:
+                    full_name = f"{namespace}{pattern.name}"
+                    url_names.add(full_name)
+                # Also get view function name
+                if hasattr(pattern.callback, '__name__'):
+                    url_names.add(pattern.callback.__name__)
+        return url_names
+
+    resolver = get_resolver()
+    registered_urls = get_all_url_names(resolver)
+
+    # Find all view functions
+    orphaned_views = []
+    for root, dirs, files in os.walk('.'):
+        # Skip excluded directories
+        dirs[:] = [d for d in dirs if d not in ['venv', 'venv-dev', '__pycache__', '.git', 'tests', 'migrations']]
+
+        for file in files:
+            if file.endswith('views.py'):
+                filepath = os.path.join(root, file)
+                with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                    # Find function/class definitions
+                    for match in re.finditer(r'^(def|class)\s+(\w+)', content, re.MULTILINE):
+                        view_name = match.group(2)
+                        # Skip private/test functions
+                        if view_name.startswith('_') or view_name.startswith('test'):
+                            continue
+                        # Check if registered
+                        if view_name not in registered_urls:
+                            orphaned_views.append((filepath, view_name))
+
+    if orphaned_views:
+        print(f"\033[1;33m⚠ Found {len(orphaned_views)} potentially orphaned views:\033[0m")
+        for filepath, view_name in orphaned_views[:10]:  # Limit output
+            short_path = filepath.replace('./', '')
+            print(f"    \033[33m⚠\033[0m {short_path} → \033[36m{view_name}\033[0m")
+        if len(orphaned_views) > 10:
+            print(f"    ... and {len(orphaned_views) - 10} more")
+        sys.exit(2)  # Warning exit code
+    else:
+        print("\033[1;32m✓ No orphaned views found\033[0m")
+        sys.exit(0)
+
+except Exception as e:
+    print(f"\033[1;31mCRITICAL: Django setup failed: {e}\033[0m")
+    sys.exit(1)
+PYEOF
+
+    local result=$?
+    if [[ $result -eq 0 ]]; then
+        echo -e "${B_GREEN}✓ All views have URL patterns${RESET}"
+        return 0
+    elif [[ $result -eq 2 ]]; then
+        echo -e "${B_YELLOW}⚠ Review warnings above${RESET}"
+        return 0  # Don't fail on warnings
+    else
+        echo -e "${B_RED}❌ URL audit failed${RESET}"
+        return 1
+    fi
+}
+
+# Main URL audit function
+check_url_consistency() {
+    echo -e "${BLUE}Checking URL-View consistency${RESET}"
+    local fail=false
+
+    audit_url_patterns_to_views || fail=true
+    audit_views_to_url_patterns || fail=true
+
+    $fail && return 1 || return 0
+}
+#############################################
+# TEMPLATE VALIDATION
+#############################################
+check_django_templates() {
+    echo -e "${BLUE}checking Django templates${RESET}"
+    local fail=false
+
+    # Track which templates we've explicitly checked
+    declare -A checked_templates
+
+    # Check app_core templates (has subdirectories)
+    local core_base_templates=(base.html home.html)
+    check_templates "app_core (base)" \
+        "${PROJECT_PATH}/app_core/templates/app_core" \
+        "${core_base_templates[@]}" || fail=true
+    for tmpl in "${core_base_templates[@]}"; do checked_templates["$tmpl"]=1; done
+
+    local core_partial_templates=(head.html navbar.html footer.html messages.html sidebar.html extra_js.html )
+    check_templates "app_core (partials)" \
+        "${PROJECT_PATH}/app_core/templates/app_core/partials" \
+        "${core_partial_templates[@]}" || fail=true
+    for tmpl in "${core_partial_templates[@]}"; do checked_templates["$tmpl"]=1; done
+
+
+
+    local core_status_partial_templates=(basic_info_panel.html _iface_speed.html _wifi_band.html _wifi_data.html _wifi_health.html _wifi_signal.html \
+                checks_panel.html interfaces_panel.html network_diagnostics.html \
+                restart_panel.html )
+    check_templates "app_core Status (partials)" \
+        "${PROJECT_PATH}/app_core/templates/app_core/status/partials" \
+        "${core_status_partial_templates[@]}" || fail=true
+    for tmpl in "${core_status_partial_templates[@]}"; do checked_templates["$tmpl"]=1; done
+
+
+
+    local core_dash_templates=(admin.html editor.html readonly.html)
+    check_templates "app_core (dashboard)" \
+        "${PROJECT_PATH}/app_core/templates/app_core/dashboard" \
+        "${core_dash_templates[@]}" || fail=true
+    for tmpl in "${core_dash_templates[@]}"; do checked_templates["$tmpl"]=1; done
+
+    # Check app_accounts templates
+    local accounts_templates=(dashboard.html edit_profile.html profile_detail.html group_manager.html dashboard_stats.html)
+    check_templates "app_accounts" \
+        "${PROJECT_PATH}/app_accounts/templates/app_accounts" \
+        "${accounts_templates[@]}" || fail=true
+    for tmpl in "${accounts_templates[@]}"; do checked_templates["$tmpl"]=1; done
+
+    local reg_templates=(logged_out.html login.html password_change_done.html password_change_form.html password_reset_complete.html \
+    password_reset_confirm.html password_reset_done.html password_reset_form.html register.html)
+    check_templates "registration" \
+        "${PROJECT_PATH}/app_accounts/templates/registration" \
+        "${reg_templates[@]}" || fail=true
+    for tmpl in "${reg_templates[@]}"; do checked_templates["$tmpl"]=1; done
+
+
+    # check app_todo templates
+    local check_todo_templates=(todo_list.html )
+    check_templates "ToDo_apps" \
+        "${PROJECT_PATH}/app_ToDo/templates/app_ToDo" \
+        "${check_todo_templates[@]}" || fail=true
+    for tmpl in "${check_todo_templates[@]}"; do checked_templates["$tmpl"]=1; done
+
+
+
+    # Check app_pet templates
+    if [[ -d "${PROJECT_PATH}/app_pet/templates/app_pet" ]]; then
+        local pet_templates=(dashboard.html)
+        check_templates "app_pet" \
+            "${PROJECT_PATH}/app_pet/templates/app_pet" \
+            "${pet_templates[@]}" || fail=true
+        for tmpl in "${pet_templates[@]}"; do checked_templates["$tmpl"]=1; done
+    fi
+
+    echo '..........................................................'
+
+    # Now discover ALL templates and check for unchecked ones
+    echo -e "\n${B_YELLOW}[Auto-Discovery] Finding unchecked templates...${RESET}"
+    find_unchecked_templates checked_templates || fail=true
+
+    $fail && return 1 || return 0
+}
+
+# Find and validate templates that weren't explicitly checked
+find_unchecked_templates() {
+    local -n checked_ref=$1
+    local found_unchecked=false
+
+    # Find all .html files in template directories
+    while IFS= read -r template_file; do
+        local basename=$(basename "$template_file")
+        local dirname=$(dirname "$template_file")
+
+        # Skip if already checked
+        if [[ -n "${checked_ref[$basename]}" ]]; then
+            continue
+        fi
+
+        # Skip admin templates (Django built-in)
+        if [[ "$template_file" == *"/admin/"* ]]; then
+            continue
+        fi
+
+        # Skip test templates
+        if [[ "$template_file" == *"/tests/"* || "$template_file" == *"/test_"* ]]; then
+            continue
+        fi
+
+        # Found an unchecked template
+        if [[ "$found_unchecked" == false ]]; then
+            echo -e "${B_CYAN}Unchecked templates found:${RESET}"
+            found_unchecked=true
+        fi
+
+        echo -e "\n${B_YELLOW}[Unchecked] $dirname${RESET}"
+        echo -e "       ${B_GREEN}✓  ${RESET}Found $basename"
+        check_usage "$basename"
+
+    done < <(find "${PROJECT_PATH}" -path "*/templates/*.html" \
+        -not -path "*/venv*" \
+        -not -path "*/.git/*" \
+        -not -path "*/staticfiles_collected/*" \
+        -not -path "*/__pycache__/*" \
+        -not -path "*/tests/*" \
+        -not -path "*/test_*" \
+        -type f)
+
+    if [[ "$found_unchecked" == false ]]; then
+        echo -e "${GREEN}✓ All templates are explicitly validated${RESET}"
+    else
+        echo -e "\n${YELLOW}⚠ Found unchecked templates - consider adding to explicit checks${RESET}"
+    fi
+
+    return 0
 }
