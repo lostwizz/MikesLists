@@ -35,8 +35,8 @@ def redirect_dashboard_to_dashboard(request):
 def catchall_redirect(request, path=None):
     return redirect("accounts:dashboard")
 
-
-
-
 def home(request):
     return render(request, "app_core/home.html", {"env": get_env()})
+
+def redirect_pet(request):
+    return redirect("pet:dashboard")

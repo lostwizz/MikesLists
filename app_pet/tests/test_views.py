@@ -42,12 +42,12 @@ def test_pet_dashboard_creates_pet_if_not_exists(client):
     """Test that pet dashboard creates a pet if user doesn't have one"""
     user = User.objects.create_user(username="testuser", password="x")
     client.login(username="testuser", password="x")
-    
+
     assert not DigitalPet.objects.filter(user=user).exists()
-    
+
     url = reverse('pet:dashboard')
     response = client.get(url)
-    
+
     assert response.status_code == 200
     assert DigitalPet.objects.filter(user=user).exists()
 
@@ -58,10 +58,10 @@ def test_pet_dashboard_includes_stage_info(client):
     user = User.objects.create_user(username="testuser", password="x")
     DigitalPet.objects.create(user=user, stage='flame')
     client.login(username="testuser", password="x")
-    
+
     url = reverse('pet:dashboard')
     response = client.get(url)
-    
+
     assert response.status_code == 200
     assert 'stage_info' in response.context
     assert response.context['stage_info']['emoji'] == '🌟'
@@ -79,11 +79,13 @@ def test_fetch_github_commits_requires_login(client):
 def test_fetch_github_commits_no_username_set(client):
     """Test error when user has no GitHub username"""
     user = User.objects.create_user(username="testuser", password="x")
+    assert user
+
     client.login(username="testuser", password="x")
-    
+
     url = reverse('pet:sync_github')
     response = client.get(url)
-    
+
     assert response.status_code == 400
     data = response.json()
     assert 'error' in data
@@ -95,12 +97,12 @@ def test_fetch_github_commits_success(mock_get, client):
     """Test successful GitHub API fetch and pet feeding"""
     user = User.objects.create_user(username="testuser", password="x")
     pet = DigitalPet.objects.create(user=user, total_commits=0)
-    
+
     user.profile.github_username = "testgithubuser"
     user.profile.save()
-    
+
     client.login(username="testuser", password="x")
-    
+
     mock_response = Mock()
     mock_response.status_code = 200
     mock_response.json.return_value = [
@@ -109,14 +111,14 @@ def test_fetch_github_commits_success(mock_get, client):
         {'type': 'IssueEvent'},
     ]
     mock_get.return_value = mock_response
-    
+
     url = reverse('pet:sync_github')
     response = client.get(url)
-    
+
     assert response.status_code == 200
     data = response.json()
     assert data['commits'] == 2
-    
+
     pet.refresh_from_db()
     assert pet.total_commits == 2
 
@@ -127,19 +129,19 @@ def test_fetch_github_commits_api_error(mock_get, client):
     """Test handling of GitHub API error"""
     user = User.objects.create_user(username="testuser", password="x")
     DigitalPet.objects.create(user=user)
-    
+
     user.profile.github_username = "testgithubuser"
     user.profile.save()
-    
+
     client.login(username="testuser", password="x")
-    
+
     mock_response = Mock()
     mock_response.status_code = 404
     mock_get.return_value = mock_response
-    
+
     url = reverse('pet:sync_github')
     response = client.get(url)
-    
+
     assert response.status_code == 400
     data = response.json()
     assert 'error' in data

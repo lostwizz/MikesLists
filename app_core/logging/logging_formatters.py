@@ -19,7 +19,6 @@ import sqlparse
 import re
 
 
-
 # -----------------------------------------------------------------
 class PrettySQLFormatter(logging.Formatter):
     """

@@ -221,6 +221,7 @@ def test_one_to_one_relationship():
     """Test that each user can only have one pet"""
     user = User.objects.create_user(username="testuser", password="x")
     pet1 = DigitalPet.objects.create(user=user)
+    assert pet1
 
     # Trying to create another pet for same user should fail
     with pytest.raises(Exception):  # IntegrityError

@@ -34,7 +34,7 @@ Adding decorators to the path function:
 """
 __version__ = "0.0.0.000027-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-16 22:27:53"
+__updated__ = "2026-02-16 23:00:33"
 ###############################################################################
 
 """
@@ -65,18 +65,22 @@ from django.contrib.auth.decorators import login_required
 from app_core.views.health import health
 from app_core.views.status import status_view, dashboard
 
+
 from app_core.views.home import (
     redirect_root_to_dashboard,
     redirect_home_to_dashboard,
     redirect_accounts_to_dashboard,
     redirect_dashboard_to_dashboard,
     catchall_redirect,
+    redirect_pet,
 )
 
 from app_core.utils.auth import is_staff
 
 from django.conf import settings
+
 # NOTE  - Becarfull of the traling slash - it is important
+
 
 urlpatterns = [
     # Admin
@@ -89,12 +93,12 @@ urlpatterns = [
 
     # Redirect /dashboard → dashboard
     # path("dashboard", redirect_dashboard_to_dashboard),
-
     # path("dashboard/", redirect_dashboard_to_dashboard),
     path("dashboard/", dashboard, name="dashboard"),
 
     # Redirect ONLY /accounts and /accounts/ → dashboard
     path("accounts", redirect_accounts_to_dashboard),
+
     # path("accounts/", redirect_accounts_to_dashboard),
     path("accounts/", include("app_accounts.urls")),
 
@@ -102,7 +106,7 @@ urlpatterns = [
     path("todo/", include("app_ToDo.urls")),
 
     # Pet
-    path("pet", include("app_pet.urls")),
+    path("pet", redirect_pet),
     path("pet/", include("app_pet.urls")),
 
     # System / Core
@@ -114,7 +118,6 @@ urlpatterns = [
 
     # Site root → dashboard
     path("", redirect_root_to_dashboard, name="root_redirect"),
-
 
     # Global password reset URLs required by Django's built-in auth system
     path(
@@ -136,7 +139,7 @@ urlpatterns = [
 
 
 # Catch‑all only in LIVE environment
-if True:       # not settings.DEBUG:
+if True:  # not settings.DEBUG:
     urlpatterns += [
         path("<path:path>", catchall_redirect, name="catchall"),
     ]

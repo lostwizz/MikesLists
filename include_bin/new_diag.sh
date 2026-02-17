@@ -5,6 +5,7 @@
 #
 # This is a refactored, parameterized version that sources configuration
 # and utility functions from separate files for better maintainability.
+# __version__="3.1.2.000153"
 
 #############################################
 # SCRIPT DIRECTORY & SOURCING
@@ -64,9 +65,14 @@ Section Filters:
   --db               Database diagnostics only
   --git              Git diagnostics only
   --nginx            Nginx diagnostics only
+  --envvars          Environment variable validation (section 8)
   --check_tests      Django tests only
   --check_tests67    Pytest coverage only
   --permissions      File permissions only
+  --packages         Python package drift (section 10)
+  --static           Static analysis - ruff + flake8 (section 11)
+  --ruff             Ruff only
+  --flake            Flake8 only
   --packages         Python packages only
   --lint             Linting (ruff + flake8) only
   --ruff             Ruff only
@@ -376,6 +382,16 @@ check_nginx() {
 }
 
 #############################################
+# SECTION 8 — Environment Variable Validation
+#############################################
+check_envvars_section() {
+    echo "========================================
+   8 - Environment Variable Validation
+========================================"
+    check_envvars
+}
+
+#############################################
 # SECTION 9 — Permissions
 #############################################
 check_permissions_section() {
@@ -394,6 +410,40 @@ check_permissions_section() {
     fi
 
     $fail && return 1 || return 0
+}
+
+#############################################
+# SECTION 10 — Package Drift
+#############################################
+check_packages_section() {
+    echo "========================================
+   10 - Python Package Drift
+========================================"
+    check_packages
+}
+
+#############################################
+# SECTION 11 — Static Analysis
+#############################################
+check_static_section() {
+    echo "========================================
+   11 - Python Static Analysis
+========================================"
+    check_static_analysis "both"
+}
+
+check_ruff_section() {
+    echo "========================================
+   11 - Ruff Only
+========================================"
+    check_static_analysis "ruff"
+}
+
+check_flake_section() {
+    echo "========================================
+   11 - Flake8 Only
+========================================"
+    check_static_analysis "flake"
 }
 
 #############################################
@@ -434,8 +484,23 @@ main() {
     run_section "nginx" check_nginx
     record_summary "7-nginx" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
 
+    run_section "envvars" check_envvars_section
+    record_summary "8-envvars" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+
     run_section "permissions" check_permissions_section
     record_summary "9-permissions" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+
+    run_section "packages" check_packages_section
+    record_summary "10-packages" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+
+    run_section "static" check_static_section
+    record_summary "11-static" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+
+    run_section "ruff" check_ruff_section
+    record_summary "11-ruff" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
+
+    run_section "flake" check_flake_section
+    record_summary "11-flake" $([[ $? -eq 0 ]] && echo PASS || echo FAIL)
 
     # Print summary
     print_summary
