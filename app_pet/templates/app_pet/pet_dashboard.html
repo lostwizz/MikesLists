@@ -1,0 +1,279 @@
+{% extends "app_core/base.html" %}
+{% block title %}{{ pet.name }}'s Dashboard{% endblock %}
+{% block content %}
+    <div class="container py-4" style="max-width: 700px;">
+        {# ── Header ── #}
+        <div class="text-center mb-4">
+            <h2>{{ pet.name }}</h2>
+            <p class="text-muted">{{ pet.get_stage_display }} · Level {{ pet.xp }} XP</p>
+        </div>
+        {# ── Pet Display ── #}
+        <div class="card shadow-sm mb-4">
+            <div class="card-body text-center">
+                {# Big pet emoji with mood overlay #}
+                <div style="font-size: 5rem;
+                            line-height: 1.2;
+                            position: relative;
+                            display: inline-block">
+                    <span id="pet-emoji">{{ stage_emoji }}</span>
+                    <span style="font-size: 1.5rem;
+                                 position: absolute;
+                                 bottom: 0;
+                                 right: -10px">{{ mood_emoji }}</span>
+                </div>
+                <h4 class="mt-2">
+                    Mood: <span id="pet-mood">{{ pet.get_mood_display }}</span>
+                    <span id="mood-emoji">{{ mood_emoji }}</span>
+                </h4>
+                {# Stage badge #}
+                <span class="badge bg-primary fs-6 mb-3">{{ pet.get_stage_display }}</span>
+            </div>
+        </div>
+        {# ── Hunger Bar ── #}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header fw-bold">🍖 Hunger</div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-1">
+                    <small>Status: <strong id="hunger-status">{{ hunger_status }}</strong></small>
+                    <small><strong id="hunger-value">{{ pet.hunger }}</strong>/100</small>
+                </div>
+                <div class="progress" style="height: 24px;">
+                    <div id="hunger-bar"
+                         class="progress-bar {% if pet.hunger > 60 %}bg-success{% elif pet.hunger > 30 %}bg-warning{% else %}bg-danger{% endif %}"
+                         style="width: {{ pet.hunger }}%">
+                        <span id="hunger-blocks"
+                              style="font-family: monospace;
+                                     font-size: 0.75rem">{{ hunger_bar }}</span>
+                    </div>
+                </div>
+                {% if pet.hunger <= 20 %}
+                    <div class="alert alert-danger mt-2 mb-0 py-1 small">
+                        ⚠️ Your pet is starving! Feed it commits or it will de-evolve!
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {# ── Stats Row ── #}
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+                <div class="card text-center shadow-sm h-100">
+                    <div class="card-body py-3">
+                        <div class="fs-4">🔥</div>
+                        <div class="fs-5 fw-bold" id="commits-today">{{ pet.commits_today }}</div>
+                        <small class="text-muted">Today</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card text-center shadow-sm h-100">
+                    <div class="card-body py-3">
+                        <div class="fs-4">📅</div>
+                        <div class="fs-5 fw-bold">{{ pet.commits_this_week }}</div>
+                        <small class="text-muted">This Week</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card text-center shadow-sm h-100">
+                    <div class="card-body py-3">
+                        <div class="fs-4">⚡</div>
+                        <div class="fs-5 fw-bold" id="pet-xp">{{ pet.xp }}</div>
+                        <small class="text-muted">XP</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card text-center shadow-sm h-100">
+                    <div class="card-body py-3">
+                        <div class="fs-4">🏆</div>
+                        <div class="fs-5 fw-bold">{{ pet.total_commits }}</div>
+                        <small class="text-muted">Total</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {# ── Streaks ── #}
+        <div class="row g-3 mb-4">
+            <div class="col-6">
+                <div class="card text-center shadow-sm h-100">
+                    <div class="card-body py-3">
+                        <div class="fs-3">📝</div>
+                        <div class="fs-4 fw-bold">{{ pet.commit_streak }}</div>
+                        <small class="text-muted">Commit Streak (days)</small>
+                        {% if pet.commit_streak >= 7 %}
+                            <div>
+                                <span class="badge bg-warning text-dark">🔥 On Fire!</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="card text-center shadow-sm h-100">
+                    <div class="card-body py-3">
+                        <div class="fs-3">🔐</div>
+                        <div class="fs-4 fw-bold">{{ pet.login_streak }}</div>
+                        <small class="text-muted">Login Streak (days)</small>
+                        {% if pet.login_streak >= 7 %}
+                            <div>
+                                <span class="badge bg-info">🌟 Dedicated!</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {# ── Evolution Progress ── #}
+        {% if stage_info.next_at %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header fw-bold">🧬 Evolution Progress</div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small>{{ pet.get_stage_display }} → Next Stage</small>
+                        <small>{{ pet.total_commits }} / {{ stage_info.next_at }} commits</small>
+                    </div>
+                    <div class="progress" style="height: 20px;">
+                        {% widthratio pet.total_commits stage_info.next_at 100 as pct %}
+                        <div class="progress-bar bg-info" style="width: {{ pct }}%">{{ pct }}%</div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="alert alert-warning text-center mb-4">
+                ⭐ <strong>Maximum Evolution Reached!</strong> Your pet is a Nova!
+            </div>
+        {% endif %}
+        {# ── Coverage Score ── #}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header fw-bold">🧪 Test Coverage</div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="fs-4 fw-bold" id="coverage-score">{{ pet.coverage_score|floatformat:1 }}%</span>
+                        <small class="text-muted ms-2">last run</small>
+                    </div>
+                    <button class="btn btn-outline-secondary btn-sm" id="run-coverage-btn">▶ Run Coverage</button>
+                </div>
+                <div id="coverage-output"
+                     class="mt-2 small text-muted"
+                     style="display:none"></div>
+            </div>
+        </div>
+        {# ── Actions ── #}
+        <div class="d-flex gap-2 flex-wrap mb-4">
+            {% if user.profile.github_username %}
+                <button class="btn btn-success" id="sync-github-btn">🐙 Sync GitHub Commits</button>
+            {% else %}
+                <a href="{% url 'accounts:edit_profile' %}"
+                   class="btn btn-outline-warning">⚠️ Set GitHub Username to Feed Your Pet</a>
+            {% endif %}
+        </div>
+        {# ── Status messages ── #}
+        <div id="status-msg" class="alert" style="display:none;"></div>
+    </div>
+{% endblock %}
+{% block extra_js %}
+    <script>
+const csrfToken = '{{ csrf_token }}';
+
+// ── Helper: show status message ──────────────────────────────────────────────
+function showMsg(text, type='info') {
+  const el = document.getElementById('status-msg');
+  el.className = `alert alert-${type}`;
+  el.textContent = text;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+
+// ── Helper: update hunger display ────────────────────────────────────────────
+function updateHunger(hunger, hungerBar, hungerStatus) {
+  document.getElementById('hunger-value').textContent = hunger;
+  document.getElementById('hunger-blocks').textContent = hungerBar;
+  document.getElementById('hunger-status').textContent = hungerStatus;
+
+  const bar = document.getElementById('hunger-bar');
+  bar.style.width = hunger + '%';
+  bar.className = 'progress-bar ' + (
+    hunger > 60 ? 'bg-success' :
+    hunger > 30 ? 'bg-warning' : 'bg-danger'
+  );
+}
+
+// ── GitHub Sync ───────────────────────────────────────────────────────────────
+const syncBtn = document.getElementById('sync-github-btn');
+if (syncBtn) {
+  syncBtn.addEventListener('click', async () => {
+    syncBtn.disabled = true;
+    syncBtn.textContent = '⏳ Syncing...';
+    try {
+      const res  = await fetch('{% url "pet:sync_github" %}', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrfToken }
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showMsg('❌ ' + (data.error || 'Sync failed'), 'danger');
+        return;
+      }
+
+      // Update stats
+      document.getElementById('commits-today').textContent  = data.commits;
+      document.getElementById('pet-emoji').textContent      = data.stage_emoji;
+      document.getElementById('pet-mood').textContent       = data.mood;
+      document.getElementById('mood-emoji').textContent     = data.mood_emoji;
+      document.getElementById('pet-xp').textContent         = data.xp;
+      updateHunger(data.hunger, data.hunger_bar, data.hunger_status);
+
+      showMsg(`✅ ${data.commits} commits synced! XP: ${data.xp}`, 'success');
+
+    } catch (e) {
+      showMsg('❌ Network error: ' + e.message, 'danger');
+    } finally {
+      syncBtn.disabled = false;
+      syncBtn.textContent = '🐙 Sync GitHub Commits';
+    }
+  });
+}
+
+// ── Run Coverage ──────────────────────────────────────────────────────────────
+const coverageBtn = document.getElementById('run-coverage-btn');
+if (coverageBtn) {
+  coverageBtn.addEventListener('click', async () => {
+    coverageBtn.disabled = true;
+    coverageBtn.textContent = '⏳ Running...';
+    document.getElementById('coverage-output').style.display = 'block';
+    document.getElementById('coverage-output').textContent   = 'Running pytest... this may take a moment.';
+
+    try {
+      const res  = await fetch('{% url "pet:run_coverage" %}', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrfToken }
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showMsg('❌ Coverage failed: ' + (data.error || ''), 'danger');
+        document.getElementById('coverage-output').textContent = data.output || '';
+        return;
+      }
+
+      document.getElementById('coverage-score').textContent = data.coverage.toFixed(1) + '%';
+      document.getElementById('pet-xp').textContent         = data.xp;
+      document.getElementById('pet-mood').textContent       = data.mood;
+      document.getElementById('mood-emoji').textContent     = data.mood_emoji;
+      updateHunger(data.hunger, data.hunger_bar, data.hunger_status);
+      document.getElementById('coverage-output').textContent = `Coverage: ${data.coverage.toFixed(1)}%`;
+
+      showMsg(`🧪 Coverage: ${data.coverage.toFixed(1)}% · +XP awarded!`, 'success');
+
+    } catch (e) {
+      showMsg('❌ Network error: ' + e.message, 'danger');
+    } finally {
+      coverageBtn.disabled = false;
+      coverageBtn.textContent = '▶ Run Coverage';
+    }
+  });
+}
+    </script>
+{% endblock %}
