@@ -40,3 +40,9 @@ def home(request):
 
 def redirect_pet(request):
     return redirect("pet:dashboard")
+
+def redirect_status(request):
+    return redirect("status_dashboard")
+
+def redirect_health(request):
+    return redirect("health_check")

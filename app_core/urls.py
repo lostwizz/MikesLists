@@ -34,7 +34,7 @@ Adding decorators to the path function:
 """
 __version__ = "0.0.0.000027-dev"
 __author__ = "Mike Merrett"
-__updated__ = "2026-02-16 23:00:33"
+__updated__ = "2026-02-18 22:44:35"
 ###############################################################################
 
 """
@@ -71,8 +71,10 @@ from app_core.views.home import (
     redirect_home_to_dashboard,
     redirect_accounts_to_dashboard,
     redirect_dashboard_to_dashboard,
-    catchall_redirect,
     redirect_pet,
+    redirect_status,
+    redirect_health,
+    catchall_redirect,
 )
 
 from app_core.utils.auth import is_staff
@@ -110,10 +112,10 @@ urlpatterns = [
     path("pet/", include("app_pet.urls")),
 
     # System / Core
-    path("status", status_view, name="status_dashboard"),
+    path("status", redirect_status),
     path("status/", status_view, name="status_dashboard"),
 
-    # path("health", health, name="health_check"),
+    path("health", redirect_health),
     path("health/", health, name="health_check"),
 
     # Site root → dashboard
